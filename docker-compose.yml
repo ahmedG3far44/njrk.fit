@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: mongodb-container
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: securepassword
+    networks:
+      - njerka-fit
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: server-container
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - MONGO_URI=mongodb://admin:securepassword@mongodb:27017/njrk?authSource=admin
+      - NODE_ENV=development
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+      - OLLAMA_API_KEY=89dd178811ad48ee91a49437af6099d2.pp68HePfs7bMRJWPUEfBnaEL
+      - S3_BUCKET_NAME=njerka-fit-bucket
+      - S3_REGION=us-east-1
+      - S3_ACCESS_KEY_ID=your-access-key-id
+      - S3_SECRET_ACCESS_KEY=your-secret-access-key
+      - STRIPE_SECRET_KEY=sk_test_51TJWvyRPSIjKJwi6NZEWveg1OOYEL3Z0aAJrGjeV8boI9yPPFEka3C0rvg3AfGJLCtda7zQSnN5JhKbIjx02W94t00GKZWRVb4
+      - STRIPE_WEBHOOK_SECRET=whsec_13d5831238f76ff2f8c8cd2f7cab809c04fef9ec0616e93b79ff9c1486cb50f4
+      - SMTP_USER=njerka.fit@gmail.com
+      - SMTP_PASSWORD="your-app-password"
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+
+      - JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+      - JWT_EXPIRATION=3h
+      - JWT_REFRESH_SECRET=your-refresh-token-secret-min-32-chars
+      - JWT_REFRESH_EXPIRATION=7d
+
+      - GOOGLE_CLIENT_ID=691688385657-i821cud5r17h2dfv7kmnk161701jcr6h.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - GOOGLE_API_KEY=AIzaSyC3bY3mYGc6bwa0yJxjAtnQ-SIsTah85PA
+    depends_on:
+      - mongodb
+    networks:
+      - njerka-fit
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: client-container
+    restart: unless-stopped
+    networks:
+      - njerka-fit
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-container
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - client
+      - server
+    networks:
+      - njerka-fit
+
+volumes:
+  mongodb_data:
+
+
+networks:
+  njerka-fit:
+    driver: bridge
