@@ -8,6 +8,7 @@ interface Step4MedicalVaultProps {
   data: Step4Data
   onUpdate: (data: Step4Data) => void
   onNext: () => void
+  errors: Partial<Record<string, string>>
 }
 
 const Step4MedicalVault = ({ data, onUpdate, onNext }: Step4MedicalVaultProps) => {

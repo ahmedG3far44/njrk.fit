@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ErrorMessage from '../../components/ErrorMessage'
 
 interface Step5Data {
   dreamGoal?: string
@@ -7,6 +8,7 @@ interface Step5Data {
 interface Step5DreamProps {
   data: Step5Data
   onUpdate: (data: Step5Data) => void
+  errors: Partial<Record<string, string>>
 }
 
 const suggestionPills = [
@@ -20,7 +22,7 @@ const suggestionPills = [
   '+ Feel confident in my own skin',
 ]
 
-const Step5Dream = ({ data, onUpdate }: Step5DreamProps) => {
+const Step5Dream = ({ data, onUpdate, errors }: Step5DreamProps) => {
   const [charCount, setCharCount] = useState(data.dreamGoal?.length || 0)
 
   useEffect(() => {
@@ -59,9 +61,11 @@ const Step5Dream = ({ data, onUpdate }: Step5DreamProps) => {
           value={data.dreamGoal || ''}
           onChange={(e) => handleTextChange(e.target.value)}
           rows={5}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all resize-none"
+          className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all resize-none ${errors.dreamGoal ? 'border-red-500' : 'border-gray-300'}`}
           placeholder="Describe your dream body and health goals in detail. The more specific you are, the better we can tailor your plan..."
+          autoComplete='off'
         />
+        {errors.dreamGoal && <ErrorMessage message={errors.dreamGoal} />}
         <div className="flex justify-between items-center mt-2">
           <span className="text-sm text-gray-500">Character count: {charCount}</span>
           {isGoodDetail && (

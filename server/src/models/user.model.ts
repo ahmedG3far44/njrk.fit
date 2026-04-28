@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { 
-  Gender, WeightUnit, HeightUnit, Religion, Goal, ActivityLevel 
+import {
+  Gender, WeightUnit, HeightUnit, Religion, Goal, ActivityLevel
 } from '../types';
 
 export interface IUser extends Document {
@@ -42,11 +42,13 @@ export interface IUser extends Document {
   estimatedSteps: number;
   estimatedSleepHours: number;
   estimatedWaterOz: number;
+  onboardingCompleted: boolean;
   preferences: {
     notifications: boolean;
     weeklySummary: boolean;
     mealReminders: boolean;
     autoGenerateMeals: boolean;
+    isFasting: boolean;
     reminderTime?: string;
     reminderTypes?: string[];
   };
@@ -55,7 +57,7 @@ export interface IUser extends Document {
 }
 
 const UserSchema = new Schema<IUser>({
-  email: { type: String, required: true, lowercase: true },
+  email: { type: String, required: true, lowercase: true, unique: true },
   passwordHash: { type: String },
   googleId: { type: String, sparse: true, unique: true },
   appleId: { type: String, sparse: true, unique: true },
@@ -68,24 +70,24 @@ const UserSchema = new Schema<IUser>({
   weightUnit: { type: String, enum: ['kg', 'lb'], default: 'kg' },
   heightUnit: { type: String, enum: ['cm', 'in'], default: 'cm' },
   religion: { type: String, enum: ['muslim', 'christian'] },
-  goal: { 
-    type: String, 
-    enum: ['lose_weight', 'gain_weight', 'maintain_weight'], 
-    default: 'maintain_weight' 
+  goal: {
+    type: String,
+    enum: ['lose_weight', 'gain_weight', 'maintain_weight'],
+    default: 'maintain_weight'
   },
   targetWeight: { type: Number },
-  activityLevel: { 
-    type: String, 
+  activityLevel: {
+    type: String,
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate'
   },
   fitnessGoals: [{ type: String }],
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
-  subscriptionTier: { 
-    type: String, 
-    enum: ['BASIC', 'PRO', 'FAMILY'], 
-    default: 'BASIC' 
+  subscriptionTier: {
+    type: String,
+    enum: ['BASIC', 'PRO', 'FAMILY'],
+    default: 'BASIC'
   },
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {
@@ -93,7 +95,10 @@ const UserSchema = new Schema<IUser>({
     status: { type: String, enum: ['active', 'cancelled', 'expired'] },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
+    currentPeriodEnd: { type: Date },
+    paidPriceId: { type: String },
   },
+  onboardingCompleted: { type: Boolean, default: false },
   currentStreak: { type: Number, default: 0 },
   longestStreak: { type: Number, default: 0 },
   lastCheckInDate: { type: Date },
@@ -108,6 +113,7 @@ const UserSchema = new Schema<IUser>({
     weeklySummary: { type: Boolean, default: true },
     mealReminders: { type: Boolean, default: true },
     autoGenerateMeals: { type: Boolean, default: false },
+    fasting: { type: Boolean, default: false },
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],
   },

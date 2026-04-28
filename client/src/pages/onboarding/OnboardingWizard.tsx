@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
-import { userService } from '../../services/user'
+// import { useNavigate } from 'react-router-dom'
+// import { useQueryClient } from '@tanstack/react-query'
+// import { userService } from '../../services/user'
 import Step1Basics from './Step1Basics'
 import Step2Personalization from './Step2Personalization'
-import Step3MedicalFitness from './Step3MedicalFitness'
+import Step3MedicalFitness, { type activityOptionsType } from './Step3MedicalFitness'
 import Step4MedicalVault from './Step4MedicalVault'
 import Step5Dream from './Step5Dream'
-import type { OnboardingProgress } from '../../services/mockData'
+
 
 const TOTAL_STEPS = 5
 
@@ -83,12 +83,12 @@ interface OnboardingData {
   }
   step2: {
     religion?: string
-    dietPreference?: string
+    foodPreferences?: string[]
   }
   step3: {
     allergies?: string[]
     otherAllergy?: string
-    activityLevel?: string
+    activityLevel?: activityOptionsType
   }
   step4: {
     medicalFiles?: string[]
@@ -99,19 +99,78 @@ interface OnboardingData {
 }
 
 const initialData: OnboardingData = {
-  step1: {},
-  step2: {},
-  step3: {},
-  step4: {},
-  step5: {},
+  step1: { age: 22, gender: 'male', height: 170, weight: 70 },
+  step2: { religion: 'muslim', foodPreferences: ['halal'] },
+  step3: { allergies: ['none'], otherAllergy: '', activityLevel: { title: 'Sedentary', slug: 'sedentary', emoji: '🪑', description: 'Little to no exercise, desk job', value: 1.2 } },
+  step4: { medicalFiles: [] },
+  step5: { dreamGoal: '' },
 }
 
 const OnboardingWizard = () => {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  // const navigate = useNavigate()
+  // const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(initialData)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [errors, setErrors] = useState<Record<number, Partial<Record<string, string>>>>({
+    1: {
+      age: '',
+      gender: '',
+      height: '',
+      weight: '',
+    }, 2: {
+      religion: '',
+      foodPreferences: '',
+    }, 3: {
+      allergies: '',
+      otherAllergy: '',
+      activityLevel: '',
+    }, 4: {
+      medicalFiles: '',
+    }, 5: {
+      dreamGoal: '',
+    }
+  })
+
+
+  const validateStep = (step: number) => {
+    let currentErrors: Partial<Record<string, string>> = {}
+
+    if (step === 1) {
+      const data1 = onboardingData.step1
+      if (!data1.age) currentErrors.age = 'Age is required'
+      if (!data1.gender) currentErrors.gender = 'Gender is required'
+      if (!data1.height) currentErrors.height = 'Height is required'
+      if (!data1.weight) currentErrors.weight = 'Weight is required'
+    }
+
+    if (step === 2) {
+      const data2 = onboardingData.step2
+      if (!data2.religion) currentErrors.religion = 'Religion is required'
+      if (!data2.foodPreferences) currentErrors.foodPreferences = 'Food preferences are required'
+    }
+
+    if (step === 3) {
+      const data3 = onboardingData.step3
+      if (!data3.allergies) currentErrors.allergies = 'Allergies are required'
+      if (!data3.otherAllergy) currentErrors.otherAllergy = 'Other allergy is required'
+      if (!data3.activityLevel) currentErrors.activityLevel = 'Activity level is required'
+    }
+
+    if (step === 4) {
+      const data4 = onboardingData.step4
+      if (!data4.medicalFiles) currentErrors.medicalFiles = 'Medical files are required'
+    }
+
+    if (step === 5) {
+      const data5 = onboardingData.step5
+      if (!data5.dreamGoal) currentErrors.dreamGoal = 'Dream goal is required'
+    }
+
+    setErrors(prev => ({ ...prev, [step]: currentErrors }))
+    return Object.keys(currentErrors).length === 0
+  }
 
   const updateStepData = (step: keyof OnboardingData, data: Partial<OnboardingData[keyof OnboardingData]>) => {
     setOnboardingData(prev => ({
@@ -122,7 +181,7 @@ const OnboardingWizard = () => {
 
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1)
+      if (validateStep(currentStep)) setCurrentStep(currentStep + 1)
     }
   }
 
@@ -135,33 +194,42 @@ const OnboardingWizard = () => {
   const handleBuildMyPlan = async () => {
     setIsSubmitting(true)
     try {
-      const progress: OnboardingProgress = {
-        step1: onboardingData.step1,
-        step2: onboardingData.step2,
-        step3: onboardingData.step3,
-        step4: onboardingData.step4,
-        step5: onboardingData.step5,
-      }
 
       const updates = {
-        isOnboarded: true,
-        onboardingProgress: progress,
         age: onboardingData.step1.age,
-        gender: onboardingData.step1.gender as 'male' | 'female' | undefined,
+        gender: onboardingData.step1.gender as 'male' | 'female',
         height: onboardingData.step1.height,
         weight: onboardingData.step1.weight,
-        activityLevel: onboardingData.step3.activityLevel,
+        activityLevel: onboardingData.step3.activityLevel?.slug,
         allergies: onboardingData.step3.allergies,
-        dietaryRestrictions: onboardingData.step2.dietPreference ? [onboardingData.step2.dietPreference] : [],
+        dietaryRestrictions: onboardingData.step2.foodPreferences,
+        medicalDocuments: onboardingData.step4.medicalFiles,
+        goal: onboardingData.step5.dreamGoal,
+        isFasting: false,
+
       }
 
-      await userService.updateProfile(updates)
 
-      localStorage.setItem('mockUserOnboarded', 'true')
+      console.log(updates)
 
-      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify(updates),
+      })
 
-      navigate('/dashboard/insights')
+      if (!response.ok) {
+        throw new Error('Failed to complete onboarding')
+      }
+
+      const data = await response.json()
+
+      console.log(data)
+
+      // navigate('/dashboard/insights')
     } catch (error) {
       console.error('Failed to complete onboarding:', error)
     } finally {
@@ -176,6 +244,7 @@ const OnboardingWizard = () => {
           <Step1Basics
             data={onboardingData.step1}
             onUpdate={(data) => updateStepData('step1', data)}
+            errors={errors[1]}
           />
         )
       case 2:
@@ -183,6 +252,7 @@ const OnboardingWizard = () => {
           <Step2Personalization
             data={onboardingData.step2}
             onUpdate={(data) => updateStepData('step2', data)}
+            errors={errors[2]}
           />
         )
       case 3:
@@ -190,6 +260,7 @@ const OnboardingWizard = () => {
           <Step3MedicalFitness
             data={onboardingData.step3}
             onUpdate={(data) => updateStepData('step3', data)}
+            errors={errors[3]}
           />
         )
       case 4:
@@ -198,6 +269,7 @@ const OnboardingWizard = () => {
             data={onboardingData.step4}
             onUpdate={(data) => updateStepData('step4', data)}
             onNext={handleNext}
+            errors={errors[4]}
           />
         )
       case 5:
@@ -205,6 +277,7 @@ const OnboardingWizard = () => {
           <Step5Dream
             data={onboardingData.step5}
             onUpdate={(data) => updateStepData('step5', data)}
+            errors={errors[5]}
           />
         )
       default:
@@ -230,13 +303,12 @@ const OnboardingWizard = () => {
                 <div key={step.id} className="flex items-center">
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        status === 'completed'
-                          ? 'bg-green-500 text-white'
-                          : status === 'active'
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${status === 'completed'
+                        ? 'bg-green-500 text-white'
+                        : status === 'active'
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-200 text-gray-400'
-                      }`}
+                        }`}
                     >
                       {status === 'completed' ? (
                         <CheckIcon />
@@ -245,22 +317,20 @@ const OnboardingWizard = () => {
                       )}
                     </div>
                     <span
-                      className={`text-xs mt-1.5 font-medium ${
-                        status === 'completed'
-                          ? 'text-gray-500'
-                          : status === 'active'
+                      className={`text-xs mt-1.5 font-medium ${status === 'completed'
+                        ? 'text-gray-500'
+                        : status === 'active'
                           ? 'text-purple-600'
                           : 'text-gray-400'
-                      }`}
+                        }`}
                     >
                       {step.label}
                     </span>
                   </div>
                   {!isLast && (
                     <div
-                      className={`flex-1 h-0.5 mx-2 ${
-                        index < currentStep - 1 ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
+                      className={`flex-1 h-0.5 mx-2 ${index < currentStep - 1 ? 'bg-green-500' : 'bg-gray-200'
+                        }`}
                       style={{ minWidth: '40px', maxWidth: '80px' }}
                     />
                   )}
@@ -282,9 +352,8 @@ const OnboardingWizard = () => {
               <button
                 type="button"
                 onClick={handleBack}
-                className={`text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors ${
-                  currentStep === 1 ? 'opacity-0 pointer-events-none' : ''
-                }`}
+                className={`text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg transition-colors ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''
+                  }`}
               >
                 Back
               </button>
@@ -314,8 +383,9 @@ const OnboardingWizard = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
+                  onClick={() => validateStep(currentStep) && handleNext()}
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Next
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">

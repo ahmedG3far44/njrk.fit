@@ -9,7 +9,7 @@ import {
     activityMultipliers,
 } from '../utils/caloriesCalculations';
 import { Meal, UserContext } from '../types';
-import { ollama, openrouter } from '../configs/llm';
+import { openrouter } from '../configs/llm';
 import { normalizeMeal } from '../utils/parser';
 
 export const mealSchema = z.object({
@@ -78,87 +78,171 @@ const generateMealPlanPrompt = (user: UserContext): string => {
         ? `Dietary restrictions: ${user.dietaryRestrictions.join(', ')}. `
         : '';
 
-    return `You are a professional nutritionist. Generate a personalized 7-day meal plan for ${user.name}.
+    return `
+You are a professional nutritionist. Generate a personalized 7-day meal plan.
 
 USER PROFILE:
+- Name: ${user.name}
 - Target daily calories: ${calories} kcal
 - Target macros: Protein ${protein}g, Carbs ${carbs}g, Fats ${fats}g
 - Activity level: ${activityLevel} (${activityDesc})
-- Goal: ${user.goal || 'maintain current weight'}
-- Fitness goals: ${user.fitnessGoals?.join(', ') || 'general fitness'}
-${restrictions}
-- Available ingredients: user preference not specified
+- Goal: ${user?.goal || 'balance_weight'}
+- Fitness goals: ${user?.fitnessGoals?.join(', ') || 'general fitness'}
 
-Generate EXACTLY 21 meals (3 per day for 7 days - breakfast, lunch, dinner). Each meal MUST include:
-- day: "Day 1" to "Day 7"
-- name: Descriptive meal name  
-- time: "08:00 AM" (breakfast), "12:30 PM" (lunch), "07:00 PM" (dinner)
-- macros: {calories, protein, carbs, fats} - each meal should be 1/3 of daily target
-- ingredients: Array of ingredients with quantities
-- instructions: Array of simple cooking steps
+USER DIETARY CONTEXT:
+- Allergies: ${user?.allergies?.join(', ') || 'none'}
+- Religion: ${user?.religion || 'none'}
+- Christian fasting: ${user?.isFasting ?? false}
 
-CRITICAL REQUIREMENTS:
-1. Total daily calories MUST equal ~${calories} (±50 kcal)
-2. Output valid JSON only - no explanations
-3. Follow this exact JSON structure:
+STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
+
+1. CALORIES & MACROS:
+- Each day MUST total ~${calories} kcal (±50 kcal)
+- Each meal ≈ 1/3 of daily macros
+- Adjust macro distribution based on goal:
+  - lose_weight → higher protein, moderate fats, lower carbs
+  - gain_weight → higher carbs + protein
+  - balance_weight → balanced macros
+
+2. ALLERGIES (CRITICAL):
+- NEVER include any ingredient listed in allergies
+- If common protein sources are restricted, substitute with safe alternatives
+- Adapt macro sources intelligently (e.g., legumes, plant protein, fish if allowed)
+
+3. RELIGION RULES (CRITICAL):
+- If religion = "muslim":
+  - STRICTLY FORBIDDEN: pork, alcohol, any non-halal ingredients
+- If religion = "christian" AND isFasting = true:
+  - STRICTLY FORBIDDEN: ALL animal products (meat, chicken, fish, eggs, dairy, cheese, milk, butter)
+  - Meals MUST be 100% plant-based (vegan)
+
+4. FOOD QUALITY:
+- Use realistic, culturally neutral meals
+- Prefer whole foods over processed foods
+- Avoid repeating the same meal more than twice in the week
+
+5. STRUCTURE:
+- EXACTLY 21 meals (3 per day × 7 days)
+- Meal times:
+  - Breakfast → "08:00 AM"
+  - Lunch → "12:30 PM"
+  - Dinner → "07:00 PM"
+
+6. RECOVERY / DIGESTION BALANCE:
+- Distribute heavy vs light meals properly
+- Avoid overly heavy dinners for weight loss goal
+
+OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
+
 {
-  "meals": [{"day":"Day 1","name":"Oatmeal","time":"08:00 AM","macros":{"calories":${Math.round(calories / 3)},"protein":${Math.round(protein / 3)},"carbs":${Math.round(carbs / 3)},"fats":${Math.round(fats / 3)}},"ingredients":["1 cup oats"],"instructions":["Cook oats"]}],
-  "targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}
-}`;
+  "meals": [
+    {
+      "day": "Day 1",
+      "name": "Meal name",
+      "time": "08:00 AM",
+      "macros": {
+        "calories": ${Math.round(calories / 3)},
+        "protein": ${Math.round(protein / 3)},
+        "carbs": ${Math.round(carbs / 3)},
+        "fats": ${Math.round(fats / 3)}
+      },
+      "ingredients": [
+        {"name": "ingredient", "quantity": "amount"}
+      ],
+      "instructions": ["step 1", "step 2"]
+    }
+  ],
+  "targetMacros": {
+    "calories": ${calories},
+    "protein": ${protein},
+    "carbs": ${carbs},
+    "fats": ${fats}
+  }
+}
+`;
 };
 
 
-const generateWorkoutPlanPrompt = (user: UserContext, equipment: string[], duration: number = 60): string => {
-    const equip = equipment?.length > 0 ? equipment.join(', ') : 'bodyweight';
+const generateWorkoutPlanPrompt = (user: UserContext, training_days: number, equipment: string[], duration: number = 60): string => {
+    const equip = equipment?.length > 0 ? equipment.join(', ') : "Gym equipment available for use";
     const activityLevel = user.activityLevel || 'moderate';
 
-    return `You are a professional fitness coach. Generate a weekly workout plan for ${user.name}.
+    return `
+You are a professional fitness coach. Generate a structured weekly workout plan.
 
 USER PROFILE:
+- Name: ${user.name}
 - Activity level: ${activityLevel}
 - Fitness goals: ${user.fitnessGoals?.join(', ') || 'general fitness'}
-- Available equipment: ${equip}
-- Preferred session duration: ${duration} minutes
 
-Generate a 7-day workout plan with diverse workout types: Strength, Cardio, Yoga, Mixed, Recovery.
-For each session include:
-- dayOfWeek: "Monday" to "Sunday"
-- name: Workout name
-- type: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery"
-- durationMin: ${duration}
-- estimatedCaloriesBurn: ~300-600 depending on intensity
-- exercises: [{name, sets, reps}]
+CONSTRAINTS (STRICT — MUST FOLLOW):
+- Training days per week: ${training_days}
+- Total days in plan: 7 (Monday → Sunday)
+- Days NOT used for training MUST be marked as "Recovery"
+- Each training session duration MUST be exactly: ${duration} minutes
+- Only use exercises that match available equipment: ${equip}
+- If equipment is "bodyweight", do NOT include gym equipment exercises
+- Distribute training days logically across the week (no clustering all in a row unless necessary)
+- Include variety: Strength, Cardio, Mixed, Yoga (if appropriate)
+- Recovery days must NOT include exercises
 
-Output valid JSON only:
+OUTPUT REQUIREMENTS:
+- Always return exactly 7 sessions (one per day)
+- Respect training_days count strictly (e.g., if 4 → only 4 non-recovery sessions)
+- Each session must include:
+  - dayOfWeek: "Monday" to "Sunday"
+  - name: Workout name
+  - type: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery"
+  - durationMin: number (use ${duration} for training, 0 for recovery)
+  - estimatedCaloriesBurn: number (0 for recovery)
+  - exercises: [] (empty array for recovery days)
+
+EXERCISE FORMAT:
+- exercises: [{ name: string, sets: number, reps: string }]
+- Use realistic sets/reps based on goal and experience
+
+OUTPUT VALID JSON ONLY:
 {
-  "sessions": [{"dayOfWeek":"Monday","name":"Full Body Strength","type":"Strength","durationMin":${duration},"estimatedCaloriesBurn":400,"exercises":[{"name":"Push-ups","sets":3,"reps":"12-15"},{"name":"Squats","sets":3,"reps":"12-15"}]}]
-}`;
+  "sessions": [
+    {
+      "dayOfWeek": "Monday",
+      "name": "Upper Body Strength",
+      "type": "Strength",
+      "durationMin": ${duration},
+      "estimatedCaloriesBurn": 400,
+      "exercises": [
+        {"name":"Push-ups","sets":3,"reps":"10-15"}
+      ]
+    }
+  ]
+}
+`;
 };
 
-const callGeminiAPI = async (prompt: string): Promise<string> => {
-    if (!env.googleApiKey) {
-        throw new Error('Google API key not configured');
-    }
+// const callGeminiAPI = async (prompt: string): Promise<string> => {
+//     if (!env.googleApiKey) {
+//         throw new Error('Google API key not configured');
+//     }
 
-    // Simple config without schema for now
-    const config = {
-        responseMimeType: 'application/json',
-    };
+//     // Simple config without schema for now
+//     const config = {
+//         responseMimeType: 'application/json',
+//     };
 
-    const response = await gemini.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config,
-    });
+//     const response = await gemini.models.generateContent({
+//         model: 'gemini-2.5-flash-lite',
+//         contents: [{ role: 'user', parts: [{ text: prompt }] }],
+//         config,
+//     });
 
-    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+//     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    if (!text) {
-        throw new Error('Empty response from Gemini');
-    }
+//     if (!text) {
+//         throw new Error('Empty response from Gemini');
+//     }
 
-    return text;
-};
+//     return text;
+// };
 
 const safeParse = (text: string): any => {
     try {
@@ -172,53 +256,53 @@ const safeParse = (text: string): any => {
     }
 };
 
-const callOllamaAPI = async (prompt: string): Promise<string> => {
+// const callOllamaAPI = async (prompt: string): Promise<string> => {
 
-    console.log("Hitting ollama ")
-    console.log("Ollama API key", env.ollamaApiKey);
+//     console.log("Hitting ollama ")
+//     console.log("Ollama API key", env.ollamaApiKey);
 
-    if (!env.ollamaApiKey) {
-        throw new Error('Ollama API key not configured');
-    }
+//     if (!env.ollamaApiKey) {
+//         throw new Error('Ollama API key not configured');
+//     }
 
 
 
-    const response = await ollama.chat({
-        model: 'qwen2.5-coder:1.5b',
-        messages: [
-            {
-                role: 'system',
-                content: `
-You are a strict JSON API.
-- Return ONLY valid JSON
-- No explanations
-- No repetition
-- No extra text
-- If unsure, return {"error": "unknown"}
-`},
-            { role: 'user', content: prompt }
-        ],
-        stream: false,
-        format: 'json',
-        options: {
-            temperature: 0.2,        // 🔥 reduce randomness
-            top_p: 0.8,              // reduce weird outputs
-            repeat_penalty: 1.2,     // 🚫 stop loops
-            num_predict: 300,        // limit response size
-            num_ctx: 2048,           // keep context small for speed
-            // stop: ["\n\n", "}"]      // 🧠 force early stop
-        }
+//     const response = await ollama.chat({
+//         model: 'qwen2.5-coder:1.5b',
+//         messages: [
+//             {
+//                 role: 'system',
+//                 content: `
+// You are a strict JSON API.
+// - Return ONLY valid JSON
+// - No explanations
+// - No repetition
+// - No extra text
+// - If unsure, return {"error": "unknown"}
+// `},
+//             { role: 'user', content: prompt }
+//         ],
+//         stream: false,
+//         format: 'json',
+//         options: {
+//             temperature: 0.2,        // 🔥 reduce randomness
+//             top_p: 0.8,              // reduce weird outputs
+//             repeat_penalty: 1.2,     // 🚫 stop loops
+//             num_predict: 300,        // limit response size
+//             num_ctx: 2048,           // keep context small for speed
+//             // stop: ["\n\n", "}"]      // 🧠 force early stop
+//         }
 
-    });
+//     });
 
-    let text = response.message.content;
+//     let text = response.message.content;
 
-    if (!text) {
-        throw new Error('Empty response from Ollama');
-    }
-    console.log("Ollama response", text);
-    return text;
-};
+//     if (!text) {
+//         throw new Error('Empty response from Ollama');
+//     }
+//     console.log("Ollama response", text);
+//     return text;
+// };
 
 
 const callOpenRouter = async (prompt: string) => {
@@ -276,7 +360,7 @@ export const generateWorkoutPlan = async (
     duration: number = 60
 ): Promise<WorkoutPlanResponse> => {
     try {
-        const prompt = generateWorkoutPlanPrompt(user, equipment, duration);
+        const prompt = generateWorkoutPlanPrompt(user, duration, equipment, user?.trainingDays || 3);
 
         // const content = await callOllamaAPI(prompt);
 

@@ -15,10 +15,11 @@ export const userService = {
   },
 
   async updateProfile(updates: UpdateUserData): Promise<{ user: User }> {
-    if (USE_MOCK) {
-      currentUser = { ...currentUser, ...updates } as User
-      return { user: currentUser }
-    }
+    // if (USE_MOCK) {
+    //   currentUser = { ...currentUser, ...updates } as User
+    //   return { user: currentUser }
+    // }
+    console.log(updates)
     const { data } = await api.patch<{ user: User }>('/users/me', updates)
     return data
   },

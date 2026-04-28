@@ -8,6 +8,7 @@ const envSchema = z.object({
     NODE_ENV: z.string().default('development'),
     ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
     CLIENT_URL: z.string().default('http://localhost:5173'),
+    API_URL: z.string().default('http://localhost:8080/api'),
     MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
     OLLAMA_URL: z.string().default('http://localhost:11434/api/generate'),
     OLLAMA_MODEL: z.string().default('qwen2.5-coder:1.5b'),
@@ -28,11 +29,7 @@ const envSchema = z.object({
     JWT_REFRESH_EXPIRATION: z.string().default('7d'),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    GOOGLE_API_KEY: z.string().optional(),
-    APPLE_CLIENT_ID: z.string().optional(),
-    APPLE_TEAM_ID: z.string().optional(),
-    APPLE_KEY_ID: z.string().optional(),
-    APPLE_PRIVATE_KEY: z.string().optional(),
+    GOOGLE_API_KEY: z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -46,8 +43,9 @@ export const env = {
     ...parsedEnv.data,
     mongodbUri: parsedEnv.data.MONGODB_URI,
     nodeEnv: parsedEnv.data.NODE_ENV,
-    allowedOrigins: "*",
+    apiUrl: parsedEnv.data.API_URL,
     clientUrl: parsedEnv.data.CLIENT_URL,
+    allowedOrigins: "*",
     ollamaUrl: parsedEnv.data.OLLAMA_URL,
     ollamaModel: parsedEnv.data.OLLAMA_MODEL,
     ollamaApiKey: parsedEnv.data.OLLAMA_API_KEY,

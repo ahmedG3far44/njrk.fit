@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../configs/env';
 import User from '../models/user.model';
+import { jwtUtils } from '../utils/jwt';
+import { UserProfile } from '../types';
 
 export const hashPassword = async (password: string): Promise<string> => {
     const salt = await bcrypt.genSalt(12);
@@ -37,77 +39,121 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
     return jwt.verify(token, env.jwtRefreshSecret) as TokenPayload;
 };
 
-export const registerUser = async (email: string, password: string, name: string) => {
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-        throw new Error('Email already exists');
+export const registerUser = async (provider: 'google' | 'github' | 'email', userData: { email: string, password?: string, name: string, avatarUrl?: string, googleId?: string, githubId?: string }): Promise<{
+    success: boolean;
+    message?: string;
+    user?: {
+        _id: string;
+        userId: string;
+        email: string;
+        name: string;
+        avatarUrl?: string;
+        onboardingCompleted: boolean;
+        subscriptionTier: "BASIC" | "PRO" | "FAMILY";
+    };
+    accessToken?: string;
+    refreshToken?: string;
+}> => {
+
+    const { email, password, name, avatarUrl, googleId, githubId } = userData;
+
+    const placeholder = "https://imgs.search.brave.com/XTYb7aqQKvXRuwwA2RPI2PJEiFUM567kRggEPKviqC8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdDMu/ZGVwb3NpdHBob3Rv/cy5jb20vNDExMTc1/OS8xMzQyNS92LzQ1/MC9kZXBvc2l0cGhv/dG9zXzEzNDI1NTUz/Mi1zdG9jay1pbGx1/c3RyYXRpb24tcHJv/ZmlsZS1wbGFjZWhv/bGRlci1tYWxlLWRl/ZmF1bHQtcHJvZmls/ZS5qcGc"
+
+    if (provider === 'email' && !password) {
+        return { success: false, message: 'Password is required' }
+    } else if (provider === 'google' && !googleId) {
+        return { success: false, message: 'Google ID is required' }
+    } else if (provider === 'github' && !githubId) {
+        return { success: false, message: 'Github ID is required' }
     }
 
-    const passwordHash = await hashPassword(password);
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
 
-    const user = await User.create({
-        email: email.toLowerCase(),
-        passwordHash,
-        name,
-    });
+    if (existingUser) {
+        return { success: false, message: 'Email already exists' }
+    }
 
-    const payload = { userId: user._id.toString(), email: user.email };
+    let newUser;
+    switch (provider) {
+        case 'google':
+            newUser = {
+                name,
+                email: email.toLowerCase(),
+                avatarUrl,
+                googleId,
+            }
+            break;
+        case 'email':
+            newUser = {
+                name,
+                email: email.toLowerCase(),
+                passwordHash: await hashPassword(password as string),
+                avatarUrl: placeholder,
+            }
+            break;
+        default:
+            newUser = {
+                name,
+                email: email.toLowerCase(),
+                passwordHash: await hashPassword(password as string),
+                avatarUrl: placeholder,
+            }
+            break;
+    }
+    const user = await User.create(newUser);
+
+    const payload = {
+        _id: user._id.toString(),
+        userId: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        onboardingCompleted: user.onboardingCompleted,
+        subscriptionTier: user.subscriptionTier
+    };
 
     return {
-        user: {
-            _id: user._id,
-            email: user.email,
-            name: user.name,
-            avatarUrl: user.avatarUrl,
-            currentStreak: user.currentStreak,
-            longestStreak: user.longestStreak,
-            availableFreezes: user.availableFreezes,
-        },
-        accessToken: generateAccessToken(payload),
-        refreshToken: generateRefreshToken(payload),
+        success: true,
+        message: 'User registered successfully',
+        user: payload,
+        accessToken: jwtUtils.generateAccessToken(payload),
+        refreshToken: jwtUtils.generateRefreshToken(payload),
     };
 };
 
 export const loginUser = async (email: string, password: string) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || !user.passwordHash) {
-        throw new Error('Invalid credentials');
+        return { success: false, message: 'Invalid credentials' };
     }
 
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
-        throw new Error('Invalid credentials');
+        return { success: false, message: 'Invalid credentials' };
     }
 
-    const payload = { userId: user._id.toString(), email: user.email };
+    const payload = {
+        _id: user._id.toString(),
+        userId: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        onboardingCompleted: user.onboardingCompleted,
+        subscriptionTier: user.subscriptionTier
+    };
+
 
     return {
-        user: {
-            _id: user._id,
-            email: user.email,
-            name: user.name,
-            avatarUrl: user.avatarUrl,
-            currentStreak: user.currentStreak,
-            longestStreak: user.longestStreak,
-            availableFreezes: user.availableFreezes,
-        },
-        accessToken: generateAccessToken(payload),
-        refreshToken: generateRefreshToken(payload),
+        success: true,
+        message: 'Login successful',
+        user: payload,
+        accessToken: jwtUtils.generateAccessToken(payload),
+        refreshToken: jwtUtils.generateRefreshToken(payload),
     };
 };
 
-export const refreshTokens = async (refreshToken: string) => {
-    const payload = verifyRefreshToken(refreshToken);
-    
-    const user = await User.findById(payload.userId);
-    if (!user) {
-        throw new Error('User not found');
-    }
 
-    const newPayload = { userId: user._id.toString(), email: user.email };
 
-    return {
-        accessToken: generateAccessToken(newPayload),
-        refreshToken: generateRefreshToken(newPayload),
-    };
+export const getUserByEmail = async (email: string) => {
+    return await User.findOne({ email: email.toLowerCase() });
 };
