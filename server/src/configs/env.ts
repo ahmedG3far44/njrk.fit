@@ -4,9 +4,9 @@ import { z } from 'zod';
 dotenv.config();
 
 const envSchema = z.object({
-    PORT: z.string().default('3000'),
+    PORT: z.string().default('8080'),
     NODE_ENV: z.string().default('development'),
-    ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
+    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),  
     CLIENT_URL: z.string().default('http://localhost:5173'),
     API_URL: z.string().default('http://localhost:8080/api'),
     MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
@@ -29,7 +29,8 @@ const envSchema = z.object({
     JWT_REFRESH_EXPIRATION: z.string().default('7d'),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    GOOGLE_API_KEY: z.string().optional()
+    GOOGLE_API_KEY: z.string().optional(),
+    OPENROUTER_API_KEY: z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -45,10 +46,11 @@ export const env = {
     nodeEnv: parsedEnv.data.NODE_ENV,
     apiUrl: parsedEnv.data.API_URL,
     clientUrl: parsedEnv.data.CLIENT_URL,
-    allowedOrigins: "*",
+    allowedOrigins: "http://localhost:5173",
     ollamaUrl: parsedEnv.data.OLLAMA_URL,
     ollamaModel: parsedEnv.data.OLLAMA_MODEL,
     ollamaApiKey: parsedEnv.data.OLLAMA_API_KEY,
+    openrouterApiKey: parsedEnv.data.OPENROUTER_API_KEY,
     s3BucketName: parsedEnv.data.S3_BUCKET_NAME,
     googleApiKey: parsedEnv.data.GOOGLE_API_KEY,
     s3Region: parsedEnv.data.S3_REGION,

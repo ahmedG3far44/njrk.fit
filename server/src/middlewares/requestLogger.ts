@@ -26,7 +26,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
         } else if (status >= 400) {
             console.warn(`[CLIENT ERROR] ${JSON.stringify(log)}`);
         } else {
-            console.log(`[REQUEST] ${JSON.stringify(log)}`);
+            console.log(`[Request] ${JSON.stringify(log)}`);
         }
     });
 

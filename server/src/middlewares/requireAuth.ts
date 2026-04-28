@@ -18,6 +18,10 @@ export interface AuthRequest extends Request {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        console.log("hitting requireAuth middleware");
+
+        console.log(req.headers.authorization);
+
         const token = req.headers.authorization?.replace('Bearer ', '');
 
         if (!token) {

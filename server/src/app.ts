@@ -26,8 +26,6 @@ app.use(requestLogger);
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
-
-
 app.get('/', (req, res) => {
     res.send('<h1>Njerka.fit AI Powered App Server is running!</h1>');
 });
@@ -38,10 +36,9 @@ app.get('/health', async (req, res) => {
 
 
 
-app.use('/api/webhooks', webhooksRoutes);
-
 app.use(express.json());
 
+app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/nutrition', nutritionRoutes);
@@ -59,5 +56,5 @@ app.use(errorHandler);
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
-
+    
 export default app;

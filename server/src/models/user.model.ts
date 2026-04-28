@@ -121,7 +121,7 @@ const UserSchema = new Schema<IUser>({
   allergies: [{ type: String }],
 }, { timestamps: true });
 
-UserSchema.index({ email: 1 }, { unique: true });
+// UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ totalPoints: -1 });
 UserSchema.index({ currentStreak: -1 });
 
