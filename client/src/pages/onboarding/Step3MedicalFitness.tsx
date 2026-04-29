@@ -1,15 +1,27 @@
+import ErrorMessage from "../../components/ErrorMessage"
+
+export interface activityOptionsType {
+  title: string
+  slug: string;
+  emoji: string
+  description: string
+  value: number
+}
+
 interface Step3Data {
   allergies?: string[]
   otherAllergy?: string
-  activityLevel?: string
+  activityLevel?: activityOptionsType
 }
 
 interface Step3MedicalFitnessProps {
   data: Step3Data
   onUpdate: (data: Step3Data) => void
+  errors: Partial<Record<string, string>>
 }
 
 const allergyOptions = [
+  'Insulin Resistance',
   'Peanuts',
   'Shellfish',
   'Dairy',
@@ -21,43 +33,50 @@ const allergyOptions = [
   'Sesame',
   'Gluten',
   'Lactose',
+  'Diabetes',
+  'PCOS',
   'None',
 ]
 
 const activityOptions = [
   {
-    value: 'sedentary',
-    emoji: '🪑',
     title: 'Sedentary',
+    slug: 'sedentary',
+    emoji: '🪑',
     description: 'Little to no exercise, desk job',
+    value: 1.2
   },
   {
-    value: 'light',
-    emoji: '🚶',
     title: 'Lightly Active',
+    emoji: '🚶',
+    slug: 'light',
     description: 'Light exercise 1-3 days/week',
+    value: 1.375
   },
   {
-    value: 'moderate',
-    emoji: '🚴',
     title: 'Moderately Active',
+    emoji: '🚴',
+    slug: 'moderate',
     description: 'Moderate exercise 3-5 days/week',
+    value: 1.5
   },
   {
-    value: 'active',
-    emoji: '🏃',
     title: 'Very Active',
+    emoji: '🏃',
+    slug: 'active',
     description: 'Hard exercise 6-7 days/week',
+    value: 1.7
   },
   {
-    value: 'very_active',
-    emoji: '💪',
     title: 'Extremely Active',
+    emoji: '💪',
+    slug: 'very_active',
     description: 'Physical job + hard daily training',
+    value: 1.9
   },
 ]
 
-const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
+const Step3MedicalFitness = ({ data, onUpdate, errors }: Step3MedicalFitnessProps) => {
   const allergies = data.allergies || []
 
   const toggleAllergy = (allergy: string) => {
@@ -79,8 +98,8 @@ const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
     onUpdate({ ...data, allergies: newAllergies })
   }
 
-  const handleActivityChange = (value: string) => {
-    onUpdate({ ...data, activityLevel: value })
+  const handleActivityChange = (activity: activityOptionsType) => {
+    onUpdate({ ...data, activityLevel: activity })
   }
 
   const handleOtherAllergyChange = (value: string) => {
@@ -107,11 +126,10 @@ const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
                   key={allergy}
                   type="button"
                   onClick={() => toggleAllergy(allergy)}
-                  className={`py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${
-                    isSelected
-                      ? 'bg-red-50 border-2 border-red-500 text-red-700'
-                      : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-red-300'
-                  }`}
+                  className={`py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${isSelected
+                    ? 'bg-red-50 border-2 border-red-500 text-red-700'
+                    : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-red-300'
+                    }`}
                 >
                   {isSelected && (
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-red-500">
@@ -129,11 +147,13 @@ const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
               type="text"
               value={data.otherAllergy || ''}
               onChange={(e) => handleOtherAllergyChange(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all border-gray-300`}
               placeholder="Other allergy? Type here..."
             />
           </div>
         </div>
+
+        {errors.allergies && <ErrorMessage message={errors.allergies} />}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -141,17 +161,16 @@ const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
           </label>
           <div className="space-y-3">
             {activityOptions.map((option) => {
-              const isSelected = data.activityLevel === option.value
+              const isSelected = data.activityLevel?.slug === option.slug
               return (
                 <button
-                  key={option.value}
+                  key={option.slug}
                   type="button"
-                  onClick={() => handleActivityChange(option.value)}
-                  className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all ${
-                    isSelected
-                      ? 'bg-purple-50 border-2 border-purple-600'
-                      : 'bg-white border-2 border-gray-200 hover:border-purple-300'
-                  }`}
+                  onClick={() => handleActivityChange(option)}
+                  className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all ${isSelected
+                    ? 'bg-purple-50 border-2 border-purple-600'
+                    : 'bg-white border-2 border-gray-200 hover:border-purple-300'
+                    }`}
                 >
                   <span className="text-3xl">{option.emoji}</span>
                   <div className="flex-1 text-left">
@@ -174,6 +193,7 @@ const Step3MedicalFitness = ({ data, onUpdate }: Step3MedicalFitnessProps) => {
             })}
           </div>
         </div>
+        {errors.activityLevel && <ErrorMessage message={errors.activityLevel} />}
       </div>
     </div>
   )

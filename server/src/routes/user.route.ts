@@ -8,7 +8,7 @@ import { uploadFile } from '../configs/aws';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
-const upload = multer({ 
+const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
@@ -23,13 +23,13 @@ const upload = multer({
 
 router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authReq = req as AuthRequest;
-        const user = await User.findById(authReq.user?.userId).select('-passwordHash');
-        
+        const userId = (req as AuthRequest).user?._id;
+        const user = await User.findById(userId).select('-passwordHash');
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        
+
         res.status(200).json({ user });
     } catch (error) {
         next(error);
@@ -38,19 +38,19 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
 
 router.patch('/me', requireAuth, validate(updateProfileSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authReq = req as AuthRequest;
+        const userId = (req as AuthRequest).user?._id;
         const updates = req.body;
-        
+
         const user = await User.findByIdAndUpdate(
-            authReq.user?.userId,
+            userId,
             { $set: updates },
             { new: true, runValidators: true }
         ).select('-passwordHash');
-        
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        
+
         res.status(200).json({ user });
     } catch (error) {
         next(error);
@@ -59,10 +59,14 @@ router.patch('/me', requireAuth, validate(updateProfileSchema), async (req: Requ
 
 router.delete('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authReq = req as AuthRequest;
-        
-        await User.findByIdAndDelete(authReq.user?.userId);
-        
+        const userId = (req as AuthRequest).user?._id;
+
+        if (!userId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await User.findByIdAndDelete(userId);
+
         res.status(200).json({ message: 'Account deleted successfully' });
     } catch (error) {
         next(error);
@@ -71,28 +75,28 @@ router.delete('/me', requireAuth, async (req: Request, res: Response, next: Next
 
 router.post('/me/avatar', requireAuth, upload.single('avatar'), async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authReq = req as AuthRequest;
-        
+        const userId = (req as AuthRequest).user?._id;
+
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
-        
+
         const fileExt = req.file.originalname.split('.').pop();
-        const key = `avatars/${authReq.user?.userId}/${uuidv4()}.${fileExt}`;
-        
+        const key = `avatars/${userId}/${uuidv4()}.${fileExt}`;
+
         const avatarUrl = await uploadFile({
             originalname: req.file.originalname,
             buffer: req.file.buffer,
             mimetype: req.file.mimetype,
             size: req.file.size,
         }, key);
-        
+
         const user = await User.findByIdAndUpdate(
-            authReq.user?.userId,
+            userId,
             { $set: { avatarUrl } },
             { new: true }
         ).select('-passwordHash');
-        
+
         res.status(200).json({ user, avatarUrl });
     } catch (error) {
         next(error);

@@ -75,7 +75,7 @@ type RefinedPlan = {
 router.post('/refine/:mealId', requireAuth, validate(refineMealSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.user?.userId;
+    const userId = authReq.user?._id;
     const { mealId } = req.params;
     const { refinement } = req.body;
 
@@ -156,7 +156,7 @@ router.post('/refine/:mealId', requireAuth, validate(refineMealSchema), async (r
 router.get('/current', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
-    let userId = authReq.user?.userId;
+    let userId = authReq.user?._id;
 
     const targetUserId = req.query.userId as string;
     const filterDate = req.query.date as "today" | "week";
@@ -226,7 +226,7 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
 router.get('/week', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
-    let userId = authReq.user?.userId;
+    let userId = authReq.user?._id;
 
     const targetUserId = req.query.userId as string;
     if (targetUserId) {
@@ -258,7 +258,7 @@ router.get('/week', requireAuth, async (req: Request, res: Response, next: NextF
 router.post('/log-meal', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.user?.userId;
+    const userId = authReq.user?._id;
     const { mealName } = req.body;
 
     await awardPoints(userId!, 25, `Meal logged: ${mealName}`);

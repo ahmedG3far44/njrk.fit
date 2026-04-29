@@ -32,6 +32,9 @@ export interface UserContext {
   activityLevel?: ActivityLevel;
   fitnessGoals?: string[];
   dietaryRestrictions?: string[];
+  allergies?: string[];
+  isFasting?: boolean;
+  trainingDays?: number;
 }
 
 // ----------------------------------------------------------------------------

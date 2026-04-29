@@ -1,3 +1,6 @@
+import ErrorMessage from "../../components/ErrorMessage"
+
+
 interface Step1Data {
   age?: number
   gender?: string
@@ -8,15 +11,15 @@ interface Step1Data {
 interface Step1BasicsProps {
   data: Step1Data
   onUpdate: (data: Step1Data) => void
+  errors?: Partial<Record<keyof Step1Data, string>>
 }
 
 const genderOptions = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' },
 ]
 
-const Step1Basics = ({ data, onUpdate }: Step1BasicsProps) => {
+const Step1Basics = ({ data, onUpdate, errors }: Step1BasicsProps) => {
   const handleChange = (field: keyof Step1Data, value: string | number) => {
     onUpdate({ ...data, [field]: value })
   }
@@ -37,10 +40,12 @@ const Step1Basics = ({ data, onUpdate }: Step1BasicsProps) => {
               min="1"
               max="120"
               value={data.age || ''}
+              required
               onChange={(e) => handleChange('age', parseInt(e.target.value) || 0)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
               placeholder="25"
             />
+            {errors?.age && <ErrorMessage message={errors.age} />}
           </div>
 
           <div>
@@ -51,16 +56,16 @@ const Step1Basics = ({ data, onUpdate }: Step1BasicsProps) => {
                   key={option.value}
                   type="button"
                   onClick={() => handleChange('gender', option.value)}
-                  className={`flex-1 py-3 px-3 rounded-xl font-medium text-sm transition-all ${
-                    data.gender === option.value
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`flex-1 py-3 px-3 rounded-xl font-medium text-sm transition-all ${data.gender === option.value
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
+            {errors?.gender && <ErrorMessage message={errors.gender} />}
           </div>
         </div>
 
@@ -70,25 +75,29 @@ const Step1Basics = ({ data, onUpdate }: Step1BasicsProps) => {
             <input
               type="number"
               min="50"
-              max="300"
+              max="250"
               value={data.height || ''}
+              required
               onChange={(e) => handleChange('height', parseInt(e.target.value) || 0)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
               placeholder="175"
             />
+            {errors?.height && <ErrorMessage message={errors.height} />}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
             <input
               type="number"
-              min="20"
-              max="500"
+              min="40"
+              max="200"
               value={data.weight || ''}
+              required
               onChange={(e) => handleChange('weight', parseInt(e.target.value) || 0)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
               placeholder="70"
             />
+            {errors?.weight && <ErrorMessage message={errors.weight} />}
           </div>
         </div>
       </div>
