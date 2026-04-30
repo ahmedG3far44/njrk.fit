@@ -86,7 +86,19 @@ export const progressService = {
     })
     return data
   },
-
+  async exportPdf(): Promise<Blob> {
+    const response = await api.get('/progress/export/pdf', {
+      responseType: 'blob', // هذي أهم كلمة عشان Axios يفهم إنه ملف
+    });
+    
+    // لو إعداداتك ترجع الداتا مباشرة بناخذها، لو لا بناخذ response.data
+    return response.data || response;
+  },
+  async shareReport(): Promise<{ success: boolean; shareUrl: string }> {
+    const { data } = await api.post('/progress/share');
+    return data;
+  }
+    ,
   async getHistory(page = 1, limit = 10): Promise<{ logs: ProgressLog[]; pagination: ProgressPagination }> {
     if (USE_MOCK) {
       const start = (page - 1) * limit

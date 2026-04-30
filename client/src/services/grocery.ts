@@ -74,7 +74,12 @@ export const groceryService = {
     const { data } = await api.post('/groceries/share')
     return data
   },
-
+  async exportPdf(): Promise<Blob> {
+    const { data } = await api.get('/grocery/export/pdf', {
+      responseType: 'blob', // هذي اللي تخلي المتصفح يفهم إنه ملف
+    });
+    return data;
+  },
   async getSharedList(token: string): Promise<SharedListData> {
     if (USE_MOCK) {
       return {

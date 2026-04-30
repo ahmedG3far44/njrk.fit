@@ -7,6 +7,7 @@ import User from '../models/user.model';
 import { uploadFile } from '../configs/aws';
 import { awardPoints } from '../services/gamification.service';
 import { v4 as uuidv4 } from 'uuid';
+import { generatePDF } from '../services/pdf.service';
 
 const router = Router();
 const upload = multer({ 
@@ -183,5 +184,108 @@ router.get('/feelings', requireAuth, async (req: Request, res: Response, next: N
         next(error);
     }
 });
+// ---------------------------------------------------------
+// 1. راوت تصدير تقرير الإنجاز كـ PDF
+// ---------------------------------------------------------
+router.get('/export/pdf', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.userId;
 
+        // نجيب آخر 30 سجل لليوزر عشان نحطها في التقرير
+        const logs = await ProgressLog.find({ userId })
+            .sort({ date: -1 })
+            .limit(30);
+
+        // نرتب البيانات عشان نرسلها لخدمة الـ PDF
+        const progressData = {
+            title: 'My Progress Report',
+            generatedAt: new Date(),
+            items: logs.map(log => ({
+                date: log.date.toISOString().split('T')[0],
+                weight: log.weightKg ? `${log.weightKg} kg` : 'N/A',
+                bodyFat: log.bodyFatPercentage ? `${log.bodyFatPercentage}%` : 'N/A',
+                muscleMass: log.muscleMass ? `${log.muscleMass} kg` : 'N/A',
+                notes: log.notes || ''
+            }))
+        };
+
+        const pdfBuffer = await generatePDF('progress', progressData);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="Progress_Report.pdf"');
+        res.status(200).send(pdfBuffer);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// ---------------------------------------------------------
+// 2. راوت إنشاء رابط المشاركة (Share)
+// ---------------------------------------------------------
+router.post('/share', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.userId;
+        
+        // جلب آخر بيانات اليوزر عشان نشاركها
+        const latestLogs = await ProgressLog.find({ userId }).sort({ date: -1 }).limit(5);
+        
+        const token = uuidv4();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // الرابط يخلص بعد 7 أيام
+        
+        // 💡 ملاحظة: هنا تفترض إن عندك مودل اسمه SharedProgress
+        // إذا ما سويته، تقدر تسويه بنفس طريقة SharedList اللي سويناها للمقاضي
+        /*
+        await SharedProgress.create({
+            token,
+            userId,
+            logs: latestLogs,
+            expiresAt,
+        });
+        */
+
+        res.status(201).json({ 
+            success: true, 
+            shareUrl: `/shared-progress/${token}`,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// ---------------------------------------------------------
+// 3. راوت فتح الرابط المشارك (لأي شخص عنده الرابط)
+// ---------------------------------------------------------
+router.get('/shared/:token', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.params;
+        
+        // 💡 نفس الشيء هنا، تفك التعليق إذا سويت المودل
+        /*
+        const sharedReport = await SharedProgress.findOne({ token })
+            .populate('userId', 'name avatarUrl');
+        
+        if (!sharedReport) {
+            return res.status(404).json({ error: 'Report not found or link expired' });
+        }
+        
+        if (new Date() > sharedReport.expiresAt) {
+            return res.status(410).json({ error: 'This link has expired' });
+        }
+        
+        res.status(200).json({
+            user: sharedReport.userId,
+            logs: sharedReport.logs,
+            expiresAt: sharedReport.expiresAt,
+        });
+        */
+       
+       // رد مؤقت عشان ما يضرب معك الكود لين تسوي المودل
+       res.status(200).json({ message: "Share endpoint is ready, just uncomment the DB logic!" });
+    } catch (error) {
+        next(error);
+    }
+});
 export default router;

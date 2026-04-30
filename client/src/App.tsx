@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "./contexts/AuthContext"
-// import { ProtectedRoute } from "./components/ProtectedRoute"
+import { ProtectedRoute } from "./components/ProtectedRoute"
 
 import LoginPage from "./pages/login"
 import RegisterPage from "./pages/register"
@@ -24,6 +24,7 @@ import GroceriesPage from "./pages/dashboard/groceries"
 import SubscriptionPage from "./pages/dashboard/subscription"
 import InsightsPage from "./pages/dashboard/insights"
 import TestCallingPage from "./pages/test"
+import FamilyPage from './pages/family';
 
 const queryClient = new QueryClient()
 
@@ -39,13 +40,13 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/onboarding/welcome" element={<OnboardingWizard />} />
-
+            
             <Route path="/test" element={<TestCallingPage />} />
 
             <Route path="/dashboard" element={
-              // <ProtectedRoute>
-              <DashboardLayout />
-              // </ProtectedRoute>
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
             }>
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile-edit" element={<ProfileEditPage />} />
@@ -54,6 +55,8 @@ const App = () => {
               <Route path="nutrition" element={<NutritionPage />} />
               <Route path="fitness" element={<FitnessPage />} />
               <Route path="streaks" element={<StreaksPage />} />
+              {/* التعديل هنا: شلنا الـ / */}
+              <Route path="family" element={<FamilyPage />} />
               <Route path="community" element={<CommunityPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="progress-history" element={<ProgressHistoryPage />} />

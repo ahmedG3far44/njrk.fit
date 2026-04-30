@@ -7,6 +7,7 @@ import { generateWorkoutPlanSchema, completeSessionSchema } from '../dtos/nutrit
 import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
 import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
+import { generatePDF } from '../services/pdf.service';
 import { UserContext } from '../types';
 
 const router = Router();
@@ -159,10 +160,60 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
     if (dateParam === "week") {
       workouts = workoutPlan?.sessions;
     } else {
-      workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
+      workouts = workoutPlan?.sessions.filter((s: any) => s.dayOfWeek === currentDay);
     }
 
     res.status(200).json({ data: workouts });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/export/pdf', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.userId;
+    const viewParam = (req.query.view as 'day' | 'week') || 'week';
+
+    const date = new Date();
+    const currentDay = weekDays[date.getDay()];
+
+    const workoutPlan = await WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 });
+
+    if (!workoutPlan) {
+      return res.status(404).json({ error: 'Workout plan not found' });
+    }
+
+    const selectedSessions = viewParam === 'day'
+      ? workoutPlan.sessions.filter((session: any) => session.dayOfWeek === currentDay)
+      : workoutPlan.sessions;
+
+    const pdfBuffer = await generatePDF('workout', {
+      title: viewParam === 'day' ? `Workout Plan - ${currentDay}` : 'Workout Plan',
+      generatedAt: new Date(),
+      sessions: selectedSessions.map((session: any) => ({
+        dayLabel: session.dayOfWeek,
+        name: session.name,
+        type: session.type,
+        durationMin: session.durationMin,
+        estimatedCaloriesBurn: session.estimatedCaloriesBurn,
+        isCompleted: session.isCompleted,
+        exercises: session.exercises.map((exercise: any) => ({
+          name: exercise.name,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          durationMin: exercise.durationMin,
+          isCompleted: exercise.isCompleted,
+        })),
+      })),
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="fitness-plan-${viewParam}.pdf"`
+    );
+    res.status(200).send(pdfBuffer);
   } catch (error) {
     next(error);
   }

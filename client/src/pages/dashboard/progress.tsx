@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { progressService } from '../../services/progress'
-import { Dumbbell, Flame, Zap, Trophy, Target } from 'lucide-react'
+import { Dumbbell, Flame, Zap, Trophy, Target, X, Copy } from 'lucide-react'
 import UpdateStatsModal from '../../components/UpdateStatsModal'
+import PageActionButtons from '../../components/PageActionButtons'
 import {
   AreaChart,
   Area,
@@ -52,6 +53,10 @@ const mockFeelings = [
 const ProgressPage = () => {
   const [timeframe, setTimeframe] = useState('7days')
   const [showUpdateModal, setShowUpdateModal] = useState(false)
+  
+  // حالات نافذة المشاركة
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
 
   const { data: apiData, isLoading, refetch } = useQuery({
     queryKey: ['progress', timeframe],
@@ -65,13 +70,67 @@ const ProgressPage = () => {
     ? mockDashboardData.weightTrend[mockDashboardData.weightTrend.length - 1].weightKg - mockDashboardData.weightTrend[0].weightKg
     : 0
 
+  // --------------------------------------------------------
+  // دوال الطباعة والمشاركة
+  // --------------------------------------------------------
+  const handlePrint = async (e?: any) => {
+    // نمنع الزر من تحديث الصفحة أو إرسال طلبين بالغلط
+    if (e) e.preventDefault(); 
+    
+    try {
+      const data = await progressService.exportPdf();
+      
+      // نتأكد 100% إنه Blob عشان المتصفح ما يرمي Error
+      const blob = data instanceof Blob ? data : new Blob([data as any], { type: 'application/pdf' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Progress_Report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      
+      // تنظيف
+      if (link.parentNode) link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      // طبعنا الخطأ في الكونسول عشان لو صار شيء نعرف وش هو بالضبط
+      console.error('Failed to export PDF:', error);
+      alert('حدث خطأ أثناء تصدير التقرير! (شيك على الـ Console)');
+    }
+  };
+
+  const shareMutation = useMutation({
+    mutationFn: () => progressService.shareReport(),
+    onSuccess: (data) => {
+      if (data.success) {
+        setShareUrl(data.shareUrl);
+        setShowShareModal(true);
+      }
+    },
+  });
+
+  const handleShare = () => {
+    shareMutation.mutate();
+  };
+
+  const handleCopyLink = () => {
+    const fullUrl = `${window.location.origin}${shareUrl}`;
+    navigator.clipboard.writeText(fullUrl);
+    alert('تم نسخ الرابط بنجاح! 📋');
+  };
+
+  // --------------------------------------------------------
+  // واجهة المستخدم (UI)
+  // --------------------------------------------------------
   if(isLoading){
     return <div>Loading...</div>
   }
 
-  
   return (
     <div className="space-y-6">
+      {/* الترويسة والأزرار */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Your Progress</h1>
@@ -94,9 +153,13 @@ const ProgressPage = () => {
             <Target className="w-4 h-4" />
             Update My Stats
           </button>
+          
+          {/* أزرار المشاركة والطباعة */}
+          <PageActionButtons onShare={handleShare} onPrint={handlePrint} />
         </div>
       </div>
 
+      {/* بطاقات الإحصائيات (Stats Cards) */}
       <div className="grid md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center gap-3">
@@ -157,6 +220,7 @@ const ProgressPage = () => {
         </div>
       </div>
 
+      {/* الرسومات البيانية (Charts) */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h3 className="font-semibold mb-4">Weight Trend (kg)</h3>
@@ -205,6 +269,7 @@ const ProgressPage = () => {
         </div>
       </div>
 
+      {/* قائمة الإنجازات/المشاعر الأخيرة */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <h3 className="font-semibold mb-4">Recent Feelings</h3>
         <div className="space-y-3">
@@ -226,6 +291,7 @@ const ProgressPage = () => {
         </div>
       </div>
 
+      {/* نافذة التحديث المنبثقة */}
       {showUpdateModal && (
         <UpdateStatsModal
           onClose={() => setShowUpdateModal(false)}
@@ -234,6 +300,37 @@ const ProgressPage = () => {
             refetch()
           }}
         />
+      )}
+
+      {/* نافذة المشاركة المنبثقة (Share Modal) */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Share Progress Report</h2>
+              <button onClick={() => setShowShareModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-500 text-sm mb-4">
+              Share your fitness journey! The link expires in 7 days.
+            </p>
+            <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-xl">
+              <input
+                type="text"
+                value={`${window.location.origin}${shareUrl}`}
+                readOnly
+                className="flex-1 bg-transparent text-sm outline-none"
+              />
+              <button
+                onClick={handleCopyLink}
+                className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

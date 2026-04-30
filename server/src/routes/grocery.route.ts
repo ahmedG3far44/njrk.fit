@@ -7,6 +7,7 @@ import GroceryList from '../models/groceryList.model';
 import SharedList from '../models/sharedList.model';
 import User from '../models/user.model';
 import { parseAndAggregateIngredients, formatQuantity, getCategoryEmoji } from '../utils/unitConverter';
+import { generatePDF } from '../services/pdf.service';
 
 const router = Router();
 
@@ -49,6 +50,34 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       totalCount: items.length,
       categories: CATEGORIES,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/export/pdf', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.userId;
+
+    const groceryList = await GroceryList.findOne({ userId });
+
+    const items = (groceryList?.items || []).map((item) => ({
+      name: item.name,
+      category: item.category,
+      quantity: formatQuantity(item.totalQuantity, item.unit),
+      checked: item.isPurchased,
+    }));
+
+    const pdfBuffer = await generatePDF('grocery', {
+      title: 'Grocery List',
+      generatedAt: new Date(),
+      items,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="grocery-list.pdf"');
+    res.status(200).send(pdfBuffer);
   } catch (error) {
     next(error);
   }

@@ -12,7 +12,7 @@ const LoginPage = () => {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const from = (location.state as { from?: Location })?.from?.pathname || '/onboarding/welcome'
+  const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard/insights'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

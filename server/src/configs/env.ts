@@ -66,6 +66,9 @@ export const env = {
     jwtExpiration: parsedEnv.data.JWT_EXPIRATION,
     jwtRefreshSecret: parsedEnv.data.JWT_REFRESH_SECRET,
     jwtRefreshExpiration: parsedEnv.data.JWT_REFRESH_EXPIRATION,
+    cloudinaryName: process.env.CLOUDINARY_NAME,
+    cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+    cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
 };
 
 export const corsOptions = {

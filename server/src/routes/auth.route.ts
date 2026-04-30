@@ -88,8 +88,8 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 router.post('/forgot-password', validate(forgotPasswordSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.body;
-        console.log('Password reset requested for:', email);
-        res.status(200).json({ message: 'Password reset email sent' });
+        const result = await authService.forgotPassword(email);
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }
@@ -98,8 +98,8 @@ router.post('/forgot-password', validate(forgotPasswordSchema), async (req: Requ
 router.post('/reset-password', validate(resetPasswordSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token, newPassword } = req.body;
-        console.log('Password reset with token:', token);
-        res.status(200).json({ message: 'Password reset successfully' });
+        const result = await authService.resetPassword(token, newPassword);
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }

@@ -52,6 +52,8 @@ export interface IUser extends Document {
   };
   medicalCondition?: string;
   allergies?: string[];
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -113,6 +115,8 @@ const UserSchema = new Schema<IUser>({
   },
   medicalCondition: { type: String },
   allergies: [{ type: String }],
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 }, { timestamps: true });
 
 UserSchema.index({ email: 1 }, { unique: true });

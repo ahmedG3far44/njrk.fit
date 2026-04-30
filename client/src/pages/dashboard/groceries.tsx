@@ -5,13 +5,12 @@ import {
   ShoppingCart,
   Loader2,
   RefreshCw,
-  Share2,
-  Printer,
   Plus,
   X,
   Copy,
 } from 'lucide-react'
 import CategorySection from '../../components/CategorySection'
+import PageActionButtons from '../../components/PageActionButtons'
 
 type ListMode = 'my' | 'family'
 
@@ -97,8 +96,28 @@ const GroceriesPage = () => {
     shareMutation.mutate()
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    try {
+      // 1. نجيب ملف الـ PDF من الباك إند
+      const blob = await groceryService.exportPdf()
+      
+      // 2. نسوي رابط وهمي عشان المتصفح يحمله
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'Grocery_List.pdf') // اسم الملف
+      document.body.appendChild(link)
+      
+      // 3. محاكاة ضغطة التحميل
+      link.click()
+      
+      // 4. تنظيف الرابط من الذاكرة
+      link.parentNode?.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+      alert('حدث خطأ أثناء تصدير ملف الـ PDF!')
+    }
   }
 
   const itemsByCategory = useMemo(() => {
@@ -152,21 +171,7 @@ const GroceriesPage = () => {
             Sync
           </button>
 
-          <button
-            onClick={handleShare}
-            className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200"
-            title="Share"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200"
-            title="Print"
-          >
-            <Printer className="w-5 h-5" />
-          </button>
+          <PageActionButtons onShare={handleShare} onPrint={handlePrint} />
         </div>
       </div>
 

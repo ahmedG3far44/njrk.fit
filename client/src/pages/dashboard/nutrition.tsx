@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { nutritionService } from '../../services/nutrition'
 import { familyService } from '../../services/family'
 import { useAuth } from '../../contexts/AuthContext'
-import { UtensilsCrossed, Loader2, Sparkles, User, Users } from 'lucide-react'
-
+import { UtensilsCrossed, Loader2, Sparkles, User, Users, Calendar, CalendarDays } from 'lucide-react'
 
 import RefineMeal from '../../components/RefineMeal'
 import MacroCard from '../../components/MacroCard'
 import MealCard from '../../components/MealCard'
 import AddMemberModal from '../../components/AddMemberModal'
+import PageActionButtons from '../../components/PageActionButtons'
+import { shareCurrentView, downloadBlob } from '../../lib/pageActions'
 
 type ViewMode = 'solo' | 'family'
 type TimeRange = 'day' | 'week'
@@ -25,11 +26,11 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const NutritionPage = () => {
   const { user } = useAuth()
   const [viewMode, setViewMode] = useState<ViewMode>('family')
-  const [timeRange] = useState<TimeRange>('day')
+  const [timeRange, setTimeRange] = useState<TimeRange>('day')
   const [showRefineModal, setShowRefineModal] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
-  const [activeProfileId, setActiveProfileId] = useState<string | null>('user-123')
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(user?._id || null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [date] = useState(() => new Date().toISOString().split('T')[0])
   const [refetch, setRefetch] = useState(0)
@@ -44,21 +45,24 @@ const NutritionPage = () => {
   })
 
   const familyMembers: FamilyMember[] = useMemo(() => {
-    if (!familyData?.familyMembers) return [{ id: 'user-123', name: 'You' }]
+    const base: FamilyMember[] = [{ id: user?._id || 'me', name: 'You', avatarUrl: user?.avatarUrl }]
+    if (!familyData?.familyMembers) return base
     return [
-      { id: 'user-123', name: 'You' },
+      ...base,
       ...familyData.familyMembers.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))
     ]
-  }, [familyData])
+  }, [familyData, user])
 
   const { data: nutritionData, isLoading } = useQuery({
     queryKey: ['nutrition', date, activeProfileId, refetch],
-    queryFn: () => nutritionService.getCurrentForUser(date, activeProfileId || 'user-123'),
+    queryFn: () => nutritionService.getCurrentForUser(date, activeProfileId || user?._id || 'me'),
+    enabled: !!(activeProfileId || user?._id),
   })
 
   const { data: weekData } = useQuery({
     queryKey: ['nutrition-week', activeProfileId, refetch],
-    queryFn: () => nutritionService.getWeek(undefined, activeProfileId || undefined),
+    queryFn: () => nutritionService.getWeek(undefined, activeProfileId || user?._id || undefined),
+    enabled: !!(activeProfileId || user?._id),
   })
 
   const plan = nutritionData?.nutritionPlan
@@ -78,19 +82,36 @@ const NutritionPage = () => {
     return grouped
   }, [weekPlan])
 
-  const activeProfile = familyMembers.find(m => m.id === (activeProfileId || 'user-123'))
-
-  console.log(activeProfile)
+  const activeProfile = familyMembers.find(m => m.id === (activeProfileId || user?._id))
 
   const targetCalories = plan?.targetMacros?.calories || 2000
 
-  const handleGenerate = () => {
-    setIsGenerating(true)
-    setTimeout(() => {
-      setIsGenerating(false)
+  const handleGenerate = async () => {
+    try {
+      setIsGenerating(true)
+
+      // تحديد الآي دي إذا كنت جالس تولد خطة لشخص من العائلة
+      const targetUserId = (activeProfileId && activeProfileId !== user?._id) ? activeProfileId : undefined;
+
+      // إرسال الطلب الفعلي للباك إند وتمرير السعرات والتاريخ والآي دي
+      await nutritionService.generate(
+        {
+          calories: targetCalories, // السعرات موجودة عندك في الكود أصلاً
+          startDate: new Date().toISOString() // تاريخ اليوم
+        },
+        targetUserId
+      )
+
+      // تحديث البيانات في الشاشة بعد نجاح التوليد
       setRefetch(prev => prev + 1)
-    }, 2000)
-  }
+
+    } catch (error) {
+      console.error('Error generating nutrition plan:', error)
+      alert('حدث خطأ أثناء توليد الخطة!')
+    } finally {
+      setIsGenerating(false)
+    }
+  };
 
   const handleRefine = (meal: any) => {
     setSelectedMeal(meal)
@@ -101,9 +122,27 @@ const NutritionPage = () => {
     console.log('Swap meal:', mealId)
   }
 
-  const isPremium = user?.subscriptionTier === 'PRO' || user?.subscriptionTier === 'FAMILY'
+  const handleShare = async () => {
+    console.log('Sharing nutrition plan...', { timeRange, activeProfileId })
+    const url = `${window.location.origin}/dashboard/nutrition?timeRange=${timeRange}`
+    await shareCurrentView(
+      'Njerka Nutrition Plan',
+      `Shared ${timeRange} nutrition plan for ${activeProfile?.name || 'me'}`,
+      url
+    )
+  }
 
-  console.log("IS Premium", isPremium)
+  const handlePrint = async () => {
+    console.log('Printing nutrition plan...', { timeRange, activeProfileId })
+    try {
+      const blob = await nutritionService.exportPdf(timeRange, activeProfileId || undefined)
+      console.log('PDF Blob received:', blob)
+      downloadBlob(blob, `nutrition-plan-${timeRange}.pdf`)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+      alert('Failed to export PDF. Please check if you are logged in.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -116,8 +155,30 @@ const NutritionPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setTimeRange('day')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                timeRange === 'day'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Day
+            </button>
+            <button
+              onClick={() => setTimeRange('week')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                timeRange === 'week'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Week
+            </button>
+          </div>
 
-          <div className="text-xs font-bold px-2 py-1  flex items-center gap-2">
+          <div className="text-xs font-bold px-2 py-1 flex items-center gap-2">
             {
               viewMode === 'solo' ? (
                 <button className='cursor-pointer hover:bg-violet-100 duration-300 p-2 rounded-2xl' onClick={() => setViewMode('family')}>
@@ -138,8 +199,8 @@ const NutritionPage = () => {
                 </button>
               )
             }
-
           </div>
+
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
@@ -158,7 +219,7 @@ const NutritionPage = () => {
             )}
           </button>
 
-
+          <PageActionButtons onShare={handleShare} onPrint={handlePrint} />
         </div>
       </div>
 

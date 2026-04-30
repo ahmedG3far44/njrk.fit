@@ -23,8 +23,16 @@ export const nutritionService = {
       return { nutritionPlan: mockNutritionPlans[0] }
     }
     const params = date ? `?date=${date}` : ''
-    const { data } = await api.get<{ nutritionPlan: NutritionPlan }>(`/nutrition/current${params}`)
-    return data
+    const { data } = await api.get<{ meals: NutritionPlan['meals']; targetMacros: NutritionPlan['targetMacros'] }>(`/nutrition/current${params}`)
+    return {
+      nutritionPlan: {
+        _id: 'current-plan',
+        userId: 'current-user',
+        date: new Date().toISOString(),
+        targetMacros: data.targetMacros,
+        meals: data.meals,
+      },
+    }
   },
 
   async getWeek(startDate?: string, userId?: string): Promise<{ nutritionPlans: NutritionPlan[] }> {
@@ -50,9 +58,17 @@ export const nutritionService = {
       const plan = mockNutritionPlans.find(p => p.userId === userId)
       return { nutritionPlan: plan || mockNutritionPlans[0] }
     }
-    const params = `?date=${date}&userId=${userId}`
-    const { data } = await api.get<{ nutritionPlan: NutritionPlan }>(`/nutrition/current${params}`)
-    return data
+    const params = `?date=today&userId=${userId}`
+    const { data } = await api.get<{ meals: NutritionPlan['meals']; targetMacros: NutritionPlan['targetMacros'] }>(`/nutrition/current${params}`)
+    return {
+      nutritionPlan: {
+        _id: 'current-plan',
+        userId,
+        date,
+        targetMacros: data.targetMacros,
+        meals: data.meals,
+      },
+    }
   },
 
   async generate(data: GenerateMealPlanData, targetUserId?: string): Promise<{ nutritionPlan: NutritionPlan }> {
@@ -69,7 +85,22 @@ export const nutritionService = {
     if (USE_MOCK) {
       return { nutritionPlan: mockNutritionPlans[0] }
     }
-    const { data: response } = await api.post<{ nutritionPlan: NutritionPlan }>(`/nutrition/refine/${mealId}`, data)
-    return response
+    const { data: response } = await api.post<{ plan: NutritionPlan }>(`/nutrition/refine/${mealId}`, data)
+    return { nutritionPlan: response.plan }
+  },
+
+  async exportPdf(view: 'day' | 'week', userId?: string): Promise<Blob> {
+    if (USE_MOCK) {
+      return new Blob(['Mock nutrition PDF'], { type: 'application/pdf' })
+    }
+    const params = new URLSearchParams()
+    params.append('view', view)
+    if (userId) {
+      params.append('userId', userId)
+    }
+    const { data } = await api.get(`/nutrition/export/pdf?${params.toString()}`, {
+      responseType: 'blob',
+    })
+    return data
   },
 }

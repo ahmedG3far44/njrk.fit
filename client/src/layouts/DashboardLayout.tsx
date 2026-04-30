@@ -7,7 +7,7 @@ import {
   UtensilsCrossed,
   Dumbbell,
   Flame,
-  Users,
+  Users, // الأيقونة هذي بنستخدمها للعائلة وللكوميونيتي
   TrendingUp,
   ShoppingCart,
   CreditCard,
@@ -17,18 +17,22 @@ import {
   X,
 } from 'lucide-react'
 
+// 👇 التعديل صار هنا، ضفنا الـ Family
 const navItems = [
   { path: '/dashboard/insights', icon: LayoutDashboard, label: 'Insights' },
   { path: '/dashboard/schedule', icon: CalendarDays, label: 'Schedule' },
   { path: '/dashboard/nutrition', icon: UtensilsCrossed, label: 'Nutrition' },
   { path: '/dashboard/fitness', icon: Dumbbell, label: 'Fitness' },
   { path: '/dashboard/streaks', icon: Flame, label: 'Streaks' },
+  { path: '/dashboard/family', icon: Users, label: 'Family' }, // 👈 السطر الجديد
   { path: '/dashboard/community', icon: Users, label: 'Community' },
   { path: '/dashboard/progress', icon: TrendingUp, label: 'Progress' },
   { path: '/dashboard/groceries', icon: ShoppingCart, label: 'Groceries' },
   { path: '/dashboard/subscription', icon: CreditCard, label: 'Subscription' },
   { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ]
+
+// ... باقي كودك زي ما هو بالضبط
 
 const DashboardLayout = () => {
   const location = useLocation()

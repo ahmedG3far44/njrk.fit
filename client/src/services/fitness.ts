@@ -22,13 +22,27 @@ export interface CompleteSessionData {
 }
 
 export const fitnessService = {
-  async getCurrent(date?: string): Promise<{ workoutPlan: WorkoutPlan }> {
+  async getCurrent(view: 'day' | 'week' = 'week'): Promise<{ workoutPlan: WorkoutPlan }> {
     if (USE_MOCK) {
       return { workoutPlan: mockWorkoutPlan }
     }
-    const params = date ? `?date=${date}` : ''
-    const { data } = await api.get<{ workoutPlan: WorkoutPlan }>(`/fitness/current${params}`)
-    return data
+    const { data } = await api.get<{ workoutPlan?: WorkoutPlan; data?: WorkoutSession[] }>(`/fitness/current?date=${view}`)
+
+    if (data.workoutPlan) {
+      return data as { workoutPlan: WorkoutPlan }
+    }
+
+    const sessions = data.data || []
+    return {
+      workoutPlan: {
+        _id: 'current-workout-plan',
+        userId: 'current-user',
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        sessionsCompleted: sessions.filter((session) => session.isCompleted).length,
+        sessions,
+      },
+    }
   },
 
   async generate(data: GenerateWorkoutData): Promise<{ workoutPlan: WorkoutPlan }> {
@@ -54,5 +68,15 @@ export const fitnessService = {
       sessionCompleted: { isCompleted: boolean }
     }>(`/fitness/session/${sessionId}/complete`, data)
     return response
+  },
+
+  async exportPdf(view: 'day' | 'week'): Promise<Blob> {
+    if (USE_MOCK) {
+      return new Blob(['Mock fitness PDF'], { type: 'application/pdf' })
+    }
+    const { data } = await api.get(`/fitness/export/pdf?view=${view}`, {
+      responseType: 'blob',
+    })
+    return data
   },
 }

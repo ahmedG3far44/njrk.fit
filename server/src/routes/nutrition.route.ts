@@ -6,12 +6,19 @@ import User from '../models/user.model';
 import NutritionPlan from '../models/nutrition.model';
 import { generateMealPlan, refineMeal } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
+import { generatePDF } from '../services/pdf.service';
 
 import { UserContext, Meal, Macros } from '../types';
 // import { weekDays } from './fitness.route';
 
 
 const router = Router();
+const nutritionWeekDays = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+
+const getCurrentNutritionDay = () => {
+  const date = new Date();
+  return nutritionWeekDays[(date.getDay() + 6) % 7];
+};
 
 router.post('/generate', requireAuth, validate(generateMealPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -19,7 +26,7 @@ router.post('/generate', requireAuth, validate(generateMealPlanSchema), async (r
     let userId = authReq.user?.userId;
 
     const targetUserId = req.body.userId;
-    if (targetUserId) {
+    if (targetUserId && targetUserId !== userId) {
       const currentUser = await User.findById(userId);
       if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
@@ -163,7 +170,7 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
 
 
 
-    if (targetUserId) {
+    if (targetUserId && targetUserId !== userId) {
       const currentUser = await User.findById(userId);
       if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
@@ -210,11 +217,11 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
     }
 
     if (!nutritionPlan) {
-      return res.status(404).json({ error: 'No nutrition plan found for this date' });
+      return res.status(200).json({ meals: [], targetMacros: null });
     }
 
     if (!meals || meals.length === 0) {
-      return res.status(404).json({ error: 'No meals found for this date' });
+      return res.status(200).json({ meals: [], targetMacros: nutritionPlan.targetMacros });
     }
 
     res.status(200).json({ meals, targetMacros: nutritionPlan.targetMacros });
@@ -229,7 +236,7 @@ router.get('/week', requireAuth, async (req: Request, res: Response, next: NextF
     let userId = authReq.user?.userId;
 
     const targetUserId = req.query.userId as string;
-    if (targetUserId) {
+    if (targetUserId && targetUserId !== userId) {
       const currentUser = await User.findById(userId);
       if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
@@ -250,6 +257,74 @@ router.get('/week', requireAuth, async (req: Request, res: Response, next: NextF
     }).sort({ date: 1 });
 
     res.status(200).json({ nutritionPlans });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/export/pdf', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthRequest;
+    let userId = authReq.user?.userId;
+    const targetUserId = req.query.userId as string;
+    const view = (req.query.view as 'day' | 'week') || 'day';
+
+    if (targetUserId && targetUserId !== userId) {
+      const currentUser = await User.findById(userId);
+      if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
+        return res.status(403).json({ error: 'Premium subscription required for family mode' });
+      }
+      userId = targetUserId;
+    }
+
+    const nutritionPlan = await NutritionPlan.findOne({ userId }).sort({ createdAt: -1 });
+
+    if (!nutritionPlan) {
+      return res.status(404).json({ error: 'No nutrition plan found' });
+    }
+
+    const currentDay = getCurrentNutritionDay();
+    const groupedDays = view === 'day'
+      ? nutritionWeekDays
+          .filter((day) => day === currentDay)
+          .map((day) => ({
+            dayLabel: day,
+            meals: nutritionPlan.meals
+              .filter((meal: Meal) => meal.day === day)
+              .map((meal: Meal) => ({
+                name: meal.name,
+                time: meal.time,
+                macros: meal.macros,
+                ingredients: meal.ingredients,
+                instructions: meal.instructions,
+              })),
+          }))
+      : nutritionWeekDays.map((day) => ({
+          dayLabel: day,
+          meals: nutritionPlan.meals
+            .filter((meal: Meal) => meal.day === day)
+            .map((meal: Meal) => ({
+              name: meal.name,
+              time: meal.time,
+              macros: meal.macros,
+              ingredients: meal.ingredients,
+              instructions: meal.instructions,
+            })),
+        }));
+
+    const pdfBuffer = await generatePDF('nutrition', {
+      title: view === 'day' ? `Nutrition Plan - ${currentDay}` : 'Nutrition Plan',
+      generatedAt: new Date(),
+      view,
+      days: groupedDays,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="nutrition-plan-${view}.pdf"`
+    );
+    res.status(200).send(pdfBuffer);
   } catch (error) {
     next(error);
   }

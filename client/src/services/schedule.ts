@@ -43,4 +43,17 @@ export const scheduleService = {
     })
     return data
   },
+
+  async exportPdf(date?: string, view: 'day' | 'week' = 'day'): Promise<Blob> {
+    if (USE_MOCK) {
+      return new Blob(['Mock schedule PDF'], { type: 'application/pdf' })
+    }
+    const params = new URLSearchParams()
+    if (date) params.append('date', date)
+    params.append('view', view)
+    const { data } = await api.get(`/schedule/export/pdf?${params.toString()}`, {
+      responseType: 'blob',
+    })
+    return data
+  },
 }

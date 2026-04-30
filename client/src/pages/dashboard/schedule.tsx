@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { scheduleService } from '../../services/schedule'
 import type { TimelineEvent } from '../../services/schedule'
 import TimelineCard from '../../components/TimelineCard'
+import PageActionButtons from '../../components/PageActionButtons'
+import { downloadBlob, shareCurrentView } from '../../lib/pageActions'
 import { 
   CalendarDays, 
   ChevronLeft, 
@@ -15,8 +18,11 @@ import {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const SchedulePage = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialSelectedDate = searchParams.get('date') || new Date().toISOString().split('T')[0]
   const [currentDate, setCurrentDate] = useState(() => new Date())
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate)
+  const [timeRange, setTimeRange] = useState<'day' | 'week'>('day')
 
   const weekStart = useMemo(() => {
     const date = new Date(currentDate)
@@ -69,13 +75,38 @@ const SchedulePage = () => {
   const handleToday = () => {
     const today = new Date()
     setCurrentDate(today)
-    setSelectedDate(today.toISOString().split('T')[0])
+    const nextDate = today.toISOString().split('T')[0]
+    setSelectedDate(nextDate)
+    setSearchParams({ date: nextDate })
   }
 
   const handleSelectDay = (dateStr: string) => {
     setSelectedDate(dateStr)
+    setSearchParams({ date: dateStr })
     const parts = dateStr.split('-')
     setCurrentDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])))
+  }
+
+  const handleShare = async () => {
+    console.log('Sharing schedule...', { selectedDate, timeRange })
+    const url = `${window.location.origin}/dashboard/schedule?date=${selectedDate}&timeRange=${timeRange}`
+    await shareCurrentView(
+      'Njerka Schedule',
+      `Shared ${timeRange} schedule for ${new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`,
+      url
+    )
+  }
+
+  const handlePrint = async () => {
+    console.log('Printing schedule...', { selectedDate, timeRange })
+    try {
+      const blob = await scheduleService.exportPdf(selectedDate, timeRange)
+      console.log('PDF Blob received:', blob)
+      downloadBlob(blob, `schedule-${timeRange}-${selectedDate}.pdf`)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+      alert('Failed to export PDF. Please check if you are logged in.')
+    }
   }
 
   const timelineEvents: TimelineEvent[] = useMemo(() => {
@@ -154,7 +185,7 @@ const SchedulePage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Daily Schedule</h1>
+          <h1 className="text-2xl font-bold">{timeRange === 'day' ? 'Daily' : 'Weekly'} Schedule</h1>
           <p className="text-gray-500 text-sm mt-1">
             {new Date(selectedDate).toLocaleDateString('en-US', {
               weekday: 'long',
@@ -166,6 +197,28 @@ const SchedulePage = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          <div className="flex bg-gray-100 p-1 rounded-xl mr-2">
+            <button
+              onClick={() => setTimeRange('day')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                timeRange === 'day'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Day
+            </button>
+            <button
+              onClick={() => setTimeRange('week')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                timeRange === 'week'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Week
+            </button>
+          </div>
           <button
             onClick={handlePrevWeek}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -184,6 +237,7 @@ const SchedulePage = () => {
           >
             <ChevronRight className="w-5 h-5" />
           </button>
+          <PageActionButtons onShare={handleShare} onPrint={handlePrint} />
         </div>
       </div>
 
