@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import mongoose from 'mongoose';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import {  AuthRequest, authMiddleware } from '../middlewares/requireAuth';
 import ProgressLog from '../models/progress.model';
 import User from '../models/user.model';
 import { uploadFile } from '../configs/aws';
@@ -14,7 +14,7 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-router.post('/log', requireAuth, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -57,7 +57,7 @@ router.post('/log', requireAuth, upload.single('scanFile'), async (req: Request,
     }
 });
 
-router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/dashboard', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -110,7 +110,7 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: 
     }
 });
 
-router.get('/history', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/history', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -135,7 +135,7 @@ router.get('/history', requireAuth, async (req: Request, res: Response, next: Ne
     }
 });
 
-router.post('/extract-inbody', requireAuth, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/extract-inbody', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -154,7 +154,7 @@ router.post('/extract-inbody', requireAuth, upload.single('scanFile'), async (re
     }
 });
 
-router.get('/feelings', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/feelings', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

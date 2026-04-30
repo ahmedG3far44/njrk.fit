@@ -29,7 +29,7 @@ const NutritionPage = () => {
   const [showRefineModal, setShowRefineModal] = useState(false)
   const [showAddMember, setShowAddMember] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
-  const [activeProfileId, setActiveProfileId] = useState<string | null>('user-123')
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(user?._id || '')
   const [isGenerating, setIsGenerating] = useState(false)
   const [date] = useState(() => new Date().toISOString().split('T')[0])
   const [refetch, setRefetch] = useState(0)
@@ -44,21 +44,21 @@ const NutritionPage = () => {
   })
 
   const familyMembers: FamilyMember[] = useMemo(() => {
-    if (!familyData?.familyMembers) return [{ id: 'user-123', name: 'You' }]
+    if (!familyData?.familyMembers) return [{ id: user?._id || '', name: user?.name || 'You' }]
     return [
-      { id: 'user-123', name: 'You' },
-      ...familyData.familyMembers.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))
+      { id: user?._id || '', name: user?.name || 'You' },
+      ...familyData.familyMembers.map(m => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl || undefined }))
     ]
   }, [familyData])
 
   const { data: nutritionData, isLoading } = useQuery({
     queryKey: ['nutrition', date, activeProfileId, refetch],
-    queryFn: () => nutritionService.getCurrentForUser(date, activeProfileId || 'user-123'),
+    queryFn: () => nutritionService.getCurrentForUser(),
   })
 
   const { data: weekData } = useQuery({
     queryKey: ['nutrition-week', activeProfileId, refetch],
-    queryFn: () => nutritionService.getWeek(undefined, activeProfileId || undefined),
+    queryFn: () => nutritionService.getWeek(),
   })
 
   const plan = nutritionData?.nutritionPlan
@@ -168,15 +168,21 @@ const NutritionPage = () => {
             <button
               key={member.id}
               onClick={() => setActiveProfileId(member.id)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-full border-2 shrink-0 transition-all ${member.id === activeProfileId
+              className={`flex items-center gap-2 px-3 py-2 rounded-full border shrink-0 transition-all ${member.id === activeProfileId
                 ? 'border-purple-500 bg-purple-50'
                 : 'border-gray-200 hover:border-purple-200'
                 }`}
             >
-              <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center">
-                <span className="text-purple-600 font-medium text-sm">
-                  {member.name.charAt(0)}
-                </span>
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                {
+                  member.avatarUrl ? (
+                    <img src={member.avatarUrl} alt="avatar" className="w-full h-full rounded-full" />
+                  ) : (
+                    <span className="text-gray-600 font-medium text-sm">
+                      {member.name.charAt(0)}
+                    </span>
+                  )
+                }
               </div>
               <span className="text-sm font-medium">{member.name}</span>
             </button>
@@ -224,24 +230,44 @@ const NutritionPage = () => {
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
               {todayDayName}'s Meals
             </h3>
-            {todayMeals.map((meal) => (
-              <MealCard
-                key={meal._id}
-                id={meal._id}
-                name={meal.name}
-                day={meal.day}
-                time={meal.time}
-                type="meal"
-                calories={meal.macros.calories}
-                protein={meal.macros.protein}
-                carbs={meal.macros.carbs}
-                fat={meal.macros.fat}
-                forUser={(meal as any).forUser || 'You'}
-                imageUrl={meal.imageUrl}
-                onSwap={() => handleSwap(meal.name)}
-                onRefine={() => handleRefine(meal)}
-              />
-            ))}
+            <>
+              {
+                todayMeals.length > 0 ?
+                  (todayMeals?.map((meal) => (
+                    <MealCard
+                      key={meal._id}
+                      id={meal._id}
+                      name={meal.name}
+                      day={meal.day}
+                      time={meal.time}
+                      type="meal"
+                      calories={meal.macros.calories}
+                      protein={meal.macros.protein}
+                      carbs={meal.macros.carbs}
+                      fat={meal.macros.fat}
+                      forUser={(meal as any).forUser || 'You'}
+                      imageUrl={meal.imageUrl}
+                      onSwap={() => handleSwap(meal.name)}
+                      onRefine={() => handleRefine(meal)}
+                    />
+                  ))) : (
+                    <>
+                    <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
+            <UtensilsCrossed className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium">No meals scheduled for today</p>
+            <p className="text-gray-400 text-sm mt-1 mb-6">
+              Generate a meal plan to get started
+            </p>
+            <button
+              onClick={handleGenerate}
+              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700"
+            >
+              Generate Plan
+            </button>
+          </div>
+                    </>
+                  )}
+            </>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
@@ -278,7 +304,7 @@ const NutritionPage = () => {
                     protein={meal.macros.protein}
                     carbs={meal.macros.carbs}
                     fat={meal.macros.fat}
-                    forUser={(meal as any).forUser || 'You'}
+                    forUser={(meal as any).forUser}
                     imageUrl={meal.imageUrl}
                     onSwap={() => handleSwap(meal.name)}
                     onRefine={() => handleRefine(meal)}

@@ -1,12 +1,13 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import mongoose from 'mongoose'; 
 import User from '../models/user.model';
 import FamilyInvitation from '../models/familyInvitation.model';
 
+import { Router, Request, Response, NextFunction } from 'express';
+import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+ 
 const router = Router();
 
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -42,7 +43,7 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
   }
 });
 
-router.get('/search', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/search', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -85,7 +86,7 @@ router.get('/search', requireAuth, async (req: Request, res: Response, next: Nex
   }
 });
 
-router.post('/invite', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/invite', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -131,7 +132,7 @@ router.post('/invite', requireAuth, async (req: Request, res: Response, next: Ne
   }
 });
 
-router.post('/respond', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/respond', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;

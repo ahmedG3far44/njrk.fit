@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { LucideActivity, LucideLock, LucideMail } from 'lucide-react';
 
-const BASE_URL = import.meta.env.VITE_API_URL as string
+
+const API_URL = import.meta.env.VITE_API_URL as string;
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -13,12 +15,45 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   const from = (location.state as { from?: Location })?.from?.pathname || '/onboarding/welcome'
+
+  const validateForm = (): boolean => {
+    let isValid = true
+
+    // Clear previous errors
+    setEmailError('')
+    setPasswordError('')
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email) {
+      setEmailError('Email is required')
+      isValid = false
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address')
+      isValid = false
+    }
+
+    // Password validation
+    if (!password) {
+      setPasswordError('Password is required')
+      isValid = false
+    }
+
+    return isValid
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!validateForm()) {
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -33,11 +68,13 @@ const LoginPage = () => {
   }
 
   const handleGoogleLogin = async () => {
-    window.location.href = `http://localhost:8080/api/auth/google`
+    const redirectGoogleUrl = API_URL + `/auth/google`
+    window.location.href = redirectGoogleUrl
   }
 
   const handleGitHubLogin = async () => {
-    window.location.href = `http://localhost:8080/api/auth/github`
+    const redirectGithubUrl = API_URL + `/auth/github`
+    window.location.href = redirectGithubUrl
   }
 
   return (
@@ -45,9 +82,7 @@ const LoginPage = () => {
       <div className="max-w-md w-full p-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
-              <path fillRule="evenodd" d="M3 6a3 3 0 013-3h2.25a3 3 0 110 6H3V6zM3.75 12a.75.75 0 01.75-.75h4.5a.75.75 0 010 1.5H4.5a.75.75 0 01-.75-.75zm12.75-3a3 3 0 013 3v2.25a3 3 0 01-3 3H3.75a3 3 0 110-6h2.25a3 3 0 001.5-2.25V3a3 3 0 013-3zm0 9.75a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm-9 3.75a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" clipRule="evenodd" />
-            </svg>
+            <LucideActivity className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -69,10 +104,7 @@ const LoginPage = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
-                    <path d="M3 4a2 2 0 00-2 2v1.16l5.262 3.18c.6.36 1.354.36 1.954 0l5.262-3.18V6a2 2 0 00-2 2H3z" />
-                    <path d="M3 10v6a2 2 0 002 2h10a2 2 0 002-2v-6l-5.262 3.18a1.5 1.5 0 01-1.954 0L3 10z" />
-                  </svg>
+                  <LucideMail size={16} className="text-gray-400" />
                 </div>
                 <input
                   id="email"
@@ -86,6 +118,9 @@ const LoginPage = () => {
                   placeholder="you@example.com"
                 />
               </div>
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600">{emailError}</p>
+              )}
             </div>
 
             <div>
@@ -94,9 +129,7 @@ const LoginPage = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
-                    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-                  </svg>
+                  <LucideLock size={16} className="text-gray-400 " />
                 </div>
                 <input
                   id="password"
@@ -110,6 +143,9 @@ const LoginPage = () => {
                   placeholder="••••••••"
                 />
               </div>
+              {passwordError && (
+                <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+              )}
             </div>
           </div>
 
@@ -150,7 +186,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={handleGitHubLogin}
-              className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all cursor-pointer"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-1.168 2.557-1.875 3.587-1.896 1.031.01 2.617.447 3.588 1.896 2.078-.507 3.299-1.23 3.299-1.23.653 1.652.242 2.873.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -160,7 +196,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex items-center justify-center gap-2 py-3 px-4 cursor-pointer border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

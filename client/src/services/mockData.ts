@@ -9,6 +9,7 @@ export interface User {
   weight?: number
   age?: number
   gender?: 'male' | 'female'
+  religion?: 'muslim' | 'christian';
   goal?: string
   activityLevel?: string
   fitnessGoals?: string[]
@@ -25,12 +26,14 @@ export interface User {
     weeklySummary: boolean
     mealReminders: boolean
     autoGenerateMeals?: boolean
+    isFasting?: boolean;
     reminderTime?: string
     reminderTypes?: string[]
   }
   medicalCondition?: string
   allergies?: string[]
   isOnboarded: boolean
+  onboardingCompleted?: boolean
   onboardingProgress?: OnboardingProgress
 }
 
@@ -77,6 +80,7 @@ export interface UpdateUserData {
   medicalCondition?: string
   allergies?: string[]
   isOnboarded?: boolean
+  onboardingCompleted?: boolean
   onboardingProgress?: OnboardingProgress
 }
 
@@ -252,6 +256,7 @@ export const mockUser: User = {
   medicalCondition: 'Asthma',
   allergies: ['Peanuts', 'Shellfish'],
   isOnboarded: true,
+  onboardingCompleted: true,
 }
 
 export const mockFamilyMembers: FamilyMember[] = [

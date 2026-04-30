@@ -40,7 +40,7 @@ const Comments = ({ postId }: CommentsProps) => {
         className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
       >
         <MessageCircle className="w-4 h-4" />
-        <span className="text-sm">Comments</span>
+        <span className="text-sm">{data?.comments?.length} Comments</span>
       </button>
 
       {showComments && (
@@ -50,16 +50,16 @@ const Comments = ({ postId }: CommentsProps) => {
           ) : (
             <>
               {data?.comments?.length ? (
-                <div className="space-y-2 mb-3">
+                <div className="space-y-4 mb-3">
                   {data.comments.map((comment) => (
-                    <div key={comment._id} className="text-sm">
-                      <span className="font-medium">{comment.userName}</span>
-                      <span className="text-gray-600 ml-2">{comment.content}</span>
+                    <div key={comment._id} className="text-sm flex items-start p-3 rounded-md  bg-zinc-200/50 mb-1.5">
+                      <span className="font-semibold w-6 h-6 flex items-center justify-center text-orange-600 bg-orange-100 rounded-full p-2 text-xs">cm</span>
+                      <span className="text-gray-700 ml-2 text-sm">{comment.content}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No comments yet</p>
+                <p className="text-sm text-gray-500 mb-3">No comments yet</p>
               )}
 
               <form onSubmit={handleSubmit} className="flex gap-2">

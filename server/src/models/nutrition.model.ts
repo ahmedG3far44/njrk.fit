@@ -12,7 +12,7 @@ interface IMeal {
   name: string;
   time: string;
   macros: IMacros;
-  ingredients: string[];
+  ingredients: { name: string; quantity: string }[];
   instructions: string[];
 }
 
@@ -33,7 +33,10 @@ const MealSchema = new Schema<IMeal>({
     carbs: { type: Number, required: true },
     fats: { type: Number, required: true },
   },
-  ingredients: [{ type: String }],
+  ingredients: [{
+    name: { type: String, required: true },
+    quantity: { type: String, required: true }
+  }],
   instructions: [{ type: String }],
 });
 

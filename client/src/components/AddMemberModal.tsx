@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import api from '../lib/api'
+import { api } from '../lib/fetchApi'
 import { Search, X, Loader2 } from 'lucide-react'
 
 interface UserSearchResult {
@@ -22,10 +22,8 @@ const AddMemberModal = ({ onClose, onInvited }: AddMemberModalProps) => {
 
   const searchMutation = useMutation({
     mutationFn: async (query: string) => {
-      const response = await api.get<{ results: UserSearchResult[] }>('/family/search', {
-        params: { q: query },
-      })
-      return response.data
+      const data = await api.get<{ results: UserSearchResult[] }>('/family/search?q=' + query)
+      return data
     },
     onSuccess: (data) => {
       setSearchResults(data?.results || [])
@@ -39,10 +37,10 @@ const AddMemberModal = ({ onClose, onInvited }: AddMemberModalProps) => {
 
   const inviteMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await api.post<{ success: boolean; message: string }>('/family/invite', {
+      const data = await api.post<{ success: boolean; message: string }>('/family/invite', {
         targetUserId: userId,
       })
-      return response.data
+      return data
     },
     onSuccess: () => {
       onInvited?.()

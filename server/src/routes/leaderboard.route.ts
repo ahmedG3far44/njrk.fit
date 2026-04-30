@@ -1,11 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
 import User from '../models/user.model';
 
 const router = Router();
 
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

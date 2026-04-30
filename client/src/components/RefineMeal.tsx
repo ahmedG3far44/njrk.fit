@@ -4,8 +4,10 @@ import { nutritionService } from '../services/nutrition'
 import { X, ChefHat, Play, Sparkles, Send, RefreshCw, Flame, Clock } from 'lucide-react'
 
 interface Ingredient {
-  item: string
-  amount: string
+  item?: string
+  amount?: string
+  name?: string
+  quantity?: string
 }
 
 interface Instruction {
@@ -98,6 +100,8 @@ const RefineMeal = ({ mealId, mealName, dayIndex, mealDetails, onClose, onRefine
 
   const formatIngredient = (ing: any, index: number) => {
     if (typeof ing === 'string') return ing
+    if (ing?.name && ing?.quantity) return `${ing.name} - ${ing.quantity}`
+    if (ing?.name) return ing.name
     return ing?.item || ing?.amount || `Ingredient ${index + 1}`
   }
 

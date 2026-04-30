@@ -6,12 +6,34 @@ const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  const validateForm = (): boolean => {
+    let isValid = true
+    setEmailError('')
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email) {
+      setEmailError('Email is required')
+      isValid = false
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address')
+      isValid = false
+    }
+    
+    return isValid
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setMessage('')
+    
+    if (!validateForm()) {
+      return
+    }
+    
     setIsLoading(true)
 
     try {
@@ -64,8 +86,11 @@ const ForgotPasswordPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="you@example.com"
-            />
-          </div>
+             />
+             {emailError && (
+               <p className="mt-1 text-sm text-red-600">{emailError}</p>
+             )}
+           </div>
 
           <div>
             <button

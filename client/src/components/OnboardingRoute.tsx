@@ -1,11 +1,11 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-interface ProtectedRouteProps {
+interface OnboardingRouteProps {
   children: React.ReactNode
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const OnboardingRoute = ({ children }: OnboardingRouteProps) => {
   const { user, isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
@@ -17,13 +17,15 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     )
   }
 
+  //If not authenticated, redirect to login
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Check if user needs to complete onboarding
-  if (user && user.onboardingCompleted === false) {
-    return <Navigate to="/onboarding/welcome" replace />
+  //If onboarding is completed, redirect to dashboard
+  if (user && user.onboardingCompleted === true) {
+  return <Navigate to="/dashboard/insights" replace />
   }
 
   return <>{children}</>

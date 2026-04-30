@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { scheduleService } from '../../services/schedule'
 import type { TimelineEvent } from '../../services/schedule'
 import TimelineCard from '../../components/TimelineCard'
-import { 
-  CalendarDays, 
-  ChevronLeft, 
+import {
+  CalendarDays,
+  ChevronLeft,
   ChevronRight,
   Loader2,
   UtensilsCrossed,
@@ -79,75 +79,75 @@ const SchedulePage = () => {
   }
 
   const timelineEvents: TimelineEvent[] = useMemo(() => {
-    if (!data?.timeline?.length) {
-      return [
-        {
-          id: '1',
-          type: 'meal' as const,
-          time: '08:00',
-          title: 'Breakfast - Oatmeal & Berries',
-          metadata: { calories: 450, protein: 18, carbs: 62, fat: 12 },
-          isCompleted: false,
-        },
-        {
-          id: '2',
-          type: 'workout' as const,
-          time: '10:00',
-          title: 'Morning Workout - Cardio',
-          metadata: { durationMin: 45, exerciseType: 'Cardio', exerciseCount: 6 },
-          isCompleted: false,
-        },
-        {
-          id: '3',
-          type: 'meal' as const,
-          time: '12:30',
-          title: 'Lunch - Grilled Chicken Salad',
-          metadata: { calories: 520, protein: 42, carbs: 35, fat: 18 },
-          isCompleted: false,
-        },
-        {
-          id: '4',
-          type: 'meal' as const,
-          time: '15:00',
-          title: 'Snack - Protein Shake',
-          metadata: { calories: 180, protein: 25, carbs: 8, fat: 3 },
-          isCompleted: false,
-        },
-        {
-          id: '5',
-          type: 'meal' as const,
-          time: '19:00',
-          title: 'Dinner - Salmon with Vegetables',
-          metadata: { calories: 620, protein: 45, carbs: 28, fat: 32 },
-          isCompleted: false,
-        },
-        {
-          id: '6',
-          type: 'workout' as const,
-          time: '20:30',
-          title: 'Evening Stretch & Yoga',
-          metadata: { durationMin: 20, exerciseType: 'Yoga', exerciseCount: 5 },
-          isCompleted: false,
-        },
-      ]
-    }
-    
-    return data.timeline.map((item) => ({
-      id: item.id,
-      type: item.type,
-      time: item.time,
-      title: item.name,
-      metadata: {
-        calories: item.details.macros?.calories,
-        protein: item.details.macros?.protein,
-        carbs: item.details.macros?.carbs,
-        fat: item.details.macros?.fat,
-        durationMin: item.details.durationMin,
-        exerciseType: item.details.type,
-        exerciseCount: item.details.exercises?.length,
+    // if (!data?.timeline?.length) {
+    return [
+      {
+        id: '1',
+        type: 'meal' as const,
+        time: '08:00',
+        title: 'Breakfast - Oatmeal & Berries',
+        metadata: { calories: 450, protein: 18, carbs: 62, fat: 12 },
+        isCompleted: false,
       },
-      isCompleted: item.details.isCompleted || false,
-    })).sort((a, b) => a.time.localeCompare(b.time))
+      {
+        id: '2',
+        type: 'workout' as const,
+        time: '10:00',
+        title: 'Morning Workout - Cardio',
+        metadata: { durationMin: 45, exerciseType: 'Cardio', exerciseCount: 6 },
+        isCompleted: false,
+      },
+      {
+        id: '3',
+        type: 'meal' as const,
+        time: '12:30',
+        title: 'Lunch - Grilled Chicken Salad',
+        metadata: { calories: 520, protein: 42, carbs: 35, fat: 18 },
+        isCompleted: false,
+      },
+      {
+        id: '4',
+        type: 'meal' as const,
+        time: '15:00',
+        title: 'Snack - Protein Shake',
+        metadata: { calories: 180, protein: 25, carbs: 8, fat: 3 },
+        isCompleted: false,
+      },
+      {
+        id: '5',
+        type: 'meal' as const,
+        time: '19:00',
+        title: 'Dinner - Salmon with Vegetables',
+        metadata: { calories: 620, protein: 45, carbs: 28, fat: 32 },
+        isCompleted: false,
+      },
+      {
+        id: '6',
+        type: 'workout' as const,
+        time: '20:30',
+        title: 'Evening Stretch & Yoga',
+        metadata: { durationMin: 20, exerciseType: 'Yoga', exerciseCount: 5 },
+        isCompleted: false,
+      },
+    ]
+    //}
+
+    // return data.timeline.map((item) => ({
+    //   id: item.id,
+    //   type: item.type,
+    //   time: item.time,
+    //   title: item.name,
+    //   metadata: {
+    //     calories: item.details.macros?.calories,
+    //     protein: item.details.macros?.protein,
+    //     carbs: item.details.macros?.carbs,
+    //     fat: item.details.macros?.fat,
+    //     durationMin: item.details.durationMin,
+    //     exerciseType: item.details.type,
+    //     exerciseCount: item.details.exercises?.length,
+    //   },
+    //   isCompleted: item.details.isCompleted || false,
+    // })).sort((a, b) => a.time.localeCompare(b.time))
   }, [data])
 
   return (
@@ -164,7 +164,7 @@ const SchedulePage = () => {
             })}
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevWeek}
@@ -192,24 +192,21 @@ const SchedulePage = () => {
           <button
             key={day.dateStr}
             onClick={() => handleSelectDay(day.dateStr)}
-            className={`p-3 rounded-xl transition-all text-center ${
-              day.dateStr === selectedDate
+            className={`p-3 rounded-xl transition-all text-center ${day.dateStr === selectedDate
                 ? 'bg-purple-600 text-white'
                 : day.isToday
                   ? 'bg-purple-50 text-purple-700 border border-purple-200'
                   : 'bg-white border border-gray-100 hover:border-purple-200'
-            }`}
+              }`}
           >
-            <p className={`text-xs font-medium ${
-              day.dateStr === selectedDate ? 'text-purple-200' : 'text-gray-500'
-            }`}>
+            <p className={`text-xs font-medium ${day.dateStr === selectedDate ? 'text-purple-200' : 'text-gray-500'
+              }`}>
               {day.dayName}
             </p>
             <p className="text-lg font-bold mt-1">{day.dayNum}</p>
             {day.isToday && (
-              <div className={`w-1.5 h-1.5 rounded-full mx-auto mt-1 ${
-                day.dateStr === selectedDate ? 'bg-white' : 'bg-purple-500'
-              }`} />
+              <div className={`w-1.5 h-1.5 rounded-full mx-auto mt-1 ${day.dateStr === selectedDate ? 'bg-white' : 'bg-purple-500'
+                }`} />
             )}
           </button>
         ))}
@@ -225,8 +222,8 @@ const SchedulePage = () => {
         ) : timelineEvents.length > 0 ? (
           <div className="space-y-4 pl-4">
             {timelineEvents.map((event, index) => (
-              <TimelineCard 
-                key={`${event.id}-${index}`} 
+              <TimelineCard
+                key={`${event.id}-${index}`}
                 event={event}
                 onToggle={(id, isCompleted) => {
                   console.log(`Toggle ${id}: ${isCompleted}`)

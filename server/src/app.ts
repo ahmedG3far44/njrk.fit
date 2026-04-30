@@ -13,6 +13,8 @@ import subscriptionsRoutes from './routes/subscriptions.route';
 import webhooksRoutes from './routes/webhooks.route';
 import groceryRoutes from './routes/grocery.route';
 import familyRoutes from './routes/family.route';
+import exportRoutes from './routes/export.route';
+import cookieParser from 'cookie-parser';
 
 import { corsOptions } from './configs/env';
 import { errorHandler } from './middlewares/errorHandler';
@@ -22,9 +24,12 @@ const app = express();
 
 dbConnection;
 
+
 app.use(requestLogger);
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('<h1>Njerka.fit AI Powered App Server is running!</h1>');
@@ -35,12 +40,10 @@ app.get('/health', async (req, res) => {
 });
 
 
-
-app.use(express.json());
-
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/export', exportRoutes);
 app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/fitness', fitnessRoutes);
 app.use('/api/schedule', scheduleRoutes);
@@ -56,5 +59,5 @@ app.use(errorHandler);
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
-    
+
 export default app;

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { communityService } from '../services/community'
+import { communityService, type Post } from '../services/community'
 import { Heart } from 'lucide-react'
 import { useState } from 'react'
 
@@ -24,9 +24,9 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
         if (!old?.posts) return old
         return {
           ...old,
-          posts: old.posts.map((post: any) => 
+          posts: old.posts.map((post: Post) =>
             post._id === postId
-              ? { ...post, isLiked: !optimisticLiked, likeCount: optimisticLiked ? post.likeCount - 1 : post.likeCount + 1 }
+              ? { ...post, isLiked: !post.isLiked, likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1 }
               : post
           ),
         }

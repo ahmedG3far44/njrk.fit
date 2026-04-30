@@ -174,15 +174,16 @@ const Step2Personalization = ({ data, onUpdate, errors }: Step2PersonalizationPr
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Religion / Fasting Periods
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid grid-cols-2 gap-3`}>
             {religionOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => handleReligionChange(option.value)}
-                className={`py-3 px-4 rounded-xl font-medium text-sm transition-all ${data.religion === option.value
-                  ? 'bg-purple-50 border-2 border-purple-600 text-purple-700'
-                  : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300'
+                className={`py-3 px-4 rounded-xl font-medium text-sm 
+                  ${errors?.religion && 'border-red-500'} transition-all cursor-pointer ${data.religion === option.value
+                  ? 'bg-purple-500 text-white '
+                  : 'bg-white border border-gray-200 text-gray-700 hover:border-purple-300'
                   }`}
               >
                 {option.label}

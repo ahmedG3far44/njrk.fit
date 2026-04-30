@@ -11,13 +11,54 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [nameError, setNameError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+
+  const validateForm = (): boolean => {
+    let isValid = true
+
+    // Clear previous errors
+    setNameError('')
+    setEmailError('')
+    setPasswordError('')
+
+    // Name validation
+    if (!name.trim()) {
+      setNameError('Full name is required')
+      isValid = false
+    } else if (name.trim().length < 2) {
+      setNameError('Name must be at least 2 characters')
+      isValid = false
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email) {
+      setEmailError('Email is required')
+      isValid = false
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address')
+      isValid = false
+    }
+
+    // Password validation
+    if (!password) {
+      setPasswordError('Password is required')
+      isValid = false
+    } else if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters')
+      isValid = false
+    }
+
+    return isValid
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (!validateForm()) {
       return
     }
 
@@ -35,11 +76,11 @@ const RegisterPage = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google'
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`
   }
 
   const handleGitHubLogin = () => {
-    window.location.href = '/api/auth/github'
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/github`
   }
 
   return (
@@ -86,13 +127,16 @@ const RegisterPage = () => {
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
                   placeholder="John Doe"
                 />
-              </div>
-            </div>
+               </div>
+               {nameError && (
+                 <p className="mt-1 text-sm text-red-600">{nameError}</p>
+               )}
+             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email Address
-              </label>
+             <div>
+               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                 Email Address
+               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
@@ -111,13 +155,16 @@ const RegisterPage = () => {
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
                   placeholder="you@example.com"
                 />
-              </div>
-            </div>
+               </div>
+               {emailError && (
+                 <p className="mt-1 text-sm text-red-600">{emailError}</p>
+               )}
+             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+             <div>
+               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                 Password
+               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
@@ -135,10 +182,13 @@ const RegisterPage = () => {
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
                   placeholder="••••••••"
                 />
-              </div>
-              <p className="mt-1.5 text-xs text-gray-500">At least 8 characters</p>
-            </div>
-          </div>
+               </div>
+               {passwordError && (
+                 <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+               )}
+               <p className="mt-1.5 text-xs text-gray-500">At least 8 characters</p>
+             </div>
+           </div>
 
           <button
             type="submit"

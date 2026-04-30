@@ -17,7 +17,7 @@ const FitnessPage = () => {
 
   const { data: apiData, isLoading, refetch } = useQuery({
     queryKey: ['fitness'],
-    queryFn: () => fitnessService.getCurrent(),
+    queryFn: () => fitnessService.getCurrent('today'),
   })
 
   const workoutPlan = apiData?.workoutPlan
@@ -189,110 +189,112 @@ const FitnessPage = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Coming Up This Week</h3>
-              <div className="flex items-center gap-2">
-                {(['All', 'Strength', 'Cardio', 'Yoga', 'Recovery'] as SessionFilter[]).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-3 py-1 text-sm rounded-full transition-colors ${filter === f
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+      {
+        workoutPlan?.sessions && workoutPlan?.sessions.length > 0 && <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Coming Up This Week</h3>
+                <div className="flex items-center gap-2">
+                  {(['All', 'Strength', 'Cardio', 'Yoga', 'Recovery'] as SessionFilter[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`px-3 py-1 text-sm rounded-full transition-colors ${filter === f
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {filteredSessions.map((session) => (
+                  <div
+                    key={session._id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    {f}
-                  </button>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${session.isCompleted
+                        ? 'bg-green-100 text-green-600'
+                        : session.type === 'Strength'
+                          ? 'bg-blue-100 text-blue-600'
+                          : session.type === 'Cardio'
+                            ? 'bg-orange-100 text-orange-600'
+                            : session.type === 'Yoga'
+                              ? 'bg-purple-100 text-purple-600'
+                              : 'bg-gray-100 text-gray-600'
+                        }`}>
+                        {session.isCompleted ? <CheckCircle className="w-5 h-5" /> : session.dayOfWeek.slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{session.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>{session.durationMin} min</span>
+                          <span className={`px-2 py-0.5 rounded text-xs ${session.type === 'Strength'
+                            ? 'bg-blue-100 text-blue-700'
+                            : session.type === 'Cardio'
+                              ? 'bg-orange-100 text-orange-700'
+                              : session.type === 'Yoga'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                            {session.type}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleViewRoutine(session)}
+                      className="px-4 py-2 text-purple-600 font-medium hover:bg-purple-50 rounded-lg"
+                    >
+                      View Routine
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              {filteredSessions.map((session) => (
+          <div className="col-span-4">
+            <div className="bg-purple-600 rounded-xl p-6 text-white h-full">
+              <h3 className="font-semibold mb-4">Weekly Goal</h3>
+              <p className="text-4xl font-bold">
+                {workoutPlan?.sessionsCompleted || 0} / {workoutPlan?.sessions?.length || 0}
+              </p>
+              <p className="text-sm text-purple-200 mb-4">sessions</p>
+
+              <div className="w-full h-2 bg-purple-800 rounded-full overflow-hidden mb-6">
                 <div
-                  key={session._id}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${session.isCompleted
-                      ? 'bg-green-100 text-green-600'
-                      : session.type === 'Strength'
-                        ? 'bg-blue-100 text-blue-600'
-                        : session.type === 'Cardio'
-                          ? 'bg-orange-100 text-orange-600'
-                          : session.type === 'Yoga'
-                            ? 'bg-purple-100 text-purple-600'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}>
-                      {session.isCompleted ? <CheckCircle className="w-5 h-5" /> : session.dayOfWeek.slice(0, 2)}
-                    </div>
-                    <div>
-                      <p className="font-medium">{session.name}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>{session.durationMin} min</span>
-                        <span className={`px-2 py-0.5 rounded text-xs ${session.type === 'Strength'
-                          ? 'bg-blue-100 text-blue-700'
-                          : session.type === 'Cardio'
-                            ? 'bg-orange-100 text-orange-700'
-                            : session.type === 'Yoga'
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                          {session.type}
-                        </span>
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{
+                    width: `${workoutPlan?.sessions?.length ? (workoutPlan.sessionsCompleted / workoutPlan.sessions.length) * 100 : 0}%`
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => {
+                  const sessionIdx = i < (workoutPlan?.sessions?.length || 0) ? i : -1
+                  const isCompleted = sessionIdx >= 0 && workoutPlan?.sessions?.[sessionIdx]?.isCompleted
+                  return (
+                    <div key={i} className="text-center">
+                      <div className={`w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center ${isCompleted ? 'bg-white text-purple-600' : 'bg-purple-800/50'
+                        }`}>
+                        {isCompleted ? <CheckCircle className="w-4 h-4" /> : ''}
                       </div>
+                      <span className="text-xs">{day}</span>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => handleViewRoutine(session)}
-                    className="px-4 py-2 text-purple-600 font-medium hover:bg-purple-50 rounded-lg"
-                  >
-                    View Routine
-                  </button>
-                </div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
-
-        <div className="col-span-4">
-          <div className="bg-purple-600 rounded-xl p-6 text-white h-full">
-            <h3 className="font-semibold mb-4">Weekly Goal</h3>
-            <p className="text-4xl font-bold">
-              {workoutPlan?.sessionsCompleted || 0} / {workoutPlan?.sessions?.length || 0}
-            </p>
-            <p className="text-sm text-purple-200 mb-4">sessions</p>
-
-            <div className="w-full h-2 bg-purple-800 rounded-full overflow-hidden mb-6">
-              <div
-                className="h-full bg-white rounded-full transition-all"
-                style={{
-                  width: `${workoutPlan?.sessions?.length ? (workoutPlan.sessionsCompleted / workoutPlan.sessions.length) * 100 : 0}%`
-                }}
-              />
-            </div>
-
-            <div className="grid grid-cols-7 gap-1">
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => {
-                const sessionIdx = i < (workoutPlan?.sessions?.length || 0) ? i : -1
-                const isCompleted = sessionIdx >= 0 && workoutPlan?.sessions?.[sessionIdx]?.isCompleted
-                return (
-                  <div key={i} className="text-center">
-                    <div className={`w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center ${isCompleted ? 'bg-white text-purple-600' : 'bg-purple-800/50'
-                      }`}>
-                      {isCompleted ? <CheckCircle className="w-4 h-4" /> : ''}
-                    </div>
-                    <span className="text-xs">{day}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+      }
 
       {showGenerateModal && (
         <GenerateWorkout

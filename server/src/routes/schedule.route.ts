@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import {  AuthRequest, authMiddleware } from '../middlewares/requireAuth';
 import NutritionPlan from '../models/nutrition.model';
 import WeeklyFitnessPlan from '../models/fitness.model';
 
@@ -13,51 +13,96 @@ interface TimelineItem {
     details: any;
 }
 
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        console.log("hitting schedule route");
+const getDayIndexFromStart = (startDate: Date, currentDate: Date) => {
+    const diff = Math.floor(
+        (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diff + 1; // Day 1, Day 2...
+};
 
+const parseTimeToMinutes = (time: string): number => {
+    const match = time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return 9999;
+
+    let [_, h, m, period] = match;
+    let hours = parseInt(h);
+    const minutes = parseInt(m);
+
+    if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+    if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+
+    return hours * 60 + minutes;
+};
+
+
+const getWorkoutTime = (type: string) => {
+    if (type === 'Cardio') return "07:00 AM";
+    if (type === 'Yoga') return "08:00 AM";
+    return "06:00 PM";
+};
+
+
+router.get('/', authMiddleware, async (req, res, next) => {
+    try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
-        console.log("userId", userId);
-
-
-        const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         const dateParam = req.query.date as string;
         const date = dateParam ? new Date(dateParam) : new Date();
         date.setHours(0, 0, 0, 0);
 
-        const nextDate = new Date(date);
-        nextDate.setDate(nextDate.getDate() + 1);
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const targetDayName = dayNames[date.getDay()];
 
-        const nutritionPlan = await NutritionPlan.findOne({
-            userId,
-            date: { $gte: date, $lt: nextDate },
-        });
+        // ✅ Nutrition Plan (get latest instead of date filter)
+        const nutritionPlan = await NutritionPlan.findOne({ userId }).sort({ createdAt: -1 });
 
-        const startOfWeek = new Date(date);
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(endOfWeek.getDate() + 6);
-
+        // ✅ Workout Plan (correct overlap query)
         const workoutPlan = await WeeklyFitnessPlan.findOne({
-            userId,
-            startDate: { $gte: startOfWeek },
-            endDate: { $lte: endOfWeek },
+            userId
         });
 
+        const currentDayWorkout = workoutPlan?.sessions.find(
+            (session: any) => session.dayOfWeek === targetDayName
+        );
 
-        console.log("workoutPlan", workoutPlan);
-        console.log("nutritionPlan", nutritionPlan);
+
+        const dayIndex = (new Date().getDay() + 1).toString();
+
+        console.log("dayIndex", dayIndex);
+
+        const currentDayNutrition = nutritionPlan?.meals.filter(
+            (meal: any) => meal.day === "Day " + dayIndex
+        );
+        console.log("currentDayWorkout", currentDayWorkout);
+        console.log("currentDayNutrition", currentDayNutrition);
+
+        // res.json({
+        //     currentDayWorkout,
+        //     currentDayNutrition
+        // })
+
+
+
+
+
         const timeline: TimelineItem[] = [];
 
+        // ---------------------------
+        // 🥗 MEALS
+        // ---------------------------
         if (nutritionPlan) {
-            nutritionPlan.meals.forEach((meal) => {
+            const dayIndex = getDayIndexFromStart(new Date(nutritionPlan.date), date);
+            const targetDayLabel = `Day ${dayIndex}`;
+
+            const mealsForDay = nutritionPlan.meals.filter(
+                (meal: any) => meal.day === targetDayLabel
+            );
+
+            mealsForDay.forEach((meal: any) => {
                 timeline.push({
                     type: 'meal',
-                    id: (meal as any)._id?.toString() || Math.random().toString(),
+                    id: meal._id?.toString() || Math.random().toString(),
                     name: meal.name,
                     time: meal.time,
                     details: {
@@ -69,46 +114,51 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
             });
         }
 
+        // ---------------------------
+        // 🏋️ WORKOUTS
+        // ---------------------------
         if (workoutPlan) {
+            const session = workoutPlan.sessions.find(
+                (s: any) =>
+                    s.dayOfWeek === targetDayName ||
+                    (s.date && new Date(s.date).toDateString() === date.toDateString())
+            );
 
-            const targetDay = dayOfWeek[date.getDay()];
-
-            workoutPlan.sessions.forEach((session) => {
-                if (session.dayOfWeek === targetDay ||
-                    (session.date && new Date(session.date).toDateString() === date.toDateString())) {
-                    timeline.push({
-                        type: 'workout',
-                        id: (session as any)._id?.toString() || Math.random().toString(),
-                        name: session.name,
-                        time: `${session.durationMin} min`,
-                        details: {
-                            type: session.type,
-                            durationMin: session.durationMin,
-                            estimatedCaloriesBurn: session.estimatedCaloriesBurn,
-                            exercises: session.exercises,
-                            isCompleted: session.isCompleted,
-                        },
-                    });
-                }
-            });
+            if (session && session.type !== 'Recovery') {
+                timeline.push({
+                    type: 'workout',
+                    id: session._id?.toString() || Math.random().toString(),
+                    name: session.name,
+                    time: getWorkoutTime(session.type),  // ✅ show actual workout time
+                    details: {
+                        type: session.type,
+                        durationMin: session.durationMin,
+                        estimatedCaloriesBurn: session.estimatedCaloriesBurn,
+                        exercises: session.exercises,
+                        isCompleted: session.isCompleted,
+                    },
+                });
+            }
         }
 
-        timeline.sort((a, b) => {
-            const timeA = a.time.replace(':', '');
-            const timeB = b.time.replace(':', '');
-            return parseInt(timeA) - parseInt(timeB);
+        // ---------------------------
+        // ⏱ SORT PROPERLY
+        // ---------------------------
+        timeline.sort(
+            (a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time)
+        );
+
+        res.json({
+            date: date.toISOString().split('T')[0],
+            timeline: [...currentDayNutrition || [], currentDayWorkout || []]
         });
 
-        res.status(200).json({
-            date: date.toISOString().split('T')[0],
-            timeline,
-        });
     } catch (error) {
         next(error);
     }
 });
 
-router.patch('/:itemId/complete', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:itemId/complete', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

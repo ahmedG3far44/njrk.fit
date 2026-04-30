@@ -1,15 +1,18 @@
 import { useState } from 'react'
-// import { useNavigate } from 'react-router-dom'
-// import { useQueryClient } from '@tanstack/react-query'
-// import { userService } from '../../services/user'
+import { useNavigate } from 'react-router-dom'
+
+
 import Step1Basics from './Step1Basics'
 import Step2Personalization from './Step2Personalization'
 import Step3MedicalFitness, { type activityOptionsType } from './Step3MedicalFitness'
 import Step4MedicalVault from './Step4MedicalVault'
 import Step5Dream from './Step5Dream'
+import { LucideHeart, LucideSettings, LucideShieldAlert, LucideSparkle, LucideUser } from 'lucide-react'
 
 
 const TOTAL_STEPS = 5
+
+const BASE_URL = import.meta.env.VITE_API_URL as string
 
 interface StepConfig {
   id: number
@@ -27,42 +30,31 @@ const stepConfigs: StepConfig[] = [
 
 function UserIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-1.5 0 6.75 6.75 0 00-13.498 0 .75.75 0 01-1.5 0z" clipRule="evenodd" />
-    </svg>
+    <LucideUser size={20} className="text-primary" />
   )
 }
 
 function SettingsIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.347a.256.256 0 00.256.105h.002a.256.256 0 00.178-.135c.062-.073.121-.15.178-.237a1.75 1.75 0 012.332.326l.415.415A12 12 0 002.025 12c0 6.627 5.373 12 12 12s12-5.373 12-12a12.008 12.008 0 00-.306-.832l.415-.415a1.752 1.752 0 012.331-.326c.09.093.16.194.233.323a1.75 1.75 0 01-.84 3.062l.002.002c-.084.083-.168.167-.25.251-.082.086-.172.16-.262.227-.087.065-.182.12-.268.176a.256.256 0 00.069.286l.002.002c.083.083.178.16.278.226.106.07.2.152.278.25.08.092.148.188.205.293.061.114.093.235.093.358v.003a1.75 1.75 0 01-1.622 1.875l-.415-.415c-.073-.074-.15-.145-.233-.218a6.748 6.748 0 01-.251-.251c-.082-.086-.172-.16-.262-.227-.087-.065-.182-.12-.268-.176a.256.256 0 00-.069-.286l-.002-.002c-.083-.083-.178-.16-.278-.226-.106-.07-.2-.152-.278-.25a1.726 1.726 0 01-.205-.293 1.726 1.726 0 01-.293-.205 1.75 1.75 0 01-.218-.233 6.75 6.75 0 01-.251-.251 1.726 1.726 0 01-.227-.262 1.726 1.726 0 01-.176-.268.256.256 0 00-.286-.069l-.002.002a.256.256 0 00-.135.178c-.063.08-.132.162-.196.24a1.75 1.75 0 01-2.332-.327l-.415-.415a1.75 1.75 0 01-.326-2.332c.073-.087.152-.173.24-.195.088-.023.172-.059.256-.105a.256.256 0 00.105-.256v-.002a1.75 1.75 0 011.875-1.622l.415.415c.074.073.145.15.218.233.08.084.16.168.251.251.086.082.16.172.227.262.065.087.12.182.176.268a.256.256 0 00.286.069h.002c.083 0 .178.033.256.105.063.058.132.13.196.24.065.086.123.173.178.258.06.092.118.188.16.29.046.102.077.208.093.318.018.118.02.238.008.358a1.75 1.75 0 01-1.622 1.875h-.002l-.415-.415a1.752 1.752 0 01-2.332.326c-.09-.093-.16-.194-.233-.323a1.75 1.75 0 01.84-3.062l.002.002c.084-.083.168-.167.25-.251.082-.086.172-.16.262-.227a.256.256 0 00.069-.286l-.002-.002a.256.256 0 00-.178-.135c-.062-.073-.121-.15-.178-.237a1.75 1.75 0 00-2.332.326l-.415.415z" clipRule="evenodd" />
-      <path fillRule="evenodd" d="M12 10a2 2 0 100 4 2 2 0 000-4z" clipRule="evenodd" />
-    </svg>
+    <LucideSettings size={20} className="text-primary" />
   )
 }
 
 function HeartIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <path d="M11.645 20.91a1.001 1.001 0 01-.647-.647L9.75 12.6l-2.19-3.71a1 1 0 111.76-1.18l2.36 4.006 4.44-7.515a1 1 0 111.72 1.18l-2.91 4.94a1 1 0 01-.638.383h-.003z" />
-    </svg>
+    <LucideHeart size={20} className="text-primary" />
   )
 }
 
 function ShieldIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <path fillRule="evenodd" d="M12 1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-4.5a.75.75 0 010-1.5h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75v-3A.75.75 0 016 6v4.5a.75.75 0 01-1.5 0V6A2.25 2.25 0 016.75 3.75h4.5A2.25 2.25 0 0113.5 6v4.5a2.25 2.25 0 01-2.25 2.25h-4.5A2.25 2.25 0 014.5 13.5v-4.5A2.25 2.25 0 016.75 6.75h3a.75.75 0 010 1.5h-3A.75.75 0 005.25 9v3a.75.75 0 001.5 0V9a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-4.5a.75.75 0 010-1.5h3a.75.75 0 01.75-.75V6a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-4.5a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3a.75.75 0 01-.75-.75V6z" clipRule="evenodd" />
-    </svg>
+    <LucideShieldAlert size={20} className="text-primary" />
   )
 }
 
 function SparkleIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <path d="M10.5 1.5a1.5 1.5 0 012.39 2.025l6.375 14.625a1.5 1.5 0 01-2.265 1.823l-4.823-5.39-5.39 4.823a1.5 1.5 0 01-1.823-2.265l14.625-6.375a1.5 1.5 0 011.025-2.39V1.5a1.5 1.5 0 011.5-1.5h2.25a1.5 1.5 0 011.5 1.5v2.25a1.5 1.5 0 002.39 1.025l6.375 14.625a1.5 1.5 0 01-2.265 1.823l-4.823-5.39-5.39 4.823a1.5 1.5 0 01-1.823-2.265l14.625-6.375a1.5 1.5 0 011.025-2.39V1.5a1.5 1.5 0 011.5-1.5h2.25a1.5 1.5 0 011.5 1.5v2.25a1.5 1.5 0 002.39 1.025l6.375 14.625a1.5 1.5 0 01-2.265 1.823l-14.625-6.375a1.5 1.5 0 01-1.025-2.39V12a1.5 1.5 0 00-1.5-1.5H11.5a1.5 1.5 0 00-1.5 1.5v2.25a1.5 1.5 0 01-2.39 1.025l-6.375-14.625a1.5 1.5 0 012.265-1.823l14.625 6.375a1.5 1.5 0 011.025 2.39v2.25a1.5 1.5 0 001.5 1.5h2.25a1.5 1.5 0 001.5-1.5V11.5a1.5 1.5 0 00-1.5-1.5h-2.25a1.5 1.5 0 01-1.5-1.5v-.25z" />
-    </svg>
+    <LucideSparkle size={20} className="text-primary" />
   )
 }
 
@@ -73,6 +65,8 @@ function CheckIcon() {
     </svg>
   )
 }
+
+type goals = "lose_weight" | "gain_weight" | "maintain_weight";
 
 interface OnboardingData {
   step1: {
@@ -95,23 +89,28 @@ interface OnboardingData {
   }
   step5: {
     dreamGoal?: string
+    targetWeight?: number
+    userGoal?: goals
   }
 }
 
+
 const initialData: OnboardingData = {
-  step1: { age: 22, gender: 'male', height: 170, weight: 70 },
-  step2: { religion: 'muslim', foodPreferences: ['halal'] },
-  step3: { allergies: ['none'], otherAllergy: '', activityLevel: { title: 'Sedentary', slug: 'sedentary', emoji: '🪑', description: 'Little to no exercise, desk job', value: 1.2 } },
+  step1: { age: 23, gender: 'male', height: 175, weight: 70 },
+  step2: { religion: 'muslim', foodPreferences: [] },
+  step3: { allergies: [], otherAllergy: '', activityLevel: { title: '', slug: '', emoji: '', description: '', value: 0 } },
   step4: { medicalFiles: [] },
-  step5: { dreamGoal: '' },
+  step5: { dreamGoal: '', targetWeight: 0, userGoal: 'lose_weight' },
 }
 
+
 const OnboardingWizard = () => {
-  // const navigate = useNavigate()
+  const navigate = useNavigate()
   // const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(initialData)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const [errors, setErrors] = useState<Record<number, Partial<Record<string, string>>>>({
     1: {
@@ -130,6 +129,8 @@ const OnboardingWizard = () => {
       medicalFiles: '',
     }, 5: {
       dreamGoal: '',
+      targetWeight: '',
+      userGoal: ''
     }
   })
 
@@ -140,32 +141,47 @@ const OnboardingWizard = () => {
     if (step === 1) {
       const data1 = onboardingData.step1
       if (!data1.age) currentErrors.age = 'Age is required'
+      else if (data1.age < 1 || data1.age > 120) currentErrors.age = 'Age must be between 1 and 120'
+
       if (!data1.gender) currentErrors.gender = 'Gender is required'
+
       if (!data1.height) currentErrors.height = 'Height is required'
+      else if (data1.height < 50 || data1.height > 250) currentErrors.height = 'Height must be between 50 and 250 cm'
+
       if (!data1.weight) currentErrors.weight = 'Weight is required'
+      else if (data1.weight < 40 || data1.weight > 200) currentErrors.weight = 'Weight must be between 40 and 200 kg'
     }
 
     if (step === 2) {
       const data2 = onboardingData.step2
       if (!data2.religion) currentErrors.religion = 'Religion is required'
-      if (!data2.foodPreferences) currentErrors.foodPreferences = 'Food preferences are required'
+      if (!data2.foodPreferences || data2.foodPreferences.length === 0)
+        currentErrors.foodPreferences = 'Food preferences are required'
     }
 
     if (step === 3) {
       const data3 = onboardingData.step3
-      if (!data3.allergies) currentErrors.allergies = 'Allergies are required'
-      if (!data3.otherAllergy) currentErrors.otherAllergy = 'Other allergy is required'
-      if (!data3.activityLevel) currentErrors.activityLevel = 'Activity level is required'
-    }
 
-    if (step === 4) {
-      const data4 = onboardingData.step4
-      if (!data4.medicalFiles) currentErrors.medicalFiles = 'Medical files are required'
+      if (data3.allergies.length === 0) currentErrors.allergies = 'Please select at least one dietary restriction or none if you don\'t have any'
+      if (data3.activityLevel?.slug === "" || data3.activityLevel?.title === "") currentErrors.activityLevel = 'Please select an activity level'
     }
 
     if (step === 5) {
       const data5 = onboardingData.step5
-      if (!data5.dreamGoal) currentErrors.dreamGoal = 'Dream goal is required'
+
+      if (!data5.targetWeight) currentErrors.targetWeight = 'Target weight is required please enter it'
+
+      switch (data5.userGoal) {
+        case "lose_weight":
+          if (data5.targetWeight >= onboardingData.step1.weight) currentErrors.targetWeight = 'Target weight must be less than current weight'
+          break
+        case "gain_weight":
+          if (data5.targetWeight <= onboardingData.step1.weight) currentErrors.targetWeight = 'Target weight must be greater than current weight'
+          break
+        case "maintain_weight":
+          if (data5.targetWeight !== onboardingData.step1.weight) currentErrors.targetWeight = 'Target weight must be equal to current weight'
+          break
+      }
     }
 
     setErrors(prev => ({ ...prev, [step]: currentErrors }))
@@ -192,7 +208,12 @@ const OnboardingWizard = () => {
   }
 
   const handleBuildMyPlan = async () => {
+
+    const isValid = await validateStep(currentStep)
+    if (!isValid) return
+
     setIsSubmitting(true)
+    setSubmitError('')
     try {
 
       const updates = {
@@ -204,21 +225,22 @@ const OnboardingWizard = () => {
         allergies: onboardingData.step3.allergies,
         dietaryRestrictions: onboardingData.step2.foodPreferences,
         medicalDocuments: onboardingData.step4.medicalFiles,
-        goal: onboardingData.step5.dreamGoal,
-        isFasting: false,
-
+        fitnessGoal: onboardingData.step5.dreamGoal,
+        religion: onboardingData.step2.religion,
+        targetWeight: onboardingData.step5.targetWeight,
+        userGoal: onboardingData.step5.userGoal,
       }
 
 
       console.log(updates)
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/onboarding`, {
+      const response = await fetch(`${BASE_URL}/auth/onboarding`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(updates),
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -229,9 +251,11 @@ const OnboardingWizard = () => {
 
       console.log(data)
 
-      // navigate('/dashboard/insights')
+      // Update auth context or trigger refetch
+      navigate('/dashboard/insights')
     } catch (error) {
       console.error('Failed to complete onboarding:', error)
+      setSubmitError(error instanceof Error ? error.message : 'Failed to complete onboarding')
     } finally {
       setIsSubmitting(false)
     }
@@ -348,6 +372,12 @@ const OnboardingWizard = () => {
               {renderStep()}
             </div>
 
+            {submitError && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {submitError}
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-6 border-t border-gray-100">
               <button
                 type="button"
@@ -383,7 +413,11 @@ const OnboardingWizard = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => validateStep(currentStep) && handleNext()}
+                  onClick={async () => {
+                    const isValid = await validateStep(currentStep)
+                    console.log(isValid)
+                    isValid && handleNext()
+                  }}
                   disabled={isSubmitting}
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >

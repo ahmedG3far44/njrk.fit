@@ -18,9 +18,6 @@ export interface AuthRequest extends Request {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log("hitting requireAuth middleware");
-
-        console.log(req.headers.authorization);
 
         const token = req.headers.authorization?.replace('Bearer ', '');
 
@@ -42,89 +39,97 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 };
 
-// export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         // const accessToken = req.cookies.accessToken;
-//         // const refreshToken = req.cookies.refreshToken;
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const accessToken = req.cookies.accessToken;
+        const refreshToken = req.cookies.refreshToken;
 
-//         const accessToken = req.headers.authorization?.replace('Bearer ', ''); 
+        // console.log("access token", accessToken);
+        // console.log("refresh token", refreshToken);
 
-//         // const refreshToken = req.headers.refreshToken?.replace('Bearer ', '');
+        // const accessToken = req.headers.authorization?.replace('Bearer ', ''); 
 
-//         // Note: Remove console.log of tokens in production to prevent leaking secrets in logs!
+        // const refreshToken = req.headers.refreshToken?.replace('Bearer ', '');
 
-//         // 1. Try to verify the access token first
-//         if (accessToken) {
-//             try {
-//                 const payload = jwtUtils.verifyAccessToken(accessToken);
+        // Note: Remove console.log of tokens in production to prevent leaking secrets in logs!
 
-//                 // PERFORMANCE FIX: Trust the JWT payload. Do NOT hit the database here.
-//                 (req as AuthRequest).user = payload;
-//                 return next();
+        // 1. Try to verify the access token first
+        if (accessToken) {
+            try {
+                const payload = jwtUtils.verifyAccessToken(accessToken);
 
-//             } catch (accessError) {
-//                 // CRITICAL FIX: Do NOT return a 401 here. 
-//                 // We intentionally swallow this error so the code continues 
-//                 // to the refresh token fallback logic below.
-//                 console.log(accessError);
-//             }
-//         }
+                // PERFORMANCE FIX: Trust the JWT payload. Do NOT hit the database here.
+                (req as AuthRequest).user = payload;
+                console.log('access token verified successfully');
 
-//         // 2. Not valid (or missing) => Verify refresh token
-//         if (!refreshToken) {
-//             return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
-//         }
+                // console.log("user", payload);
+                return next();
 
-//         try {
-//             const refreshPayload = jwtUtils.verifyRefreshToken(refreshToken);
+            } catch (accessError) {
+                console.log('access token verification failed', accessError);
+                // CRITICAL FIX: Do NOT return a 401 here. 
+                // We intentionally swallow this error so the code continues 
+                // to the refresh token fallback logic below.
+                console.log(accessError);
+            }
+        }
 
-//             // SECURITY CHECK: We DO hit the database here to ensure the user 
-//             // still exists and hasn't been banned before issuing a fresh session.
-//             const user = await User.findById(refreshPayload?._id);
+        // 2. Not valid (or missing) => Verify refresh token
+        if (!refreshToken) {
+            return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
+        }
 
-//             if (!user) {
-//                 res.clearCookie('accessToken');
-//                 res.clearCookie('refreshToken');
-//                 return res.status(401).json({ error: 'User not found' });
-//             }
+        try {
+            const refreshPayload = jwtUtils.verifyRefreshToken(refreshToken);
+            console.log('refresh token verified successfully');
+            // SECURITY CHECK: We DO hit the database here to ensure the user 
+            // still exists and hasn't been banned before issuing a fresh session.
+            const user = await User.findById(refreshPayload?._id);
 
-//             // 3. Create the rich payload for the new access token and req.user
-//             const userPayload = {
-//                 _id: user._id.toString(),
-//                 userId: user._id.toString(),
-//                 email: user.email,
-//                 name: user.name,
-//                 avatarUrl: user.avatarUrl,
-//                 onboardingCompleted: user.onboardingCompleted,
-//                 subscriptionTier: user.subscriptionTier,
-//             };
+            if (!user) {
+                console.log('user not found');
+                res.clearCookie('accessToken');
+                res.clearCookie('refreshToken');
+                return res.status(401).json({ error: 'User not found' });
+            }
 
-//             const newAccessToken = jwtUtils.generateAccessToken(userPayload);
+            // 3. Create the rich payload for the new access token and req.user
+            const userPayload = {
+                _id: user._id.toString(),
+                userId: user._id.toString(),
+                email: user.email,
+                name: user.name,
+                avatarUrl: user.avatarUrl,
+                onboardingCompleted: user.onboardingCompleted,
+                subscriptionTier: user.subscriptionTier,
+            };
 
-//             // Attach the new token to the response cookies
-//             res.cookie('accessToken', newAccessToken, {
-//                 httpOnly: true,
-//                 secure: process.env.NODE_ENV === 'production',
-//                 sameSite: 'strict',
-//                 maxAge: 15 * 60 * 1000 // FIX: 15 minutes (Standard access token life)
-//             });
+            const newAccessToken = jwtUtils.generateAccessToken(userPayload);
 
-//             // FIX: Ensure req.user has the full data, not just the refresh payload
-//             (req as AuthRequest).user = userPayload;
-//             return next();
+            // Attach the new token to the response cookies
+            res.cookie('accessToken', newAccessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 15 * 60 * 1000 // FIX: 15 minutes (Standard access token life)
+            });
 
-//         } catch (refreshError) {
-//             // 4. If refresh token is expired/invalid => clear cookies and redirect
-//             res.clearCookie('accessToken');
-//             res.clearCookie('refreshToken');
-//             return res.status(401).json({
-//                 error: 'Session expired. Please log in again.',
-//                 code: 'SESSION_EXPIRED'
-//             });
-//         }
+            // FIX: Ensure req.user has the full data, not just the refresh payload
+            (req as AuthRequest).user = userPayload;
+            return next();
 
-//     } catch (error) {
-//         console.error('Auth Middleware Error:', error);
-//         return res.status(500).json({ error: 'Internal server error' });
-//     }
-// };
+        } catch (refreshError) {
+            // 4. If refresh token is expired/invalid => clear cookies and redirect
+            res.clearCookie('accessToken');
+            res.clearCookie('refreshToken');
+            return res.status(401).json({
+                error: 'Session expired. Please log in again.',
+                code: 'SESSION_EXPIRED'
+            });
+        }
+
+    } catch (error) {
+        console.error('Auth Middleware Error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};

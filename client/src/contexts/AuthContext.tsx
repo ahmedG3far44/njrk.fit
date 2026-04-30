@@ -1,12 +1,15 @@
-import { createContext, useContext, type ReactNode } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { authService, type User, type LoginCredentials, type RegisterData, type AuthResponse } from '../services/auth'
-import api from '../lib/api'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { type User, type LoginCredentials, type RegisterData, type AuthResponse } from '../services/auth'
+import { api } from '../lib/fetchApi'
+
+
+const API_URL = import.meta.env.VITE_API_URL as string;
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  getCurrentUser: () => Promise<void>
   login: (credentials: LoginCredentials) => Promise<AuthResponse>
   register: (userData: RegisterData) => Promise<AuthResponse>
   logout: () => Promise<void>
@@ -22,58 +25,93 @@ export const useAuth = () => {
   return context
 }
 
-const userQueryKey = ['user']
+
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const queryClient = useQueryClient()
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: userQueryKey,
-    queryFn: async () => {
-      const token = localStorage.getItem('accessToken')
-      if (!token) return null
-      try {
-        const { data } = await api.get<{ user: User }>('/users/me')
-        return data.user
-      } catch {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        return null
+  const [user, setUser] = useState<User | null>(JSON.parse(localStorage.getItem("user")!))
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(user ? true : false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+
+  const getCurrentUser = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${API_URL}/users/me`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch user");
       }
-    },
-    enabled: !!localStorage.getItem('accessToken'),
-    retry: false,
-  })
 
-  const loginMutation = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {
-      queryClient.setQueryData(userQueryKey, data.user)
-    },
-  })
+      const data = await res.json();
+      console.log("current user", data.user);
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setIsAuthenticated(true);
+      return data;
 
-  const registerMutation = useMutation({
-    mutationFn: authService.register,
-    onSuccess: (data) => {
-      queryClient.setQueryData(userQueryKey, data.user)
-    },
-  })
-
-  const logoutMutation = useMutation({
-    mutationFn: authService.logout,
-    onSuccess: () => {
-      queryClient.clear()
-    },
-  })
-
-  const value: AuthContextType = {
-    user: user ?? null,
-    isLoading,
-    isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  const login = async (credentials: LoginCredentials) => {
+    setIsLoading(true);
+    try {
+      const data = await api.post<AuthResponse>("/auth/login", credentials);
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setIsAuthenticated(true);
+      return data;
+    } catch (error) {
+      console.error('Error logging in:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  const register = async (userData: RegisterData) => {
+    setIsLoading(true);
+    try {
+      const data = await api.post<AuthResponse>("/auth/register", userData);
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setIsAuthenticated(true);
+      return data;
+    } catch (error) {
+      console.error('Error registering:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.post("/auth/logout", {});
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem("user");
+    } catch (error) {
+      console.error('Error logging out:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  useEffect(() => {
+
+    getCurrentUser();
+
+
+  }, [])
+
+  return <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, register, logout, getCurrentUser }}>{children}</AuthContext.Provider>
 }

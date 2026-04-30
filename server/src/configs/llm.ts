@@ -6,7 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 
 
 const gemini = new GoogleGenAI({
-    apiKey: env.googleApiKey,
+    apiKey: env.GOOGLE_API_KEY,
 });
 
 const ollama = new Ollama({
@@ -17,7 +17,7 @@ const ollama = new Ollama({
 
 const openrouter = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
-    apiKey: env.openrouterApiKey,
+    apiKey: env.OPENROUTER_API_KEY,
 });
 
 

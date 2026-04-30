@@ -20,9 +20,9 @@ export interface IUser extends Document {
   goal?: Goal;
   targetWeight?: number;
   activityLevel?: ActivityLevel;
-  fitnessGoals: string[];
-  dietaryRestrictions: string[];
-  equipment: string[];
+  fitnessGoals: string;
+  dietaryRestrictions?: string;
+  equipment?: string[];
   subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
   familyMembers: Types.ObjectId[];
   subscription?: {
@@ -69,11 +69,11 @@ const UserSchema = new Schema<IUser>({
   gender: { type: String, enum: ['male', 'female'] },
   weightUnit: { type: String, enum: ['kg', 'lb'], default: 'kg' },
   heightUnit: { type: String, enum: ['cm', 'in'], default: 'cm' },
-  religion: { type: String, enum: ['muslim', 'christian'] },
+  religion: { type: String, enum: ['muslim', 'christian'], default: 'muslim' },
   goal: {
     type: String,
     enum: ['lose_weight', 'gain_weight', 'maintain_weight'],
-    default: 'maintain_weight'
+    default: 'lose_weight'
   },
   targetWeight: { type: Number },
   activityLevel: {
@@ -81,7 +81,7 @@ const UserSchema = new Schema<IUser>({
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate'
   },
-  fitnessGoals: [{ type: String }],
+  fitnessGoals: { type: String }, 
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
   subscriptionTier: {
@@ -113,7 +113,7 @@ const UserSchema = new Schema<IUser>({
     weeklySummary: { type: Boolean, default: true },
     mealReminders: { type: Boolean, default: true },
     autoGenerateMeals: { type: Boolean, default: false },
-    fasting: { type: Boolean, default: false },
+    isFasting: { type: Boolean, default: false },
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],
   },

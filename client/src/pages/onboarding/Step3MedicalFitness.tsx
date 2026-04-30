@@ -51,7 +51,7 @@ const activityOptions = [
     emoji: '🚶',
     slug: 'light',
     description: 'Light exercise 1-3 days/week',
-    value: 1.375
+    value: 1.3
   },
   {
     title: 'Moderately Active',
@@ -96,14 +96,18 @@ const Step3MedicalFitness = ({ data, onUpdate, errors }: Step3MedicalFitnessProp
       newAllergies = [...newAllergies, allergy]
     }
     onUpdate({ ...data, allergies: newAllergies })
+    // console.log("Allergies", newAllergies)
   }
 
   const handleActivityChange = (activity: activityOptionsType) => {
     onUpdate({ ...data, activityLevel: activity })
+    console.log("Activity level", activity)
   }
 
   const handleOtherAllergyChange = (value: string) => {
     onUpdate({ ...data, otherAllergy: value })
+    console.log("Other allergy: ", value)
+
   }
 
   return (
@@ -166,7 +170,7 @@ const Step3MedicalFitness = ({ data, onUpdate, errors }: Step3MedicalFitnessProp
                 <button
                   key={option.slug}
                   type="button"
-                  onClick={() => handleActivityChange(option)}
+                  onClick={() => handleActivityChange(option as activityOptionsType)}
                   className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all ${isSelected
                     ? 'bg-purple-50 border-2 border-purple-600'
                     : 'bg-white border-2 border-gray-200 hover:border-purple-300'

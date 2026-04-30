@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FeatureCard {
@@ -160,6 +161,7 @@ function HomePage() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [heroVisible, setHeroVisible] = useState(false);
+    const { getCurrentUser, user, logout, isLoading } = useAuth();
 
     useEffect(() => {
         const t = setTimeout(() => setHeroVisible(true), 100);
@@ -297,12 +299,25 @@ function HomePage() {
                         </div>
 
                         {/* Desktop CTA */}
-                        <div className="hidden md:flex items-center gap-3">
-                            <Link to="/login" className="text-sm font-medium text-gray-700 hover:text-purple-700 transition-colors px-3 py-2">Login</Link>
-                            <Link to="/register" className="btn-primary bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
-                                Get Started
-                            </Link>
-                        </div>
+
+
+                        {user ? (
+                            <div className="hidden md:flex items-center gap-3">
+                                <Link to="/dashboard/insights" className="btn-primary bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
+                                    Dashboard
+                                </Link>
+                                <button disabled={isLoading} onClick={logout} className="btn-primary bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
+                                    {isLoading ? "Loading..." : "Logout"}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="hidden md:flex items-center gap-3">
+                                <Link to="/login" className="btn-primary bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">Login</Link>
+                                <Link to="/register" className="btn-primary bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md">
+                                    Get Started
+                                </Link>
+                            </div>
+                        )}
 
                         {/* Mobile Menu Button */}
                         <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors">

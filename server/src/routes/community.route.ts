@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import mongoose from 'mongoose';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+
 import { Post, Like, Comment } from '../models/community.model';
 // import { uploadFile } from '../configs/aws';
 // import { v4 as uuidv4 } from 'uuid';
@@ -22,27 +23,23 @@ const upload = multer({
 
 //upload.single('media')
 // create post
-router.post('/posts', requireAuth, upload.single('media'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/posts', authMiddleware, upload.single('media'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const mediaFile = req.file;
-        const content = req.body.content;
+        const payload = req.body;
+        console.log("payload", payload);
+        const content = payload.content;
+
+        if (!content) {
+            return res.status(400).json({ error: "Content is required" });
+        }
 
         console.log("content", content);
         console.log("mediaFile", mediaFile);
 
         let mediaUrl: string | undefined;
-
-        // if (req.file) {
-        //     const key = `posts/${authReq.user?.userId}/${uuidv4()}.${req.file.originalname.split('.').pop()}`;
-        //     mediaUrl = await uploadFile({
-        //         originalname: req.file.originalname,
-        //         buffer: req.file.buffer,
-        //         mimetype: req.file.mimetype,
-        //         size: req.file.size,
-        //     }, key);
-        // }
 
         mediaUrl = "https://imgs.search.brave.com/Rp_q1FGkE2mQ5yApmJ4NRgHo77BQ3eY0bLQYLGfdcrA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9wbGFj/ZWhvbGRpdC5jb20v/NjAweDQwMA";
 
@@ -61,7 +58,7 @@ router.post('/posts', requireAuth, upload.single('media'), async (req: Request, 
 });
 
 // get feed posts
-// requireAuth
+// authMiddleware
 
 router.get('/test', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -149,8 +146,8 @@ router.get('/test', async (req: Request, res: Response, next: NextFunction) => {
                 "commentCount": 0,
             }
         ]
-    
-        
+
+
         // const count = await Post.countDocuments();
 
         // if (count === 0) {
@@ -210,7 +207,7 @@ router.get('/feed', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 //delete posts
-router.delete("/posts/:id", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/posts/:id", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const postId = new mongoose.Types.ObjectId(req.params.id as string);
         const post = await Post.findById(postId);
@@ -227,68 +224,77 @@ router.delete("/posts/:id", requireAuth, async (req: Request, res: Response, nex
     }
 });
 
-// Like Post
-router.post('/posts/:id/like', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+// Toggle Likes on a Post
+router.put('/posts/:id/like', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
-        const userId = new mongoose.Types.ObjectId(authReq.user?.userId);
-        const postId = new mongoose.Types.ObjectId(req.params.id as string);
+        const userId = authReq.user?.userId as string;
+        const postId = req.params.id as string;
+
         const post = await Post.findById(postId);
         const existingLike = await Like.findOne({ postId, userId });
-
-        if (existingLike) {
-            return res.status(400).json({ error: 'You have already liked this post' });
-        }
 
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
 
+        //unlike post
+        if (existingLike) {
+            await Like.deleteOne({ postId, userId });
+            post.likeCount -= 1;
+            post.isLiked = false; 
+            await post.save();
+
+            res.status(200).json({ success: true, message: "Post unliked successfully", count: post.likeCount });
+        }
+
+        //like post
         const like = await Like.create({
             postId: postId,
             userId: userId,
         });
 
         post.likeCount += 1;
+        post.isLiked = true; 
         await post.save();
 
-        res.status(201).json({ like });
+        res.status(201).json({ success: true, message: "Post liked successfully", count: post.likeCount });
     } catch (error) {
         next(error);
     }
 });
 
 // Unlike post 
-router.delete("/posts/:id/like", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const authReq = req as AuthRequest;
-        const userId = new mongoose.Types.ObjectId(authReq.user?.userId);
-        const postId = new mongoose.Types.ObjectId(req.params.id as string);
-        const post = await Post.findById(postId);
-        const existingLike = await Like.findOne({ postId, userId });
+// router.delete("/posts/:id/like", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         const authReq = req as AuthRequest;
+//         const userId = new mongoose.Types.ObjectId(authReq.user?.userId);
+//         const postId = new mongoose.Types.ObjectId(req.params.id as string);
+//         const post = await Post.findById(postId);
+//         const existingLike = await Like.findOne({ postId, userId });
 
-        if (!existingLike) {
-            return res.status(400).json({ error: 'You have not liked this post' });
-        }
+//         if (!existingLike) {
+//             return res.status(400).json({ error: 'You have not liked this post' });
+//         }
 
-        if (!post) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
+//         if (!post) {
+//             return res.status(404).json({ error: 'Post not found' });
+//         }
 
-        await existingLike.deleteOne();
+//         await existingLike.deleteOne();
 
-        post.likeCount -= 1;
-        await post.save();
+//         post.likeCount -= 1;
+//         await post.save();
 
-        res.status(200).json({ success: true });
-    } catch (error) {
-        next(error);
-    }
-});
+//         res.status(200).json({ success: true });
+//     } catch (error) {
+//         next(error);
+//     }
+// });
 
 
 // get comments by post id
-router.get('/posts/:id/comments', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/posts/:id/comments', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const postId = new mongoose.Types.ObjectId(req.params.id as string);
 
@@ -303,7 +309,7 @@ router.get('/posts/:id/comments', requireAuth, async (req: Request, res: Respons
 });
 
 // create comment
-router.post('/posts/:id/comment', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/posts/:id/comment', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = new mongoose.Types.ObjectId(authReq.user?.userId);
@@ -331,7 +337,7 @@ router.post('/posts/:id/comment', requireAuth, async (req: Request, res: Respons
 });
 
 // delete comment
-router.delete("/posts/:id/comment/:commentId", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete("/posts/:id/comment/:commentId", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = new mongoose.Types.ObjectId(authReq.user?.userId);

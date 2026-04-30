@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService, type UpdateUserData } from '../../services/user'
 import { useAuth } from '../../contexts/AuthContext'
-import { Loader2, Trash2, Bell, Mail, Utensils, Settings, Camera, Calendar, Save, Bell as BellIcon, ChevronRight, CheckCircle, X } from 'lucide-react'
+import { Loader2, Trash2, Bell, Mail, Utensils, Settings, Camera, Calendar, Save, Bell as BellIcon, ChevronRight, CheckCircle, X, LucideUser } from 'lucide-react'
 
 const GOALS = [
   { value: 'lose_weight', label: 'Weight Loss' },
@@ -82,6 +82,7 @@ const SettingsPage = () => {
     notifications: user?.preferences?.notifications ?? true,
     weeklySummary: user?.preferences?.weeklySummary ?? true,
     mealReminders: user?.preferences?.mealReminders ?? true,
+    isFasting: false,
     autoGenerateMeals: user?.preferences?.autoGenerateMeals ?? false,
     reminderTime: user?.preferences?.reminderTime ?? '08:00',
     reminderTypes: user?.preferences?.reminderTypes ?? ['Meals'],
@@ -93,7 +94,7 @@ const SettingsPage = () => {
     weight: user?.weight ?? 70,
     age: user?.age ?? 30,
     gender: user?.gender ?? 'male',
-    goal: user?.goal ?? 'build_muscle',
+    goal: user?.goal ?? 'gain_weight',
   })
 
   const [medicalData, setMedicalData] = useState({
@@ -515,6 +516,17 @@ const SettingsPage = () => {
           enabled={preferences.mealReminders}
           onChange={(v) => handlePreferenceChange('mealReminders', v)}
         />
+        {
+          user.religion === "muslim" && (
+            <ToggleOption
+              icon={<LucideUser className="w-5 h-5" />}
+              title="Fasting Mode"
+              description="Activate fasting mode"
+              enabled={preferences.isFasting}
+              onChange={(v) => handlePreferenceChange('isFasting', v)}
+            />
+          )
+        }
 
         <div className="border-t pt-4">
           <button

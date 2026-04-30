@@ -4,8 +4,9 @@ import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema 
 import * as authService from '../services/auth.service';
 import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
-import { AuthRequest, requireAuth } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
 import User from '../models/user.model';
+import z from 'zod';
 
 
 const router = Router();
@@ -121,7 +122,9 @@ router.get('/google/callback', async (req: Request, res: Response) => {
         setAuthCookies(res, accessToken, refreshToken);
 
         // Now redirect based on onboarding status
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        const clientUrl = env.CLIENT_URL;
+        console.log("redirect client url", clientUrl)
+        console.log("user onboarding completed", user.onboardingCompleted)
         if (!user.onboardingCompleted) {
             res.redirect(`${clientUrl}/onboarding/welcome`);
         } else {
@@ -144,7 +147,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
 
         setAuthCookies(res, result.accessToken!, result.refreshToken!);
 
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        const clientUrl = env.CLIENT_URL;
         const redirectPath = !result.user!.onboardingCompleted ? '/onboarding/welcome' : '/dashboard/insights';
 
         res.status(201).json({ ...result, redirect: `${clientUrl}${redirectPath}` });
@@ -164,7 +167,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
 
         setAuthCookies(res, result.accessToken!, result.refreshToken!);
 
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+        const clientUrl = env.CLIENT_URL;
         const redirectPath = !result.user!.onboardingCompleted ? '/onboarding/welcome' : '/dashboard/insights';
 
         // Changed to 200 OK (201 is usually for resource creation)
@@ -237,18 +240,81 @@ router.post('/reset-password', validate(resetPasswordSchema), async (req: Reques
 });
 
 
-router.post("/onboarding", requireAuth, async (req: Request, res: Response) => {
+interface IOnboardingRequest {
+    age: number;
+    gender: "male" | "female";
+    height: number;
+    weight: number;
+    allergies: string[];
+    activityLevel: {
+        value: number;
+        title: string;
+        slug: string;
+        emoji: string;
+    };
+    religion: "muslim" | "christian";
+    dietaryRestrictions: string[];
+    medicalDocuments?: string[];
+    userGoal: "lose_weight" | "gain_weight" | "healthy_lifestyle";
+    targetWeight: number;
+    fitnessGoal: string;
+}
+const onboardingSchema = z.object({
+    age: z.number().min(13, {
+        message: "You must be at least 13 years old",
+    }).max(100, {
+        message: "You must be at most 100 years old",
+    }),
+    gender: z.enum(["male", "female"]),
+    height: z.number().min(100, {
+        message: "You must be at least 100cm tall",
+    }).max(250, {
+        message: "You must be at most 250cm tall",
+    }),
+    weight: z.number().min(10, {
+        message: "You must be at least 10kg heavy",
+    }).max(200, {
+        message: "You must be at most 200kg heavy",
+    }),
+    allergies: z.array(z.string()).optional(),
+    activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
+    religion: z.enum(["muslim", "christian"]),
+    dietaryRestrictions: z.array(z.string()).optional(),
+    medicalDocuments: z.array(z.string()).optional(),
+    userGoal: z.enum(["lose_weight", "gain_weight", "maintain_weight"]),
+    targetWeight: z.number(),
+    fitnessGoal: z.string(),
+});
 
+export type TOnboarding = z.infer<typeof onboardingSchema>;
 
+router.post("/onboarding", authMiddleware, async (req: Request, res: Response) => {
     try {
+
+        console.log("onboarding request received");
         const userId = (req as AuthRequest).user?._id;
 
         if (!userId) {
             return res.status(401).json({ error: "Unauthorized" });
         }
-        const payload = req.body;
 
-        const { weight, height, age, gender, dietaryRestrictions, fitnessGoals, activityLevel, trainingDays, weightUnit, heightUnit, religion, goal, targetWeight, isFasting } = payload;
+        const payload = req.body;
+        console.log("body", payload);
+
+        const onboarding = onboardingSchema.safeParse(payload);
+
+        console.log("passing schema validation of onboarding: ", onboarding)
+
+        if (!onboarding.success) {
+            console.log("schema validation failed", onboarding.error);
+            return res.status(400).json({ error: onboarding.error });
+        }
+
+        console.log("onboarding", onboarding.data);
+
+        const data = onboarding.data;
+
+
 
 
         const user = await User.findById(userId);
@@ -257,36 +323,19 @@ router.post("/onboarding", requireAuth, async (req: Request, res: Response) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        user.set({
-            weight,
-            height,
-            age,
-            gender,
-            dietaryRestrictions,
-            fitnessGoals,
-            activityLevel,
-            trainingDays,
-            weightUnit,
-            heightUnit,
-            religion,
-            preferences: {
-                isFasting: isFasting || false,
-            },
-            goal,
-            targetWeight
-        });
-        user.onboardingCompleted = true;
+        const result = await authService.onboardingUser(userId, data);
 
-        await user.save();
+        if (!result.success) {
+            return res.status(400).json({ error: result.message });
+        }
+        console.log("redirecting user to: ", env.CLIENT_URL)
 
-
-        res.redirect(`${env.clientUrl}/dashboard/insights`);
+        res.status(201).json({ message: 'User onboarded successfully', redirect: `${env.CLIENT_URL}/dashboard/insights` });
     }
     catch (error) {
         console.error('Onboarding error:', error);
         res.status(500).json({ error: 'Failed to complete onboarding' });
     }
-
 });
 
 export default router;

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validate } from '../middlewares/validateResource';
 import { generateMealPlanSchema, refineMealSchema } from '../dtos/nutrition.dto';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { AuthRequest, authMiddleware } from '../middlewares/requireAuth';
 import User from '../models/user.model';
 import NutritionPlan from '../models/nutrition.model';
 import { generateMealPlan, refineMeal } from '../services/llm.service';
@@ -13,7 +13,7 @@ import { UserContext, Meal, Macros } from '../types';
 
 const router = Router();
 
-router.post('/generate', requireAuth, validate(generateMealPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/generate', authMiddleware, validate(generateMealPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     let userId = authReq.user?.userId;
@@ -44,8 +44,8 @@ router.post('/generate', requireAuth, validate(generateMealPlanSchema), async (r
       goal: user.goal,
       targetWeight: user.targetWeight,
       activityLevel: user.activityLevel,
-      fitnessGoals: user.fitnessGoals || [],
-      dietaryRestrictions: user.dietaryRestrictions || [],
+      fitnessGoals: user.fitnessGoals,
+      dietaryRestrictions: user.dietaryRestrictions,
     };
 
     const plan = await generateMealPlan(userContext);
@@ -56,7 +56,7 @@ router.post('/generate', requireAuth, validate(generateMealPlanSchema), async (r
       userId,
       date: startDate,
       targetMacros: plan.targetMacros as Macros,
-      meals: plan.meals as Meal[],
+      meals: plan?.meals,
     });
 
 
@@ -72,7 +72,7 @@ type RefinedPlan = {
   targetMacros: Macros;
 };
 
-router.post('/refine/:mealId', requireAuth, validate(refineMealSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/refine/:mealId', authMiddleware, validate(refineMealSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?._id;
@@ -110,8 +110,8 @@ router.post('/refine/:mealId', requireAuth, validate(refineMealSchema), async (r
       height: user.height,
       age: user.age,
       activityLevel: user.activityLevel,
-      fitnessGoals: user.fitnessGoals || [],
-      dietaryRestrictions: user.dietaryRestrictions || [],
+      fitnessGoals: user.fitnessGoals,
+      dietaryRestrictions: user.dietaryRestrictions
     };
 
 
@@ -153,7 +153,7 @@ router.post('/refine/:mealId', requireAuth, validate(refineMealSchema), async (r
   }
 });
 
-router.get('/current', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/current', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     let userId = authReq.user?._id;
@@ -223,7 +223,7 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
   }
 });
 
-router.get('/week', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/week', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     let userId = authReq.user?._id;
@@ -255,7 +255,7 @@ router.get('/week', requireAuth, async (req: Request, res: Response, next: NextF
   }
 });
 
-router.post('/log-meal', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/log-meal', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?._id;

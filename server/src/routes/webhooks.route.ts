@@ -7,7 +7,7 @@ const router = Router();
 
 router.post('/stripe', async (req: Request, res: Response, next: NextFunction) => {
     const sig = req.headers['stripe-signature'];
-    const webhookSecret = env.stripeWebhookSecret;
+    const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
     let event;
 
@@ -23,22 +23,22 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction) =
         case 'customer.subscription.updated': {
             const subscription = event.data.object as any;
             const userId = subscription.metadata?.userId;
-            
+
             if (userId) {
                 await User.findByIdAndUpdate(userId, {
-                    'subscription.status': subscription.status === 'active' ? 'active' : 
-                                   subscription.cancel_at_period_end ? 'canceled' : 'past_due',
+                    'subscription.status': subscription.status === 'active' ? 'active' :
+                        subscription.cancel_at_period_end ? 'canceled' : 'past_due',
                     'subscription.currentPeriodEnd': new Date(subscription.current_period_end * 1000),
                     'subscription.cancelAtPeriodEnd': subscription.cancel_at_period_end || false,
                 });
             }
             break;
         }
-        
+
         case 'customer.subscription.deleted': {
             const subscription = event.data.object as any;
             const userId = subscription.metadata?.userId;
-            
+
             if (userId) {
                 await User.findByIdAndUpdate(userId, {
                     'subscription.status': 'expired',
@@ -47,17 +47,17 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction) =
             }
             break;
         }
-        
+
         case 'invoice.payment_succeeded': {
             const invoice = event.data.object as any;
             const customerId = invoice.customer;
-            
+
             const subscriptionId = invoice.lines?.data[0]?.subscription;
             if (subscriptionId) {
                 const sub = await stripe.subscriptions.retrieve(subscriptionId);
                 await User.findOneAndUpdate(
                     { 'subscription.stripeCustomerId': customerId },
-                    { 
+                    {
                         'subscription.status': 'active',
                         'subscription.currentPeriodEnd': new Date((sub as any).current_period_end * 1000),
                     }
@@ -65,11 +65,11 @@ router.post('/stripe', async (req: Request, res: Response, next: NextFunction) =
             }
             break;
         }
-        
+
         case 'invoice.payment_failed': {
             const invoice = event.data.object as any;
             const customerId = invoice.customer;
-            
+
             await User.findOneAndUpdate(
                 { 'subscription.stripeCustomerId': customerId },
                 { 'subscription.status': 'past_due' }

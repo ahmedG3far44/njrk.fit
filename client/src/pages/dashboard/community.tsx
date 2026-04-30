@@ -176,21 +176,19 @@ const CommunityPage = () => {
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setViewMode('feed')}
-            className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'feed'
+            className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'feed'
                 ? 'bg-purple-600 text-white'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             Feed
           </button>
           <button
             onClick={() => setViewMode('leaderboard')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'leaderboard'
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'leaderboard'
                 ? 'bg-purple-600 text-white'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             Leaderboard
           </button>
@@ -240,7 +238,7 @@ const CommunityPage = () => {
             )}
           </div>
 
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-4 space-y-4 max-sm:hidden ">
             <div className="sticky top-4 space-y-4">
               <SquadCard />
               <TrendingCard />

@@ -11,22 +11,40 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [newPasswordError, setNewPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match')
+    setNewPasswordError('')
+    setConfirmPasswordError('')
+    
+    let isValid = true
+    
+    // Password length check
+    if (!newPassword) {
+      setNewPasswordError('New password is required')
+      isValid = false
+    } else if (newPassword.length < 8) {
+      setNewPasswordError('Password must be at least 8 characters')
+      isValid = false
+    }
+    
+    // Password match check
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please confirm your password')
+      isValid = false
+    } else if (newPassword !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match')
+      isValid = false
+    }
+    
+    if (!isValid) {
       return
     }
-
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters')
-      return
-    }
-
+    
     if (!token) {
       setError('Invalid reset token')
       return
@@ -99,26 +117,32 @@ const ResetPasswordPage = () => {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-              />
-            </div>
+                 placeholder="••••••••"
+               />
+               {newPasswordError && (
+                 <p className="mt-1 text-sm text-red-600">{newPasswordError}</p>
+               )}
+             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-              />
-            </div>
+             <div>
+               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                 Confirm Password
+               </label>
+               <input
+                 id="confirmPassword"
+                 name="confirmPassword"
+                 type="password"
+                 autoComplete="new-password"
+                 required
+                 value={confirmPassword}
+                 onChange={(e) => setConfirmPassword(e.target.value)}
+                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="••••••••"
+               />
+               {confirmPasswordError && (
+                 <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+               )}
+             </div>
           </div>
 
           <div>

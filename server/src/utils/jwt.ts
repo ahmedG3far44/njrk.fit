@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+
 import { env } from "../configs/env";
 
 
@@ -16,19 +17,19 @@ interface TokenPayload {
 
 export const jwtUtils = {
     generateAccessToken: (payload: TokenPayload) => {
-        return jwt.sign(payload, env.jwtSecret, {
+        return jwt.sign(payload, env.JWT_SECRET, {
             expiresIn: '24h'
         });
     },
     generateRefreshToken: (payload: TokenPayload) => {
-        return jwt.sign(payload, env.jwtRefreshSecret, {
+        return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
             expiresIn: '30d',
         });
     },
     verifyAccessToken: (token: string) => {
-        return jwt.verify(token, env.jwtSecret) as TokenPayload;
+        return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
     },
     verifyRefreshToken: (token: string) => {
-        return jwt.verify(token, env.jwtRefreshSecret) as TokenPayload;
+        return jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload;
     },
 } 

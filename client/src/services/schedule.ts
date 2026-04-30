@@ -1,5 +1,5 @@
-import api from '../lib/api'
-import { USE_MOCK, mockSchedule, type ScheduleItem as ScheduleItemType, type Schedule as ScheduleType } from './mockData'
+import { api } from '../lib/fetchApi'
+import { type ScheduleItem as ScheduleItemType, type Schedule as ScheduleType } from './mockData'
 
 export type ScheduleItem = ScheduleItemType
 export type Schedule = ScheduleType
@@ -23,22 +23,23 @@ export interface TimelineEvent {
 
 export const scheduleService = {
   async getSchedule(date?: string): Promise<Schedule> {
-    if (USE_MOCK) {
-      if (date) {
-        return { ...mockSchedule, date }
-      }
-      return { ...mockSchedule }
-    }
+    // if (USE_MOCK) {
+    //   if (date) {
+    //     return { ...mockSchedule, date }
+    //   }
+    //   return { ...mockSchedule }
+    // }
     const params = date ? `?date=${date}` : ''
-    const { data } = await api.get<Schedule>(`/schedule${params}`)
+    const data = await api.get<Schedule>(`/schedule${params}`)
+    console.log(data)
     return data
   },
 
   async toggleComplete(itemId: string, isCompleted: boolean): Promise<{ success: boolean }> {
-    if (USE_MOCK) {
-      return { success: true }
-    }
-    const { data } = await api.patch<{ success: boolean }>(`/schedule/${itemId}/complete`, {
+    // if (USE_MOCK) {
+    //   return { success: true }
+    // }
+    const data = await api.patch<{ success: boolean }>(`/schedule/${itemId}/complete`, {
       isCompleted,
     })
     return data

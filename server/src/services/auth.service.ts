@@ -1,9 +1,12 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { env } from '../configs/env';
 import User from '../models/user.model';
+
+// import { UserProfile } from '../types';
+
+import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
-import { UserProfile } from '../types';
+import { TOnboarding } from '../routes/auth.route';
 
 export const hashPassword = async (password: string): Promise<string> => {
     const salt = await bcrypt.genSalt(12);
@@ -20,23 +23,23 @@ interface TokenPayload {
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
-    return jwt.sign(payload, env.jwtSecret, {
-        expiresIn: env.jwtExpiration as jwt.SignOptions['expiresIn'],
+    return jwt.sign(payload, env.JWT_SECRET, {
+        expiresIn: env.JWT_EXPIRATION as jwt.SignOptions['expiresIn'],
     });
 };
 
 export const generateRefreshToken = (payload: TokenPayload): string => {
-    return jwt.sign(payload, env.jwtRefreshSecret, {
-        expiresIn: env.jwtRefreshExpiration as jwt.SignOptions['expiresIn'],
+    return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+        expiresIn: env.JWT_REFRESH_EXPIRATION as jwt.SignOptions['expiresIn'],
     });
 };
 
 export const verifyAccessToken = (token: string): TokenPayload => {
-    return jwt.verify(token, env.jwtSecret) as TokenPayload;
+    return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 };
 
 export const verifyRefreshToken = (token: string): TokenPayload => {
-    return jwt.verify(token, env.jwtRefreshSecret) as TokenPayload;
+    return jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload;
 };
 
 export const registerUser = async (provider: 'google' | 'github' | 'email', userData: { email: string, password?: string, name: string, avatarUrl?: string, googleId?: string, githubId?: string }): Promise<{
@@ -152,6 +155,35 @@ export const loginUser = async (email: string, password: string) => {
     };
 };
 
+
+export const onboardingUser = async (userId: string, data: TOnboarding) => {
+    try {
+        console.log("updatting user onboarding data: ", data)
+        const user = await User.findById(userId);
+        if (!user) {
+            return { success: false, message: 'User not found' };
+        }
+        user.weight = data.weight;
+        user.height = data.height;
+        user.age = data.age;
+        user.gender = data.gender;
+        user.activityLevel = data.activityLevel;
+        user.dietaryRestrictions = data.dietaryRestrictions?.join(",");
+        user.religion = data.religion;
+        user.allergies = data.allergies;
+
+        user.goal = data.userGoal;
+        user.targetWeight = data.targetWeight;
+        user.fitnessGoals = data.fitnessGoal;
+
+        user.onboardingCompleted = true;
+        await user.save();
+        return { success: true, message: 'User onboarded successfully' };
+    } catch (error) {
+        console.error('User onboarding failed:', error);
+        return { success: false, message: 'User onboarding failed', error: error };
+    }
+}
 
 
 export const getUserByEmail = async (email: string) => {

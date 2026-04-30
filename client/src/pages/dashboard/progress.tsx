@@ -65,13 +65,13 @@ const ProgressPage = () => {
     ? mockDashboardData.weightTrend[mockDashboardData.weightTrend.length - 1].weightKg - mockDashboardData.weightTrend[0].weightKg
     : 0
 
-  if(isLoading){
+  if (isLoading) {
     return <div>Loading...</div>
   }
 
-  
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Your Progress</h1>
@@ -97,67 +97,7 @@ const ProgressPage = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data?.totalWorkouts || 0}</p>
-              <p className="text-sm text-gray-500">Total Workouts</p>
-            </div>
-          </div>
-          <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">+3 this week</span>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data?.weightLost?.toFixed(1) || '0.0'} kg</p>
-              <p className="text-sm text-gray-500">Weight Lost</p>
-            </div>
-          </div>
-          <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
-            {weightChange < 0 ? `${weightChange.toFixed(1)} kg` : '+0.0 kg'}
-          </span>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data?.avgProtein || 0}g</p>
-              <p className="text-sm text-gray-500">Avg. Protein</p>
-            </div>
-          </div>
-          <span className="inline-block mt-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Daily avg</span>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{data?.streakDays || 0}</p>
-              <p className="text-sm text-gray-500">Streak Days</p>
-            </div>
-          </div>
-          {data?.streakDays && data.streakDays > 0 && (
-            <span className="inline-block mt-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full flex items-center gap-1">
-              <Trophy className="w-3 h-3" /> Personal Best!
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h3 className="font-semibold mb-4">Weight Trend (kg)</h3>
           <div className="h-64">
@@ -204,6 +144,68 @@ const ProgressPage = () => {
           </div>
         </div>
       </div>
+
+
+      <div className="grid md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{data?.totalWorkouts || 0}</p>
+              <p className="text-sm text-gray-500">Total Workouts</p>
+            </div>
+          </div>
+          <span className="inline-block mt-2 px-2 py-0.5 text-green-700 text-xs rounded-full">+3 this week</span>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full  bg-green-100  flex items-center justify-center">
+              <Trophy className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{data?.weightLost?.toFixed(1) || '0.0'} kg</p>
+              <p className="text-sm text-gray-500">Weight Lost</p>
+            </div>
+          </div>
+          <span className="inline-block mt-2 px-2 py-0.5 text-green-700 text-xs rounded-full">
+            {weightChange < 0 ? `${weightChange.toFixed(1)} kg` : '+0.0 kg'}
+          </span>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-100  flex items-center justify-center">
+              <Flame className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{data?.avgProtein || 0}g</p>
+              <p className="text-sm text-gray-500">Avg. Protein</p>
+            </div>
+          </div>
+          <span className="inline-block mt-2 px-2 py-0.5 text-purple-700 text-xs rounded-full">Daily avg</span>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-yellow-600" />
+            </div>
+            <div className=''>
+              <p className="text-2xl font-bold">{data?.streakDays || 0}</p>
+              <p className="text-sm text-gray-500">Streak Days</p>
+            </div>
+          </div>
+          {data?.streakDays && data.streakDays > 0 && (
+            <span className="flex  text-yellow-700 mt-2 px-2 py-0.5  text-xs rounded-full flex items-center gap-1">
+              <Trophy className="w-3 h-3" /> Personal Best!
+            </span>
+          )}
+        </div>
+      </div>
+
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <h3 className="font-semibold mb-4">Recent Feelings</h3>

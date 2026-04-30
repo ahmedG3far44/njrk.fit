@@ -4,7 +4,7 @@ import WeeklyFitnessPlan from '../models/fitness.model';
 import { Router, Request, Response, NextFunction } from 'express';
 import { validate } from '../middlewares/validateResource';
 import { generateWorkoutPlanSchema, completeSessionSchema } from '../dtos/nutrition.dto';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
 import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
 import { UserContext } from '../types';
@@ -14,7 +14,7 @@ const router = Router();
 
 export const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; 
 
-router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -32,8 +32,8 @@ router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async
       age: user.age,
       gender: user.gender,
       activityLevel: user.activityLevel,
-      fitnessGoals: user.fitnessGoals || [],
-      dietaryRestrictions: user.dietaryRestrictions || [],
+      fitnessGoals: user.fitnessGoals || "",
+      dietaryRestrictions: user.dietaryRestrictions || "",
     };
 
     const plan = await generateWorkoutPlan(
@@ -62,7 +62,7 @@ router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async
 });
 router.patch(
   "/session/:sessionId/complete",
-  requireAuth,
+  authMiddleware,
   validate(completeSessionSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -128,7 +128,7 @@ router.patch(
   }
 );
 
-router.get('/current', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/current', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -162,7 +162,7 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
       workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
     }
 
-    res.status(200).json({ data: workouts });
+    res.status(200).json({ data: workouts? workouts : "No workouts scheduled for today." });
   } catch (error) {
     next(error);
   }

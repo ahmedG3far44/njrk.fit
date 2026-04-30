@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "./contexts/AuthContext"
 // import { ProtectedRoute } from "./components/ProtectedRoute"
+import { OnboardingRoute } from "./components/OnboardingRoute"
 
 import LoginPage from "./pages/login"
 import RegisterPage from "./pages/register"
@@ -38,7 +39,11 @@ const App = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/onboarding/welcome" element={<OnboardingWizard />} />
+            <Route path="/onboarding/welcome" element={
+              <OnboardingRoute>
+                <OnboardingWizard />
+              </OnboardingRoute>
+            } />
 
             <Route path="/test" element={<TestCallingPage />} />
 

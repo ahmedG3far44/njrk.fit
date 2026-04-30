@@ -1,10 +1,10 @@
-import api from '../lib/api'
-import { 
-  USE_MOCK, 
-  mockWorkoutPlan, 
+import { api } from '../lib/fetchApi'
+import {
+  // USE_MOCK, 
+  // mockWorkoutPlan, 
   type Exercise as ExerciseType,
   type WorkoutSession as WorkoutSessionType,
-  type WorkoutPlan as WorkoutPlanType 
+  type WorkoutPlan as WorkoutPlanType
 } from './mockData'
 
 export type Exercise = ExerciseType
@@ -22,34 +22,37 @@ export interface CompleteSessionData {
 }
 
 export const fitnessService = {
-  async getCurrent(date?: string): Promise<{ workoutPlan: WorkoutPlan }> {
-    if (USE_MOCK) {
-      return { workoutPlan: mockWorkoutPlan }
-    }
+  async getCurrent(date?: "week" | "today"): Promise<{ workoutPlan: WorkoutPlan }> {
+    // if (USE_MOCK) {
+    //   return { workoutPlan: mockWorkoutPlan }
+    // }
+    // if (!date) {
+    //   return { workoutPlan: mockWorkoutPlan }
+    // }
     const params = date ? `?date=${date}` : ''
-    const { data } = await api.get<{ workoutPlan: WorkoutPlan }>(`/fitness/current${params}`)
+    const data = await api.get<{ workoutPlan: WorkoutPlan }>(`/fitness/current${params}`)
     return data
   },
 
-  async generate(data: GenerateWorkoutData): Promise<{ workoutPlan: WorkoutPlan }> {
-    if (USE_MOCK) {
-      return { workoutPlan: mockWorkoutPlan }
-    }
-    const { data: response } = await api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', data)
-    return response
+  async generate(generateWorkoutData: GenerateWorkoutData): Promise<{ workoutPlan: WorkoutPlan }> {
+    // if (USE_MOCK) {
+    //   return { workoutPlan: mockWorkoutPlan }
+    // }
+    const data = await api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', generateWorkoutData)
+    return data
   },
 
   async completeSession(
     sessionId: string,
     data?: CompleteSessionData
   ): Promise<{ workoutPlan: WorkoutPlan; sessionCompleted: { isCompleted: boolean } }> {
-    if (USE_MOCK) {
-      return { 
-        workoutPlan: mockWorkoutPlan, 
-        sessionCompleted: { isCompleted: true } 
-      }
-    }
-    const { data: response } = await api.patch<{
+    // if (USE_MOCK) {
+    //   return { 
+    //     workoutPlan: mockWorkoutPlan, 
+    //     sessionCompleted: { isCompleted: true } 
+    //   }
+    // }
+    const response = await api.patch<{
       workoutPlan: WorkoutPlan
       sessionCompleted: { isCompleted: boolean }
     }>(`/fitness/session/${sessionId}/complete`, data)

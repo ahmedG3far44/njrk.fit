@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { requireAuth, AuthRequest, authMiddleware } from '../middlewares/requireAuth';
 
 import stripe from '../configs/stripe';
 import User from '../models/user.model';
@@ -7,7 +7,7 @@ import { env } from '../configs/env';
 
 const router = Router();
 
-router.post('/create', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/create', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

@@ -7,6 +7,7 @@ export interface IPost extends Document {
   mediaUrl?: string; // S3 image url
   likeCount: number; // Cached count for fast feed loading
   commentCount: number;
+  isLiked?: boolean;
 }
 
 const PostSchema = new Schema<IPost>({
@@ -14,6 +15,7 @@ const PostSchema = new Schema<IPost>({
   content: { type: String, required: true, maxlength: 500 },
   mediaUrl: { type: String },
   likeCount: { type: Number, default: 0 },
+  isLiked: { type: Boolean, default: false },
   commentCount: { type: Number, default: 0 },
 }, { timestamps: true });
 
