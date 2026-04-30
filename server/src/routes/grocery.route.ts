@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireAuth, AuthRequest, authMiddleware } from '../middlewares/requireAuth';
+import { requireAuth, AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import NutritionPlan from '../models/nutrition.model';
@@ -24,7 +24,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
 
-    const daysAhead = parseInt(req.query.daysAhead as string) || 7; 
+    const daysAhead = parseInt(req.query.daysAhead as string) || 7;
 
     let groceryList = await GroceryList.findOne({ userId });
 
@@ -70,7 +70,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
     const items = groceryList.items.map(item => ({
       name: item.name,
       category: item.category,
-      quantity: formatQuantity(Number(item.totalQuantity?.toString().split(' ')[0]) * daysAhead, item.unit) ,
+      quantity: formatQuantity(Number(item.totalQuantity?.toString().split(' ')[0]) * daysAhead, item.unit),
       checked: item.isPurchased,
       isPurchased: item.isPurchased,
     }));

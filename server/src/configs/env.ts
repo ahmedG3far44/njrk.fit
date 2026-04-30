@@ -19,7 +19,7 @@ const envSchema = z.object({
     S3_ACCESS_KEY_ID: z.string().min(1, 'S3_ACCESS_KEY_ID is required'),
     S3_SECRET_ACCESS_KEY: z.string().min(1, 'S3_SECRET_ACCESS_KEY is required'),
 
-    STRIPE_SECRET_KEY: z.string().default('sk_test_51TJWvyRPSIjKJwi6NZEWveg1OOYEL3Z0aAJrGjeV8boI9yPPFEka3C0rvg3AfGJLCtda7zQSnN5JhKbIjx02W94t00GKZWRVb4'),
+    STRIPE_SECRET_KEY: z.string().default('sk_test_51TJWvyRPSIjKJwi6NZEWveg1OOYEL3Z0aAJrGjeV8boI9yPPFEka3C0rvg3AfGJLCtda7zQSnN5JhKbIjx02W94t00GKZWRVb4'), 
     STRIPE_WEBHOOK_SECRET: z.string().default('whsec_13d5831238f76ff2f8c8cd2f7cab809c04fef9ec0616e93b79ff9c1486cb50f4'),
 
     EMAIL_USER: z.string().email().default('njerka.fit@gmail.com'),

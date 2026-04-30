@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validate } from '../middlewares/validateResource';
 import { generateMealPlanSchema, refineMealSchema } from '../dtos/nutrition.dto';
-import { AuthRequest, authMiddleware } from '../middlewares/requireAuth';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import User from '../models/user.model';
 import NutritionPlan from '../models/nutrition.model';
 import { generateMealPlan, refineMeal } from '../services/llm.service';
@@ -21,7 +21,7 @@ router.post('/generate', authMiddleware, validate(generateMealPlanSchema), async
     const targetUserId = req.body.userId;
     if (targetUserId) {
       const currentUser = await User.findById(userId);
-      if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
+      if (!currentUser || currentUser.subscription.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
       }
       userId = targetUserId;
@@ -165,7 +165,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
 
     if (targetUserId) {
       const currentUser = await User.findById(userId);
-      if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
+      if (!currentUser || currentUser.subscription.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
       }
       userId = targetUserId;
@@ -231,7 +231,7 @@ router.get('/week', authMiddleware, async (req: Request, res: Response, next: Ne
     const targetUserId = req.query.userId as string;
     if (targetUserId) {
       const currentUser = await User.findById(userId);
-      if (!currentUser || currentUser.subscriptionTier === 'BASIC') {
+      if (!currentUser || currentUser.subscription.subscriptionTier === 'BASIC') {
         return res.status(403).json({ error: 'Premium subscription required for family mode' });
       }
       userId = targetUserId;

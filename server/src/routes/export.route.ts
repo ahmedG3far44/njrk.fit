@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { AuthRequest, authMiddleware } from "../middlewares/requireAuth";
+import { AuthRequest, authMiddleware } from "../middlewares/authMiddleware";
 import { generatePDF } from "../services/pdf.service";
 
 import WeeklyFitnessPlan from "../models/fitness.model";
@@ -8,7 +8,7 @@ import GroceryList from "../models/groceryList.model";
 import User from "../models/user.model";
 
 
- 
+
 const router = Router();
 
 const getLatestDocument = async (model: any, userId: string) => {

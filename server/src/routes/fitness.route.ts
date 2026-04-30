@@ -4,7 +4,7 @@ import WeeklyFitnessPlan from '../models/fitness.model';
 import { Router, Request, Response, NextFunction } from 'express';
 import { validate } from '../middlewares/validateResource';
 import { generateWorkoutPlanSchema, completeSessionSchema } from '../dtos/nutrition.dto';
-import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
 import { UserContext } from '../types';
@@ -12,7 +12,7 @@ import { UserContext } from '../types';
 const router = Router();
 
 
-export const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; 
+export const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -135,7 +135,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
 
     const dateParam = req.query.date as 'day' | 'week';
 
-    if(!dateParam){
+    if (!dateParam) {
       return res.status(400).json({ error: 'Invalid date parameter' });
     }
 
@@ -146,7 +146,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
 
-    
+
 
     const currentDay = weekDays[date.getDay()];
 
@@ -162,7 +162,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
       workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
     }
 
-    res.status(200).json({ data: workouts? workouts : "No workouts scheduled for today." });
+    res.status(200).json({ data: workouts ? workouts : "No workouts scheduled for today." });
   } catch (error) {
     next(error);
   }

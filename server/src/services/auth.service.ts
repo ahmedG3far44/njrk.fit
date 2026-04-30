@@ -7,6 +7,7 @@ import User from '../models/user.model';
 import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
 import { TOnboarding } from '../routes/auth.route';
+import stripe from '../configs/stripe';
 
 export const hashPassword = async (password: string): Promise<string> => {
     const salt = await bcrypt.genSalt(12);
@@ -53,12 +54,16 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         avatarUrl?: string;
         onboardingCompleted: boolean;
         subscriptionTier: "BASIC" | "PRO" | "FAMILY";
+        stripCustomerId: string;
     };
     accessToken?: string;
     refreshToken?: string;
 }> => {
 
     const { email, password, name, avatarUrl, googleId, githubId } = userData;
+
+
+
 
     const placeholder = "https://imgs.search.brave.com/XTYb7aqQKvXRuwwA2RPI2PJEiFUM567kRggEPKviqC8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdDMu/ZGVwb3NpdHBob3Rv/cy5jb20vNDExMTc1/OS8xMzQyNS92LzQ1/MC9kZXBvc2l0cGhv/dG9zXzEzNDI1NTUz/Mi1zdG9jay1pbGx1/c3RyYXRpb24tcHJv/ZmlsZS1wbGFjZWhv/bGRlci1tYWxlLWRl/ZmF1bHQtcHJvZmls/ZS5qcGc"
 
@@ -76,6 +81,11 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         return { success: false, message: 'Email already exists' }
     }
 
+    const customer = await stripe.customers.create({
+        email: email,
+        name: name,
+    });
+
     let newUser;
     switch (provider) {
         case 'google':
@@ -84,6 +94,14 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 email: email.toLowerCase(),
                 avatarUrl,
                 googleId,
+                subscription: {
+                    stripCustomerId: customer.id,
+                    subscriptionTier: "BASIC",
+                    subscriptionStatus: "trialing",
+                    subscriptionId: null,
+                    subscriptionStartDate: new Date(),
+                    subscriptionEndDate: null
+                }
             }
             break;
         case 'email':
@@ -92,6 +110,14 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 email: email.toLowerCase(),
                 passwordHash: await hashPassword(password as string),
                 avatarUrl: placeholder,
+                subscription: {
+                    stripCustomerId: customer.id,
+                    subscriptionTier: "BASIC",
+                    subscriptionStatus: "trialing",
+                    subscriptionId: null,
+                    subscriptionStartDate: new Date(),
+                    subscriptionEndDate: null
+                }
             }
             break;
         default:
@@ -100,9 +126,21 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 email: email.toLowerCase(),
                 passwordHash: await hashPassword(password as string),
                 avatarUrl: placeholder,
+                subscription: {
+                    stripCustomerId: customer.id,
+                    subscriptionTier: "BASIC",
+                    subscriptionStatus: "active",
+                    subscriptionId: null,
+                    subscriptionStartDate: new Date(),
+                    subscriptionEndDate: null
+                }
             }
             break;
     }
+
+    console.log("Stripe customer created: ", customer.id);
+
+
     const user = await User.create(newUser);
 
     const payload = {
@@ -112,7 +150,8 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         name: user.name,
         avatarUrl: user.avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
-        subscriptionTier: user.subscriptionTier
+        stripCustomerId: customer.id,
+        subscriptionTier: "BASIC" as const
     };
 
     return {
@@ -142,7 +181,7 @@ export const loginUser = async (email: string, password: string) => {
         name: user.name,
         avatarUrl: user.avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
-        subscriptionTier: user.subscriptionTier
+        subscriptionTier: user.subscription?.subscriptionTier as "BASIC" | "PRO" | "FAMILY"
     };
 
 

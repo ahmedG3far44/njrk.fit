@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import {  AuthRequest, authMiddleware } from '../middlewares/requireAuth';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import NutritionPlan from '../models/nutrition.model';
 import WeeklyFitnessPlan from '../models/fitness.model';
 

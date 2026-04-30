@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import mongoose from 'mongoose';
-import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 
 import { Post, Like, Comment } from '../models/community.model';
 // import { uploadFile } from '../configs/aws';
@@ -242,7 +242,7 @@ router.put('/posts/:id/like', authMiddleware, async (req: Request, res: Response
         if (existingLike) {
             await Like.deleteOne({ postId, userId });
             post.likeCount -= 1;
-            post.isLiked = false; 
+            post.isLiked = false;
             await post.save();
 
             res.status(200).json({ success: true, message: "Post unliked successfully", count: post.likeCount });
@@ -255,7 +255,7 @@ router.put('/posts/:id/like', authMiddleware, async (req: Request, res: Response
         });
 
         post.likeCount += 1;
-        post.isLiked = true; 
+        post.isLiked = true;
         await post.save();
 
         res.status(201).json({ success: true, message: "Post liked successfully", count: post.likeCount });

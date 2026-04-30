@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import dbConnection from './configs/db';
 import authRoutes from './routes/auth.route';
 import userRoutes from './routes/user.route';
@@ -19,18 +19,25 @@ import cookieParser from 'cookie-parser';
 import { corsOptions } from './configs/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestLogger } from './middlewares/requestLogger';
+// ... imports above ...
 
 const app = express();
-
 dbConnection;
-
 
 app.use(requestLogger);
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
+// 1. Define the Webhook route FIRST. 
+// It has its own express.raw() parser inside webhooksRoutes, 
+// so it handles the raw buffer before anything else touches it.
+app.use('/api/webhook', webhooksRoutes);
+
+// 2. NOW apply the global JSON parsers for the REST of your app.
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// 3. Define the rest of your normal JSON-based routes
 app.get('/', (req, res) => {
     res.send('<h1>Njerka.fit AI Powered App Server is running!</h1>');
 });
@@ -39,8 +46,6 @@ app.get('/health', async (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-
-app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/export', exportRoutes);

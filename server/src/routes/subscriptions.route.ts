@@ -1,9 +1,9 @@
+import { env } from '../configs/env';
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireAuth, AuthRequest, authMiddleware } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 
 import stripe from '../configs/stripe';
 import User from '../models/user.model';
-import { env } from '../configs/env';
 
 const router = Router();
 
@@ -45,7 +45,7 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
             const newAmount = newPrice.unit_amount || 0;
 
             // Calculate prorated charge (only for upgrades)
-            const currentPrice = await stripe.prices.retrieve(user.subscription.planId);
+            const currentPrice = await stripe.prices.retrieve(user.subscription.planId as string);
             const currentAmount = currentPrice.unit_amount || 0;
 
             const currentPlanTier = getPlanTier(currentPrice.nickname || '');
@@ -100,6 +100,7 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
             status: 'active',
             stripeCustomerId,
             stripeSubscriptionId: subscription.id,
+            subscriptionTier: "BASIC",
             currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         };
         await user.save();
@@ -113,6 +114,34 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
     }
 });
 
+router.post('/create-portal-session', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user._id; // Adjust based on how your auth payload is structured
+
+        // 2. Find the user in your database
+        const user = await User.findById(userId);
+
+        // 3. Ensure they actually have a Stripe Customer ID
+        if (!user || !user.subscription?.stripeCustomerId) {
+            return res.status(400).json({ error: 'No Stripe customer associated with this user.' });
+        }
+
+        // 4. Create the Customer Portal session
+        const session = await stripe.billingPortal.sessions.create({
+            customer: user.subscription.stripeCustomerId,
+            // The URL Stripe will send them back to when they click "Return to Njerka.fit"
+            return_url: `${env.CLIENT_URL}/dashboard/subscription`,
+        });
+
+        // 5. Return the URL to the frontend
+        res.status(200).json({ url: session.url });
+
+    } catch (error: any) {
+        console.error('Error creating portal session:', error.message);
+        res.status(500).json({ error: 'Failed to create billing portal session' });
+    }
+});
+
 function getPlanTier(planName: string): number {
     const name = planName.toLowerCase();
     if (name.includes('family') || name.includes('elite')) return 3;
@@ -120,7 +149,7 @@ function getPlanTier(planName: string): number {
     return 1;
 }
 
-router.post('/cancel', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/cancel', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -144,7 +173,7 @@ router.post('/cancel', requireAuth, async (req: Request, res: Response, next: Ne
     }
 });
 
-router.get('/status', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/status', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -159,14 +188,14 @@ router.get('/status', requireAuth, async (req: Request, res: Response, next: Nex
             planId: user.subscription?.planId,
             currentPeriodEnd: user.subscription?.currentPeriodEnd,
             cancelAtPeriodEnd: user.subscription?.cancelAtPeriodEnd || false,
-            subscriptionTier: user.subscriptionTier,
+            subscriptionTier: user.subscription?.subscriptionTier,
         });
     } catch (error) {
         next(error);
     }
 });
 
-router.post('/portal', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/portal', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

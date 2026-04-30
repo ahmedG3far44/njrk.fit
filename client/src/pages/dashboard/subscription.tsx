@@ -36,10 +36,10 @@ const plans: Plan[] = [
     ],
   },
   {
-    id: 'pro',
+    id: 'price_1TJWzbRPSIjKJwi65DaSICYd',
     name: 'PRO',
     price: 19.99,
-    stripePriceId: 'price_pro',
+    stripePriceId: 'price_1TJWzbRPSIjKJwi65DaSICYd',
     tagline: 'For serious athletes',
     icon: <Zap className="w-5 h-5" />,
     accentColor: 'text-violet-600',
@@ -54,10 +54,10 @@ const plans: Plan[] = [
     ],
   },
   {
-    id: 'family',
+    id: 'price_1TJX1mRPSIjKJwi6YpH18JNr',
     name: 'FAMILY',
     price: 39.99,
-    stripePriceId: 'price_family',
+    stripePriceId: 'price_1TJX1mRPSIjKJwi6YpH18JNr',
     tagline: 'Health for everyone',
     icon: <Users className="w-5 h-5" />,
     accentColor: 'text-violet-700',
@@ -123,8 +123,8 @@ const SubscriptionPage = () => {
   })
 
   const portalMutation = useMutation({
-    mutationFn: subscriptionService.createPortalSession,
-    onSuccess: (data) => { window.location.href = data.url },
+    mutationFn: subscriptionService.manageSubscriptionPortal,
+    onSuccess: ({ url }: { url: string }) => { window.location.href = url },
   })
 
   const handleSubscribe = async (plan: Plan) => {

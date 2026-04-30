@@ -4,7 +4,7 @@ import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema 
 import * as authService from '../services/auth.service';
 import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
-import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 import User from '../models/user.model';
 import z from 'zod';
 

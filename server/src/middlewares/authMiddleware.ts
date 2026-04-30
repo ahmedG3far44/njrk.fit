@@ -41,15 +41,24 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const accessToken = req.cookies.accessToken;
-        const refreshToken = req.cookies.refreshToken;
+        let accessToken = req.cookies.accessToken;
+        let refreshToken = req.cookies.refreshToken;
 
         // console.log("access token", accessToken);
         // console.log("refresh token", refreshToken);
 
-        // const accessToken = req.headers.authorization?.replace('Bearer ', ''); 
-
-        // const refreshToken = req.headers.refreshToken?.replace('Bearer ', '');
+        if (!accessToken && !refreshToken) {
+            const authHeader = req.headers.authorization?.replace('Bearer ', '');
+            if (authHeader) {
+                accessToken = authHeader;
+                if (!accessToken) {
+                    return res.status(401).json({ error: 'Authentication required' });
+                }
+            }
+            else {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+        }
 
         // Note: Remove console.log of tokens in production to prevent leaking secrets in logs!
 
@@ -101,7 +110,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
                 name: user.name,
                 avatarUrl: user.avatarUrl,
                 onboardingCompleted: user.onboardingCompleted,
-                subscriptionTier: user.subscriptionTier,
+                subscriptionTier: user.subscription?.subscriptionTier,
             };
 
             const newAccessToken = jwtUtils.generateAccessToken(userPayload);

@@ -23,15 +23,15 @@ export interface IUser extends Document {
   fitnessGoals: string;
   dietaryRestrictions?: string;
   equipment?: string[];
-  subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
   familyMembers: Types.ObjectId[];
-  subscription?: {
-    planId: string;
+  subscription: {
+    planId?: string;
     status: 'active' | 'canceled' | 'expired' | 'past_due';
-    stripeCustomerId?: string;
+    stripeCustomerId: string;
     stripeSubscriptionId?: string;
     currentPeriodEnd?: Date;
     cancelAtPeriodEnd?: boolean;
+    subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
   };
   currentStreak: number;
   longestStreak: number;
@@ -81,14 +81,10 @@ const UserSchema = new Schema<IUser>({
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate'
   },
-  fitnessGoals: { type: String }, 
+  fitnessGoals: { type: String },
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
-  subscriptionTier: {
-    type: String,
-    enum: ['BASIC', 'PRO', 'FAMILY'],
-    default: 'BASIC'
-  },
+
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {
     planId: { type: String },
@@ -97,6 +93,11 @@ const UserSchema = new Schema<IUser>({
     stripeSubscriptionId: { type: String },
     currentPeriodEnd: { type: Date },
     paidPriceId: { type: String },
+    subscriptionTier: {
+      type: String,
+      enum: ['BASIC', 'PRO', 'FAMILY'],
+      default: 'BASIC'
+    },
   },
   onboardingCompleted: { type: Boolean, default: false },
   currentStreak: { type: Number, default: 0 },

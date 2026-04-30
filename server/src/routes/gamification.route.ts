@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { authMiddleware, type AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 import {
     checkIn,
     useFreeze,
@@ -13,29 +13,32 @@ import {
 
 const router = Router();
 
-router.post('/check-in', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const authReq = req as AuthRequest;
-        const userId = authReq.user?.userId;
-        const timezoneOffset = parseInt(req.body.timezoneOffset as string) || 0;
+router.post('/check-in', authMiddleware, async (req, res, next) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.userId;
 
-        const result = await checkIn(userId!, timezoneOffset);
+    const result = await checkIn(userId!);
 
-        await awardPoints(userId!, 10, result.isFirstCheckIn ? 'First check-in' : 'Daily check-in');
+    await awardPoints(
+      userId!,
+      10,
+      result.isFirstCheckIn ? 'First check-in' : 'Daily check-in'
+    );
 
-        res.status(200).json({
-            currentStreak: result.currentStreak,
-            longestStreak: result.longestStreak,
-            availableFreezes: result.availableFreezes,
-            isFirstCheckIn: result.isFirstCheckIn,
-            isFrozen: result.isFrozen,
-            message: result.isFirstCheckIn
-                ? 'First check-in! Your streak has started.'
-                : `Streak: ${result.currentStreak} days`,
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      currentStreak: result.currentStreak,
+      longestStreak: result.longestStreak,
+      availableFreezes: result.availableFreezes,
+      isFirstCheckIn: result.isFirstCheckIn,
+      isFrozen: result.isFrozen,
+      message: result.isFirstCheckIn
+        ? 'First check-in! Your streak has started.'
+        : `Streak: ${result.currentStreak} days`,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post('/freeze', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {

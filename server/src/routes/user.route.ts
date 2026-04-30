@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { validate } from '../middlewares/validateResource';
 import { updateProfileSchema } from '../dtos/user.dto';
-import { requireAuth, AuthRequest, authMiddleware } from '../middlewares/requireAuth';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import User from '../models/user.model';
 import { uploadFile } from '../configs/aws';
 import { v4 as uuidv4 } from 'uuid';
