@@ -7,7 +7,7 @@ export interface CreateSubscriptionData {
 export interface CreateSubscriptionResponse {
   subscriptionId: string;
   status: string;
-  prorated: boolean;
+  checkoutUrl?: string;
 }
 
 export interface CancelSubscriptionResponse {

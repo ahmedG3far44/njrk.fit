@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, Lock, User, Github, Chrome } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, Chrome } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
 
+import NjerkaLogo from './NjerkaLogo';
 
-interface AuthProps {
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080") as string;
+
+
+interface AuthProps { 
   onLogin: () => void;
   onRegister: () => void;
   initialView?: 'login' | 'register';
@@ -119,8 +124,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
         className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden"
       >
         <div className="p-8 md:p-12">
-          <div className="flex justify-center mb-8"> 
-            <img src={"./image.png"} alt="Njerka" className="h-20 w-auto object-contain" />
+          <div className="flex justify-center mb-8">
+            <NjerkaLogo size="large" />
           </div>
 
           <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
@@ -206,7 +211,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-green-800 to-green-700 text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-green-200"
+              className="w-full bg-gradient-to-r from-green-800 to-green-700 text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-green-200 cursor-pointer"
             >
               {isLoading ? (
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
@@ -229,20 +234,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 gap-4 mt-6">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 border border-slate-200 p-3 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium text-slate-600"
-                onClick={() => toast.info('GitHub OAuth coming soon')}
+                onClick={() => window.location.href = `${API_BASE_URL}/auth/google`}
+                className="group flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 active:scale-[0.98] cursor-pointer"
               >
-                <Github className="w-5 h-5" /> GitHub
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 border border-slate-200 p-3 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium text-slate-600"
-                onClick={() => window.location.href = 'http://localhost:8080/api/auth/google'}
-              >
-                <Chrome className="w-5 h-5" /> Google
+                <Chrome className="h-5 w-5 text-gray-500 transition-colors group-hover:text-gray-700" />
+                <span>Continue with Google</span>
               </button>
             </div>
           </div>
@@ -257,7 +256,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
                   setErrors({});
                   setFormData({ name: '', email: '', password: '' });
                 }}
-                className="text-green-700 font-bold hover:underline"
+                className="text-green-800 font-bold hover:underline cursor-pointer"
               >
                 {view === 'login' ? 'Sign up' : 'Log in'}
               </button>

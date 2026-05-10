@@ -21,8 +21,9 @@ export interface IUser extends Document {
   targetWeight?: number;
   activityLevel?: ActivityLevel;
   fitnessGoals: string;
-  dietaryRestrictions?: string;
+  dietaryRestrictions: string[];
   equipment?: string[];
+  allergies?: string[];
   familyMembers: Types.ObjectId[];
   subscription: {
     planId?: string;
@@ -53,7 +54,6 @@ export interface IUser extends Document {
     reminderTypes?: string[];
   };
   medicalCondition?: string;
-  allergies?: string[];
 }
 
 const UserSchema = new Schema<IUser>({

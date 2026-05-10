@@ -4,7 +4,7 @@ import {
   Check, Camera, Brain, Dumbbell, ShoppingCart, Leaf
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import njerkaLogo from '/image.png';
+import NjerkaLogo from './NjerkaLogo';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -49,10 +49,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-200/40">
         <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={njerkaLogo} alt="Njerka" className="h-10 w-auto object-contain" />
-            <span className="font-extrabold text-xl text-green-800 tracking-tight">Njerka</span>
-          </div>
+
+          <NjerkaLogo />
+
           <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
             <a href="#features" className="hover:text-green-700 transition-colors">Features</a>
             <a href="#pricing" className="hover:text-green-700 transition-colors">Pricing</a>
@@ -277,7 +276,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 className={`bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl ${feature.glow} hover:-translate-y-1 transition-all duration-300 group`}
               >
                 <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  {React.cloneElement(feature.icon as React.ReactElement, { className: 'w-7 h-7' })}
+                  {React.cloneElement(feature.icon as React.ReactElement<any>, { className: 'w-7 h-7' })}
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
                 <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
@@ -300,7 +299,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex gap-4"
               >
                 <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                  {React.cloneElement(feature.icon as React.ReactElement, { className: 'w-6 h-6' })}
+                  {React.cloneElement(feature.icon as React.ReactElement<any>, { className: 'w-6 h-6' })}
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 mb-1">{feature.title}</h3>
@@ -322,16 +321,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
             {pricingPlans.map((plan) => (
-              <motion.div 
+              <motion.div
                 key={plan.name}
-                initial={{ opacity: 0, y: 20 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={`p-8 rounded-3xl border transition-colors bg-white ${
-                  plan.isBest 
+                className={`p-8 rounded-3xl border transition-colors bg-white ${plan.isBest
                     ? 'relative bg-green-900 text-white shadow-2xl scale-105 z-10'
                     : 'hover:border-green-200'
-                }`}
+                  }`}
                 style={plan.isBest ? { boxShadow: '0 0 0 2px #166534, 0 25px 50px -12px rgba(22,101,52,0.45)' } : {}}
               >
                 {plan.isBest && (
@@ -358,13 +356,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                     </li>
                   ))}
                 </ul>
-                <button 
+                <button
                   onClick={onGetStarted}
-                  className={`w-full py-3 rounded-xl font-bold transition-colors ${
-                    plan.isBest 
-                      ? 'bg-white text-green-900 hover:bg-green-50' 
+                  className={`w-full py-3 rounded-xl font-bold transition-colors ${plan.isBest
+                      ? 'bg-white text-green-900 hover:bg-green-50'
                       : 'bg-green-50 text-green-700 hover:bg-green-100'
-                  }`}
+                    }`}
                 >
                   {plan.buttonText}
                 </button>
@@ -420,8 +417,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <img src={njerkaLogo} alt="Njerka" className="h-12 w-auto object-contain" />
-                <span className="font-extrabold text-xl text-green-800 tracking-tight">Njerka</span>
+                <NjerkaLogo />
               </div>
               <p className="text-slate-500 text-sm leading-relaxed">
                 Empowering families to live healthier, longer lives through medical-grade AI technology and community.

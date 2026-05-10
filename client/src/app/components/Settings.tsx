@@ -34,6 +34,8 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     autoGenerateMeals: true,
     manualPrompt: '',
     fasting: false,
+    foodPreferences: [] as string[],
+    allergies: [] as string[],
   });
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         weight: (user.weight as number) || 0,
         goal: (user.goal as "lose_weight" | "gain_weight" | "maintain_weight") || '',
         religion: (user?.religion as string) || '',
+        foodPreferences: (user?.dietaryRestrictions as string[]) || [],
+        allergies: (user?.allergies as string[]) || [],
       }));
     }
   }, [user]);
@@ -493,8 +497,30 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               <span className="font-semibold text-slate-700 text-sm">Allergies</span>
               <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button>
             </div>
-            <div className="flex gap-2">
-              <span className="bg-white border border-slate-200 px-3 py-1 rounded-lg text-sm text-slate-600">None</span>
+            <div className="flex gap-2 flex-wrap">
+              {formData.allergies && formData.allergies.length > 0 ? (
+                formData.allergies.map((allergy, index) => (
+                  <span key={index} className="bg-red-50 border border-red-200 px-3 py-1 rounded-lg text-sm text-red-600">{allergy}</span>
+                ))
+              ) : (
+                <span className="bg-white border border-slate-200 px-3 py-1 rounded-lg text-sm text-slate-600">None</span>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold text-slate-700 text-sm">Food Preferences</span>
+              <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {formData.foodPreferences && formData.foodPreferences.length > 0 ? (
+                formData.foodPreferences.map((food, index) => (
+                  <span key={index} className="bg-green-50 border border-green-200 px-3 py-1 rounded-lg text-sm text-green-600">{food}</span>
+                ))
+              ) : (
+                <span className="bg-white border border-slate-200 px-3 py-1 rounded-lg text-sm text-slate-600">None selected</span>
+              )}
             </div>
           </div>
         </div>

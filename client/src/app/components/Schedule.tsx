@@ -61,8 +61,9 @@ export const Schedule: React.FC = () => {
       });
       
       // Sort by time
-      slots.sort((a, b) => a.time.localeCompare(b.time));
-      setTimeSlots(slots);
+      const validSlots = slots.filter(slot => slot.time);
+      validSlots.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      setTimeSlots(validSlots);
     } catch (error: any) {
       console.error('Failed to fetch timeline:', error);
       const errorMsg = error?.response?.data?.message || error?.message || 'Failed to load schedule';

@@ -207,14 +207,12 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
         user.age = data.age;
         user.gender = data.gender;
         user.activityLevel = data.activityLevel;
-        user.dietaryRestrictions = data.dietaryRestrictions?.join(",");
+        user.dietaryRestrictions = data.dietaryRestrictions || [];
         user.religion = data.religion;
         user.allergies = data.allergies;
-
         user.goal = data.userGoal;
         user.targetWeight = data.targetWeight;
         user.fitnessGoals = data.fitnessGoal;
-
         user.onboardingCompleted = true;
         await user.save();
         return { success: true, message: 'User onboarded successfully' };

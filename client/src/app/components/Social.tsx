@@ -610,7 +610,15 @@ export const Social: React.FC = () => {
                                       )}
                                     </div>
                                     <p className="text-sm text-slate-600">{comment.content}</p>
-                                    <span className="text-xs text-slate-400">{formatDate(comment.createdAt)}</span>
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <span className="text-xs text-slate-400">{formatDate(comment.createdAt)}</span>
+                                      <button className="text-xs font-medium text-slate-500 hover:text-red-500 flex items-center gap-1">
+                                        <Heart className="w-3 h-3" /> Like
+                                      </button>
+                                      <button className="text-xs font-medium text-slate-500 hover:text-green-600 flex items-center gap-1">
+                                        <MessageCircle className="w-3 h-3" /> Reply
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               ))}

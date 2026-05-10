@@ -32,8 +32,11 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       age: user.age,
       gender: user.gender,
       activityLevel: user.activityLevel,
-      fitnessGoals: user.fitnessGoals || "",
-      dietaryRestrictions: user.dietaryRestrictions || "",
+      fitnessGoals: user.fitnessGoals,
+      goal: user.goal,
+      allergies: user.allergies,
+      dietaryRestrictions: user.dietaryRestrictions,
+      equipment: user.equipment,
     };
 
     const plan = await generateWorkoutPlan(

@@ -25,7 +25,7 @@ export interface OnboardingData {
   height: number;
   weight: number;
   allergies?: string[];
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  activityLevel: "sedentary" | "light" | "moderate" | "active" | "very_active";
   religion: 'muslim' | 'christian';
   dietaryRestrictions?: string[];
   userGoal: 'lose_weight' | 'gain_weight' | 'maintain_weight';

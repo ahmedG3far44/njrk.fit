@@ -32,21 +32,21 @@ export const GroceryList: React.FC = () => {
   const categories = [
     "Proteins",
     "Vegetables",
-    "Fruits",
-    "Grains",
     "Dairy",
-    "Snacks",
-    "Pantry",
+    "Grains",
+    "Fruits",
+    "Spices",
+    "Other",
   ];
 
   const categoryEmoji: Record<string, string> = {
     Proteins: "🥩",
     Vegetables: "🥦",
-    Fruits: "🍎",
-    Grains: "🌾",
     Dairy: "🥛",
-    Snacks: "🥜",
-    Pantry: "🫙",
+    Grains: "🌾",
+    Fruits: "🍎",
+    Spices: "🧂",
+    Other: "🫙",
   };
 
   useEffect(() => {
@@ -145,16 +145,7 @@ export const GroceryList: React.FC = () => {
     if (!newItem.trim()) return;
     try {
       await groceryService.addItem({ name: newItem });
-      setItems([
-        {
-          name: newItem,
-          category: "Pantry",
-          quantity: "1",
-          checked: false,
-          isPurchased: false,
-        },
-        ...items,
-      ]);
+      await fetchGroceryList();
       setNewItem("");
       toast.success("Item added successfully!");
     } catch (error) {

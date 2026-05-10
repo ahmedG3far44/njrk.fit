@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight, Flame, Trophy, ScanLine, Camera, Zap,
   Utensils, Dumbbell, Brain, Clock, ChevronRight, TrendingUp,
-  Droplets, Moon, Activity, Sparkles, X
+  Droplets, Moon, Activity, Sparkles, X, Loader2
 } from 'lucide-react';
+import { nutritionService } from '../services/nutritionService';
+import { fitnessService } from '../services/fitnessService';
+import { gamificationService } from '../services/gamificationService';
+import { toast } from 'sonner';
 
 interface DashboardProps {
   user: any;
@@ -15,20 +19,20 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpenCam }) => {
   const [aiTipVisible, setAiTipVisible] = useState(true);
 
-  const [nutrition] = useState([
+  const [nutrition, setNutrition] = useState([
     { label: 'Calories', current: 0, target: 0, unit: 'kcal', color: 'bg-orange-500', light: 'bg-orange-100', text: 'text-orange-600' },
     { label: 'Protein', current: 0, target: 0, unit: 'g', color: 'bg-blue-500', light: 'bg-blue-100', text: 'text-blue-600' },
     { label: 'Carbs', current: 0, target: 0, unit: 'g', color: 'bg-green-500', light: 'bg-green-100', text: 'text-green-600' },
     { label: 'Fat', current: 0, target: 0, unit: 'g', color: 'bg-yellow-400', light: 'bg-yellow-100', text: 'text-yellow-600' },
   ]);
 
-  const [vitals] = useState([
-    { label: 'Water', value: '0L', target: '0L', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50', progress: 0, progressColor: 'bg-blue-500' },
-    { label: 'Sleep', value: '0h', target: '0h', icon: Moon, color: 'text-teal-500', bg: 'bg-teal-50', progress: 0, progressColor: 'bg-teal-500' },
-    { label: 'Steps', value: '0', target: '0', icon: Activity, color: 'text-green-500', bg: 'bg-green-50', progress: 0, progressColor: 'bg-green-500' },
+  const [vitals, setVitals] = useState([
+    { label: 'Water', value: '0L', target: '2.5L', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50', progress: 0, progressColor: 'bg-blue-500' },
+    { label: 'Sleep', value: '0h', target: '8h', icon: Moon, color: 'text-teal-500', bg: 'bg-teal-50', progress: 0, progressColor: 'bg-teal-500' },
+    { label: 'Steps', value: '0', target: '10000', icon: Activity, color: 'text-green-500', bg: 'bg-green-50', progress: 0, progressColor: 'bg-green-500' },
   ]);
 
-  const [upcomingMeal] = useState({
+  const [upcomingMeal, setUpcomingMeal] = useState({
     name: '',
     time: '',
     calories: 0,
@@ -36,7 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
     macros: { p: '0g', c: '0g', f: '0g' },
   });
 
-  const [nextWorkout] = useState({
+  const [nextWorkout, setNextWorkout] = useState({
     title: '',
     duration: '',
     intensity: '',
@@ -44,7 +48,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
     type: '',
   });
 
-  const [streakData] = useState({
+  const [streakData, setStreakData] = useState({
     currentStreak: 0,
     personalBest: 0,
   });
@@ -54,14 +58,113 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
     total: 0,
   });
 
-  const [pointsData] = useState({
+  const [pointsData, setPointsData] = useState({
     current: 0,
     nextReward: 0,
   });
 
-  const [aiTip] = useState({
+  const [aiTip, setAiTip] = useState({
     content: '',
   });
+
+  const [loading, setLoading] = useState({
+    nutrition: true,
+    fitness: true,
+    gamification: true,
+  });
+
+  const fetchNutritionData = useCallback(async () => {
+    try {
+      const response = await nutritionService.getCurrent({ date: 'today' });
+      if (response) {
+        const targetMacros = response.targetMacros || { calories: 0, protein: 0, carbs: 0, fats: 0 };
+        const meals = response.meals || [];
+
+        const consumed = meals.reduce((acc: { calories: number; protein: number; carbs: number; fats: number }, meal: any) => ({
+          calories: acc.calories + (meal.macros?.calories || 0),
+          protein: acc.protein + (meal.macros?.protein || 0),
+          carbs: acc.carbs + (meal.macros?.carbs || 0),
+          fats: acc.fats + (meal.macros?.fats || 0),
+        }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+
+        setNutrition([
+          { label: 'Calories', current: consumed.calories, target: targetMacros.calories, unit: 'kcal', color: 'bg-orange-500', light: 'bg-orange-100', text: 'text-orange-600' },
+          { label: 'Protein', current: consumed.protein, target: targetMacros.protein, unit: 'g', color: 'bg-blue-500', light: 'bg-blue-100', text: 'text-blue-600' },
+          { label: 'Carbs', current: consumed.carbs, target: targetMacros.carbs, unit: 'g', color: 'bg-green-500', light: 'bg-green-100', text: 'text-green-600' },
+          { label: 'Fat', current: consumed.fats, target: targetMacros.fats, unit: 'g', color: 'bg-yellow-400', light: 'bg-yellow-100', text: 'text-yellow-600' },
+        ]);
+
+        if (meals.length > 0) {
+          const nextMeal = meals.find((m: any) => !m.isCompleted) || meals[0];
+          setUpcomingMeal({
+            name: nextMeal.name || '',
+            time: nextMeal.time || '',
+            calories: nextMeal.macros?.calories || 0,
+            image: 'https://images.unsplash.com/photo-1574484284002-952d92456975?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+            macros: {
+              p: `${nextMeal.macros?.protein || 0}g`,
+              c: `${nextMeal.macros?.carbs || 0}g`,
+              f: `${nextMeal.macros?.fats || 0}g`
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch nutrition data:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, nutrition: false }));
+    }
+  }, []);
+
+  const fetchFitnessData = useCallback(async () => {
+    try {
+      const response = await fitnessService.getCurrent({ date: 'today' });
+      if (response && response.data && response.data.length > 0) {
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+        const todaySession = response.data.find((s: any) => s.dayOfWeek === today) || response.data[0];
+
+        if (todaySession) {
+          setNextWorkout({
+            title: todaySession.name || 'Workout',
+            duration: `${todaySession.durationMin || 0} min`,
+            intensity: todaySession.type || 'Medium',
+            time: '',
+            type: todaySession.type || 'Workout',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch fitness data:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, fitness: false }));
+    }
+  }, []);
+
+  const fetchGamificationData = useCallback(async () => {
+    try {
+      const response = await gamificationService.getStatus();
+      if (response) {
+        setStreakData({
+          currentStreak: response.currentStreak || 0,
+          personalBest: response.longestStreak || 0,
+        });
+        setPointsData({
+          current: response.totalPoints || 0,
+          nextReward: 500,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch gamification data:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, gamification: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNutritionData();
+    fetchFitnessData();
+    fetchGamificationData();
+  }, [fetchNutritionData, fetchFitnessData, fetchGamificationData]);
 
   return (
     <div className="space-y-6 pb-8">

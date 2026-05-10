@@ -15,6 +15,7 @@ import {
 } from "../middlewares/authMiddleware";
 import User from "../models/user.model";
 import z from "zod";
+import { ActivityLevel, Gender, Goal, Religion } from "../types";
 
 const router = Router();
 
@@ -291,20 +292,15 @@ router.post(
 
 interface IOnboardingRequest {
   age: number;
-  gender: "male" | "female";
+  gender: Gender;
   height: number;
   weight: number;
   allergies: string[];
-  activityLevel: {
-    value: number;
-    title: string;
-    slug: string;
-    emoji: string;
-  };
-  religion: "muslim" | "christian";
+  activityLevel: ActivityLevel;
+  religion: Religion;
   dietaryRestrictions: string[];
   medicalDocuments?: string[];
-  userGoal: "lose_weight" | "gain_weight" | "healthy_lifestyle";
+  userGoal: Goal;
   targetWeight: number;
   fitnessGoal: string;
 }

@@ -14,6 +14,13 @@ interface OnboardingProps {
 const STEP_ICONS = [User, Heart, Activity, FileText, Target];
 const STEP_LABELS = ['The Basics', 'Personalization', 'Medical & Activity', 'Medical Vault', 'Your Goal'];
 
+const FOOD_PREFERENCES = [
+  { category: 'Proteins', items: ['Chicken', 'Beef', 'Fish', 'Eggs', 'Tofu', 'Lentils', 'Beans'] },
+  { category: 'Carbs', items: ['Rice', 'Bread', 'Potato', 'Pasta', 'Oats', 'Quinoa'] },
+  { category: 'Fats', items: ['Avocado', 'Nuts', 'Cheese', 'Olive Oil'] },
+  { category: 'Other', items: ['Dairy', 'Gluten', 'Seafood'] },
+];
+
 interface FormData {
   name: string;
   age: string;
@@ -21,7 +28,7 @@ interface FormData {
   height: string;
   weight: number;
   religion: string;
-  dietPreference: string;
+  foodPreferences: string[];
   allergies: string[];
   customAllergy: string;
   activityLevel: string;
@@ -38,7 +45,7 @@ interface FormErrors {
   height?: string;
   weight?: string;
   religion?: string;
-  dietPreference?: string;
+  foodPreferences?: string;
   activityLevel?: string;
   goal?: string;
   targetWeight?: string;
@@ -59,7 +66,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     height: '',
     weight: 0,
     religion: '',
-    dietPreference: '',
+    foodPreferences: [],
     allergies: [],
     customAllergy: '',
     activityLevel: '',
@@ -79,6 +86,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     update({ allergies: next });
   };
 
+  const toggleFoodPreference = (food: string) => {
+    const next = formData.foodPreferences.includes(food)
+      ? formData.foodPreferences.filter(x => x !== food)
+      : [...formData.foodPreferences, food];
+    update({ foodPreferences: next });
+  };
+
   const clearError = (field: keyof FormErrors) => {
     setErrors(prev => ({ ...prev, [field]: undefined }));
   };
@@ -96,7 +110,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
     if (currentStep === 1) {
       if (!formData.religion) newErrors.religion = 'Please select your religion';
-      if (!formData.dietPreference) newErrors.dietPreference = 'Please select a diet preference';
     }
 
     if (currentStep === 2) {
@@ -121,7 +134,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const isValid = () => {
     if (step === 0) return formData.name && formData.age && formData.gender && formData.height && formData.weight;
-    if (step === 1) return formData.religion && formData.dietPreference;
+    if (step === 1) return formData.religion;
     if (step === 2) return formData.activityLevel;
     if (step === 3) return true;
     if (step === 4) return formData.goal && formData.targetWeight && formData.dreamGoal.length >= 10;
@@ -129,14 +142,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   const mapActivityLevel = (level: string): OnboardingData['activityLevel'] => {
-    const mapping: Record<string, OnboardingData['activityLevel']> = {
-      'Sedentary': 'sedentary',
-      'Lightly Active': 'light',
-      'Moderately Active': 'moderate',
-      'Very Active': 'active',
-      'Athlete': 'very_active',
+    const mapping: Record<string, { value: number; title: string; slug: OnboardingData['activityLevel']; emoji: string }> = {
+      'Sedentary': { value: 1, title: 'Sedentary', slug: 'sedentary', emoji: '🪑' },
+      'Lightly Active': { value: 2, title: 'Lightly Active', slug: 'light', emoji: '🚶' },
+      'Moderately Active': { value: 3, title: 'Moderately Active', slug: 'moderate', emoji: '🔥' },
+      'Very Active': { value: 4, title: 'Very Active', slug: 'active', emoji: '💪' },
+      'Athlete': { value: 5, title: 'Athlete', slug: 'very_active', emoji: '🏆' },
     };
-    return mapping[level] || 'sedentary';
+    return mapping[level]?.slug || 'sedentary';
   };
 
   const mapGoal = (goal: string): OnboardingData['userGoal'] => {
@@ -145,7 +158,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       'gain_muscle': 'gain_weight',
       'maintain_weight': 'maintain_weight',
     };
-    return mapping[goal] || 'maintain_weight';
+    return mapping[goal] || 'lose_weight';
   };
 
   const mapGender = (gender: string): OnboardingData['gender'] => {
@@ -175,13 +188,15 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       height: Number(formData.height),
       weight: formData.weight,
       allergies: allergies.length > 0 ? allergies : undefined,
-      activityLevel: mapActivityLevel(formData.activityLevel),
+      activityLevel: mapActivityLevel(formData.activityLevel) as "sedentary" | "light" | "moderate" | "active" | "very_active",
       religion: mapReligion(formData.religion),
-      dietaryRestrictions: formData.dietPreference ? [formData.dietPreference] : undefined,
+      dietaryRestrictions: formData.foodPreferences.length > 0 ? formData.foodPreferences : undefined,
       userGoal: mapGoal(formData.goal),
       targetWeight: formData.targetWeight,
       fitnessGoal: formData.dreamGoal,
     };
+
+    console.log("onboarding data", onboardingData);
 
     try {
       await completeOnboarding(onboardingData);
@@ -316,34 +331,38 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               {errors.religion && <p className="text-red-500 text-xs">{errors.religion}</p>}
             </div>
 
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <ChefHat className="w-4 h-4 text-green-700" /> Diet Preference
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Balanced', desc: 'Everything in moderation' },
-                  { label: 'Vegan', desc: 'Plant-based only' },
-                  { label: 'Keto', desc: 'Low carb, high fat' },
-                  { label: 'Mediterranean', desc: 'Olive oil & whole grains' },
-                  { label: 'Paleo', desc: 'Whole, unprocessed foods' },
-                  { label: 'Halal', desc: 'Halal-certified ingredients' },
-                ].map(d => (
-                  <button
-                    key={d.label}
-                    type="button"
-                    onClick={() => { update({ dietPreference: d.label }); clearError('dietPreference'); }}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${formData.dietPreference === d.label
-                      ? 'border-green-700 bg-green-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                  >
-                    <div className={`font-semibold text-sm ${formData.dietPreference === d.label ? 'text-green-800' : 'text-slate-800'}`}>{d.label}</div>
-                    <div className="text-xs text-slate-400">{d.desc}</div>
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <ChefHat className="w-4 h-4 text-green-700" /> Food Preferences
+                </label>
+                <span className="text-xs text-slate-400">
+                  {formData.foodPreferences.length} selected
+                </span>
               </div>
-              {errors.dietPreference && <p className="text-red-500 text-xs">{errors.dietPreference}</p>}
+              <p className="text-xs text-slate-400">Select the foods you want to include in your diet</p>
+
+              {FOOD_PREFERENCES.map((category) => (
+                <div key={category.category} className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{category.category}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {category.items.map((food) => (
+                      <button
+                        key={food}
+                        type="button"
+                        onClick={() => toggleFoodPreference(food)}
+                        className={`p-2 rounded-lg border-2 text-xs font-semibold transition-all flex items-center justify-between gap-1 ${formData.foodPreferences.includes(food)
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                          }`}
+                      >
+                        <span>{food}</span>
+                        {formData.foodPreferences.includes(food) && <Check className="w-3 h-3 flex-shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         );

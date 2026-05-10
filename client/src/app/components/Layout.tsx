@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import NjerkaLogo from './NjerkaLogo';
 
 
 interface LayoutProps {
@@ -108,8 +109,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       {/* ── Desktop Sidebar ── */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 h-full relative">
         {/* Logo */}
-        <div className="p-5 pb-3 flex items-center justify-center border-b border-slate-100">
-          <img src={"./image.png"} alt="Njerka" className="h-16 w-auto object-contain" />
+        <div className="p-5 pb-3 flex items-start justify-start border-b border-slate-100">
+        <NjerkaLogo size='small' text={true}/>
         </div>
 
         {/* Nav */}
@@ -120,9 +121,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               <button
                 key={item.id}
                 onClick={() => onChangeView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all relative group ${isActive
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 relative group ${isActive
                   ? 'bg-green-50 text-green-800'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                  : 'text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900'
                   }`}
               >
                 {isActive && (

@@ -229,8 +229,9 @@ export const Nutrition: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMeals(viewMode, activeProfileId !== 'me' ? activeProfileId : undefined);
-  }, [viewMode, fetchMeals, activeProfileId]);
+    const userId = activeProfileId !== 'me' ? activeProfileId : undefined;
+    fetchMeals(viewMode, userId);
+  }, [viewMode, activeProfileId]);
 
   useEffect(() => {
     fetchFamily();

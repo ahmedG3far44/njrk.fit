@@ -44,9 +44,13 @@ export const StreakRewards: React.FC = () => {
     const fetchStreakData = async () => {
       setLoading(true);
       try {
+        const today = new Date();
         const [status, activity] = await Promise.all([
           gamificationService.getStatus(),
-          gamificationService.getActivity()
+          gamificationService.getActivity({
+            month: today.getMonth(),
+            year: today.getFullYear()
+          })
         ]);
         
         setStreakData(status);
@@ -236,39 +240,40 @@ export const StreakRewards: React.FC = () => {
                  {['M','T','W','T','F','S','S'].map((d, i) => (
                    <div key={i} className="text-center text-xs font-bold text-slate-400 mb-2">{d}</div>
                  ))}
-                 {(() => {
-                   const today = new Date();
-                   const currentDay = today.getDate();
-                   const currentMonth = today.getMonth();
-                   const currentYear = today.getFullYear();
-                   
-                   return Array.from({ length: 31 }).map((_, i) => {
-                     const dayNumber = i + 1;
-                     const isToday = dayNumber === currentDay;
-                     
-                     const hasActivity = activityData.some((activity: any) => {
-                       const activityDate = new Date(activity.date || activity.createdAt);
-                       return activityDate.getDate() === dayNumber && 
-                              activityDate.getMonth() === currentMonth && 
-                              activityDate.getFullYear() === currentYear;
-                     });
-                     
-                     return (
-                       <div 
-                         key={i} 
-                         className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
-                           isToday
-                             ? 'bg-green-600 text-white ring-2 ring-green-300 ring-offset-1'
-                             : hasActivity 
-                               ? 'bg-green-100 text-green-700' 
-                               : 'bg-slate-50 text-slate-400'
-                         }`}
-                       >
-                         {dayNumber}
-                       </div>
-                     );
-                   });
-                 })()}
+{(() => {
+                    const today = new Date();
+                    const currentDay = today.getDate();
+                    const currentMonth = today.getMonth();
+                    const currentYear = today.getFullYear();
+                    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    
+                    return Array.from({ length: daysInMonth }).map((_, i) => {
+                      const dayNumber = i + 1;
+                      const isToday = dayNumber === currentDay;
+                      
+                      const hasActivity = activityData.some((activity: any) => {
+                        const activityDate = new Date(activity.date);
+                        return activityDate.getDate() === dayNumber && 
+                               activityDate.getMonth() === currentMonth && 
+                               activityDate.getFullYear() === currentYear;
+                      });
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+                            isToday
+                              ? 'bg-green-600 text-white ring-2 ring-green-300 ring-offset-1'
+                              : hasActivity 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-slate-50 text-slate-400'
+                          }`}
+                        >
+                          {dayNumber}
+                        </div>
+                      );
+                    });
+                  })()}
               </div>
             </div>
 

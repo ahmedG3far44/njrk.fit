@@ -29,85 +29,29 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
             stripeCustomerId = customer.id;
         }
 
-        // Handle upgrade/downgrade with proration
-        if (user.subscription?.stripeSubscriptionId && user.subscription.planId !== planId) {
-            const currentSub = await stripe.subscriptions.retrieve(user.subscription.stripeSubscriptionId);
-
-            // Calculate proration
-            const currentPeriodEnd = new Date((currentSub as any).current_period_end * 1000);
-            const now = new Date();
-            const daysRemaining = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            const totalDays = Math.ceil((currentPeriodEnd.getTime() - new Date((currentSub as any).current_period_start * 1000).getTime()) / (1000 * 60 * 60 * 24));
-            const prorationFraction = daysRemaining / totalDays;
-
-            // Get new price to calculate prorated amount
-            const newPrice = await stripe.prices.retrieve(planId);
-            const newAmount = newPrice.unit_amount || 0;
-
-            // Calculate prorated charge (only for upgrades)
-            const currentPrice = await stripe.prices.retrieve(user.subscription.planId as string);
-            const currentAmount = currentPrice.unit_amount || 0;
-
-            const currentPlanTier = getPlanTier(currentPrice.nickname || '');
-            const newPlanTier = getPlanTier(newPrice.nickname || '');
-
-            if (newPlanTier > currentPlanTier) {
-                const priceDiff = newAmount - currentAmount;
-                const proratedAmount = Math.round(priceDiff * prorationFraction / 100);
-
-                // Create invoice item for prorated charge
-                await stripe.invoiceItems.create({
-                    customer: stripeCustomerId,
-                    currency: 'usd',
-                    amount: proratedAmount,
-                    description: `Prorated charge for upgrade (${daysRemaining} days remaining)`,
-                });
-            }
-
-            // Update subscription
-            const subscription = await stripe.subscriptions.update(user.subscription.stripeSubscriptionId, {
-                items: [{ price: planId }],
-                proration_behavior: 'create_prorations',
-            });
-
-            user.subscription = {
-                ...user.subscription,
-                planId,
-                status: 'active',
-                stripeCustomerId,
-                stripeSubscriptionId: subscription.id,
-                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-            };
-            await user.save();
-
-            res.status(201).json({
-                subscriptionId: subscription.id,
-                status: 'active',
-                prorated: newPlanTier > currentPlanTier,
-            });
-            return;
-        }
-
-        // New subscription
-        const subscription = await stripe.subscriptions.create({
+        // Create a Stripe Checkout session for new subscriptions or upgrades
+        const session = await stripe.checkout.sessions.create({
             customer: stripeCustomerId,
-            items: [{ price: planId }],
-            metadata: { userId: userId! },
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: planId,
+                    quantity: 1,
+                },
+            ],
+            success_url: `${env.CLIENT_URL}/dashboard/subscriptions?success=true`,
+            cancel_url: `${env.CLIENT_URL}/dashboard/subscriptions?canceled=true`,
+            metadata: {
+                userId: userId!,
+                planId: planId,
+            },
         });
 
-        user.subscription = {
-            planId,
-            status: 'active',
-            stripeCustomerId,
-            stripeSubscriptionId: subscription.id,
-            subscriptionTier: "BASIC",
-            currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-        };
-        await user.save();
-
         res.status(201).json({
-            subscriptionId: subscription.id,
-            status: 'active',
+            subscriptionId: session.id,
+            checkoutUrl: session.url,
+            status: 'pending',
         });
     } catch (error) {
         next(error);

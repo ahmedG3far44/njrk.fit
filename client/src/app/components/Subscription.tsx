@@ -125,7 +125,9 @@ export const Subscription: React.FC = () => {
       const data: CreateSubscriptionData = { planId: plan.priceId! };
       const response = await subscriptionService.create(data);
       
-      if (response.subscriptionId) {
+      if (response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+      } else if (response.subscriptionId) {
         toast.success(`Subscribed to ${plan.name} successfully!`);
         await fetchSubscriptionStatus();
       }

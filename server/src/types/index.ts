@@ -31,10 +31,11 @@ export interface UserContext {
   targetWeight?: number;
   activityLevel?: ActivityLevel;
   fitnessGoals?: string;
-  dietaryRestrictions?: string;
-  allergies?: string;
+  dietaryRestrictions?: string[];
+  allergies?: string[];
   isFasting?: boolean;
   trainingDays?: number;
+  equipment?: string[];
 }
 
 // ----------------------------------------------------------------------------
@@ -212,9 +213,9 @@ export interface UserProfile {
 
 
 export interface Groceries {
-    _id: string;
-    userId: string;
-    date: Date;
-    items: string[];
-    
+  _id: string;
+  userId: string;
+  date: Date;
+  items: string[];
+
 } 

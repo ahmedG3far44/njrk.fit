@@ -168,7 +168,7 @@ router.get('/test', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 
-router.get('/feed', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/feed', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = new mongoose.Types.ObjectId(authReq.user?.userId);
