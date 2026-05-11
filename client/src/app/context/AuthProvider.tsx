@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
+import { gamificationService } from '../services/gamificationService';
 
 const STORAGE_KEY = 'njerka_user';
 
@@ -107,6 +108,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.get<MeResponse>('/users/me');
       setUser(response.user);
       saveUserToStorage(response.user);
+      
+      // Auto check-in on session load
+      try {
+        await gamificationService.checkIn();
+      } catch (checkInError) {
+        console.error('Auto check-in failed on session load:', checkInError);
+      }
     } catch {
       clearSession();
     } finally {
@@ -128,6 +136,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await api.post<AuthLoginResponse>('/auth/login', credentials, { skipAuthRefresh: true });
     setUser(response.user);
     saveUserToStorage(response.user);
+    
+    // Auto check-in on login
+    try {
+      await gamificationService.checkIn();
+    } catch (checkInError) {
+      console.error('Auto check-in failed on login:', checkInError);
+    }
+    
     return { needsOnboarding: !response.user.onboardingCompleted };
   }, []);
 
@@ -135,6 +151,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await api.post<AuthLoginResponse>('/auth/register', credentials, { skipAuthRefresh: true });
     setUser(response.user);
     saveUserToStorage(response.user);
+    
+    // Auto check-in on register (first check-in)
+    try {
+      await gamificationService.checkIn();
+    } catch (checkInError) {
+      console.error('Auto check-in failed on register:', checkInError);
+    }
+    
     return { needsOnboarding: true };
   }, []);
 

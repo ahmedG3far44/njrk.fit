@@ -20,6 +20,10 @@ export interface SubscriptionStatus {
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
   subscriptionTier: string;
+  cardLast4?: string;
+  subscriptionStartDate?: string;
+  planName?: string;
+  planPrice?: number;
 }
 
 export const subscriptionService = {

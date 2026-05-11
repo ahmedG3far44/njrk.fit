@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider';
 import { familyService, PendingInvitation } from '../services/familyService';
 import { userService } from '../services/userService';
+import { subscriptionService } from '../services/subscriptionService';
 
 interface Notification {
   id: string;
@@ -21,6 +22,12 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    status: string;
+    planName?: string;
+    subscriptionTier?: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -53,6 +60,23 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       }));
     }
   }, [user]);
+
+  // Fetch subscription status
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const status = await subscriptionService.getStatus();
+        setSubscriptionInfo({
+          status: status.status,
+          planName: status.planName,
+          subscriptionTier: status.subscriptionTier,
+        });
+      } catch (error) {
+        console.error('Failed to fetch subscription:', error);
+      }
+    };
+    fetchSubscription();
+  }, []);
 
   const [saved, setSaved] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -649,13 +673,28 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${user?.subscriptionTier === 'premium' ? 'bg-amber-100 text-amber-700' :
-              user?.subscriptionTier === 'family' ? 'bg-blue-100 text-blue-700' :
-                'bg-slate-100 text-slate-600'
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${subscriptionInfo?.subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' :
+                subscriptionInfo?.subscriptionTier === 'family' ? 'bg-blue-100 text-blue-700' :
+                  'bg-slate-100 text-slate-600'
               }`}>
-              {user?.subscriptionTier || 'Free'}
+              {subscriptionInfo?.subscriptionTier === 'pro' && 'Pro'}
+              {subscriptionInfo?.subscriptionTier === 'family' && 'Family'}
+              {(!subscriptionInfo?.subscriptionTier || subscriptionInfo?.subscriptionTier === 'basic') && 'Free'}
             </span>
-            <button className="flex items-center gap-1 text-green-700 font-bold text-sm hover:underline">
+            {subscriptionInfo?.status === 'active' && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                Active
+              </span>
+            )}
+            {subscriptionInfo?.status === 'canceled' && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">
+                Canceled
+              </span>
+            )}
+            <button
+              onClick={() => window.location.href = '/dashboard/subscriptions'}
+              className="flex items-center gap-1 cursor-pointer text-green-700 font-bold text-sm hover:underline"
+            >
               Manage <ChevronRight className="w-4 h-4" />
             </button>
           </div>

@@ -68,26 +68,12 @@ export const Subscription: React.FC = () => {
 
   const plans: PricingPlan[] = [
     {
-      id: 'free',
-      name: 'Free',
-      price: 0,
-      period: 'mo',
-      tier: 'free',
-      features: [
-        { text: 'Basic Meal Tracking', icon: <Utensils className="w-4 h-4" /> },
-        { text: '3 Workouts per Week', icon: <Dumbbell className="w-4 h-4" /> },
-        { text: 'Community Access', icon: <Users className="w-4 h-4" /> },
-        { text: 'Daily Progress Log', icon: <BarChart3 className="w-4 h-4" /> },
-      ],
-      isCurrent: subscriptionStatus?.subscriptionTier === 'free',
-    },
-    {
       id: 'pro',
       name: 'Pro',
       price: 12,
       period: 'mo',
       tier: 'pro',
-      priceId: 'price_pro_monthly',
+      priceId: 'price_1TJWzbRPSIjKJwi65DaSICYd',
       features: [
         { text: 'Unlimited AI Meal Gen', icon: <Sparkles className="w-4 h-4" /> },
         { text: 'Full Workout Library', icon: <Dumbbell className="w-4 h-4" /> },
@@ -104,7 +90,7 @@ export const Subscription: React.FC = () => {
       price: 24,
       period: 'mo',
       tier: 'family',
-      priceId: 'price_family_monthly',
+      priceId: 'price_1TJX1mRPSIjKJwi6YpH18JNr',
       features: [
         { text: 'Up to 6 Family Members', icon: <Users className="w-4 h-4" /> },
         { text: 'Unified Grocery List', icon: <Utensils className="w-4 h-4" /> },
@@ -116,6 +102,17 @@ export const Subscription: React.FC = () => {
       isCurrent: subscriptionStatus?.subscriptionTier === 'family',
     },
   ];
+
+  const currentTier = subscriptionStatus?.subscriptionTier?.toUpperCase();
+  
+  const availablePlans = plans.filter(plan => {
+    if (currentTier === 'PRO') return plan.tier === 'family';
+    if (currentTier === 'FAMILY') return false;
+    return true;
+  });
+
+  const showCancelButton = currentTier === 'PRO' || currentTier === 'FAMILY';
+  const isFamilyPlan = currentTier === 'PRO';
 
   const handleSubscribe = async (plan: PricingPlan) => {
     if (plan.price === 0 || plan.isCurrent) return;
@@ -231,6 +228,9 @@ export const Subscription: React.FC = () => {
 
   const currentPlan = plans.find(p => p.tier === subscriptionStatus?.subscriptionTier) || plans[0];
   const isPaidTier = subscriptionStatus?.subscriptionTier === 'pro' || subscriptionStatus?.subscriptionTier === 'family';
+  
+  const displayPlanName = subscriptionStatus?.planName || currentPlan.name;
+  const displayPlanPrice = subscriptionStatus?.planPrice || currentPlan.price;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -273,7 +273,7 @@ export const Subscription: React.FC = () => {
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                     <p className="text-slate-400 text-xs font-medium mb-1">Amount</p>
-                    <p className="font-bold text-lg">${currentPlan.price}/mo</p>
+                    <p className="font-bold text-lg">${displayPlanPrice}/mo</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                     <p className="text-slate-400 text-xs font-medium mb-1">Billing</p>
@@ -283,11 +283,12 @@ export const Subscription: React.FC = () => {
                     <p className="text-slate-400 text-xs font-medium mb-1">Payment</p>
                     <p className="font-bold text-lg flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
-                      Stripe
+                      {subscriptionStatus?.cardLast4 ? `•••• ${subscriptionStatus.cardLast4}` : 'Stripe'}
                     </p>
                   </div>
                 </div>
 
+                {showCancelButton && (
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={handleManageSubscription}
@@ -306,6 +307,7 @@ export const Subscription: React.FC = () => {
                     </button>
                   )}
                 </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -324,8 +326,8 @@ export const Subscription: React.FC = () => {
           </div>
 
           {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {availablePlans.map((plan, index) => (
               <motion.div
                 key={plan.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -397,7 +399,7 @@ export const Subscription: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      {plan.price === 0 ? 'Get Started' : 'Subscribe'}
+                      {isFamilyPlan ? 'Upgrade to Family' : 'Subscribe'}
                       <ChevronRight className="w-5 h-5" />
                     </>
                   )}

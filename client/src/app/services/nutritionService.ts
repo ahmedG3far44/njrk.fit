@@ -62,8 +62,8 @@ export const nutritionService = {
     return api.post<{ plan: NutritionPlan }>('/nutrition/generate', data);
   },
 
-  async refine(mealId: string, data: RefineMealData): Promise<{ plan: NutritionPlan }> {
-    return api.post<{ plan: NutritionPlan }>(`/nutrition/refine/${mealId}`, data);
+  async refine(mealId: string, data: RefineMealData): Promise<{ meal: Meal }> {
+    return api.post<{ meal: Meal }>(`/nutrition/refine/${mealId}`, data);
   },
 
   async getCurrent(params?: { userId?: string; date?: 'today' | 'week' }): Promise<{ meals: Meal[]; targetMacros: MealMacros }> {

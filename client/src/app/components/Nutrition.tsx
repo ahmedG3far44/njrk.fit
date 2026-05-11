@@ -324,16 +324,19 @@ export const Nutrition: React.FC = () => {
   const activeUser = activeProfileId === 'me'
     ? { id: 'me', name: 'You', avatarUrl: '' }
     : {
-        id: foundMember?.id || 'me',
-        name: foundMember?.name || 'You',
-        avatarUrl: foundMember?.avatarUrl || ''
-      };
+      id: foundMember?.id || 'me',
+      name: foundMember?.name || 'You',
+      avatarUrl: foundMember?.avatarUrl || ''
+    };
 
   return (
     <div className="space-y-6 relative">
       <AnimatePresence>
         {selectedMeal && (
-          <RecipeDetail recipe={selectedMeal} onClose={() => setSelectedMeal(null)} />
+          <RecipeDetail recipe={selectedMeal} onClose={() => setSelectedMeal(null)} canRefine={isOwnProfile} onMealRefined={(refinedMeal) => {
+            setSelectedMeal(refinedMeal);
+            setCurrentMeals(prev => prev.map(m => m._id === refinedMeal._id ? refinedMeal : m));
+          }} />
         )}
       </AnimatePresence>
 
@@ -341,7 +344,7 @@ export const Nutrition: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed min-h-screen w-full left-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={e => e.target === e.currentTarget && setShowInviteModal(false)}
         >
           <motion.div

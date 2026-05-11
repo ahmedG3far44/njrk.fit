@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Clock, Flame, ChefHat, PlayCircle, Heart, RefreshCw, Sparkles, Send } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { MealItem } from '../services/nutritionService';
+import { MealItem, nutritionService, RefineMealData } from '../services/nutritionService';
+import { toast } from 'sonner';
 
 
 interface RecipeDetailProps {
   onClose: () => void;
+  canRefine?: boolean;
+  onMealRefined?: (meal: any) => void;
   recipe?: {
+    _id: string;
     name?: string;
     image?: string;
     calories?: number;
@@ -28,11 +32,17 @@ interface RecipeDetailProps {
   };
 }
 
-export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) => {
+export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefined, recipe, canRefine = true }) => {
   const [aiInstruction, setAiInstruction] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [regenerated, setRegenerated] = useState(false);
   const [liked, setLiked] = useState(false);
+
+  const [currentRecipe, setCurrentRecipe] = useState<RecipeDetailProps["recipe"]>(recipe);
+
+  useEffect(() => {
+    setCurrentRecipe(recipe);
+  }, [recipe]);
 
   const defaultRecipe = {
     name: 'Grilled Chicken Quinoa Bowl',
@@ -64,41 +74,41 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
   };
 
   const getCalories = () =>
-    recipe?.calories ??
-    (recipe?.macros?.calories != null
-      ? recipe.macros.calories
+    currentRecipe?.calories ??
+    (currentRecipe?.macros?.calories != null
+      ? currentRecipe.macros.calories
       : defaultRecipe.calories);
 
   const getProtein = () =>
-    recipe?.protein ??
-    (recipe?.macros?.protein != null
-      ? `${recipe.macros.protein}g`
+    currentRecipe?.protein ??
+    (currentRecipe?.macros?.protein != null
+      ? `${currentRecipe.macros.protein}g`
       : defaultRecipe.protein);
   const getCarbs = () =>
-    recipe?.carbs ??
-    (recipe?.macros?.carbs != null
-      ? `${recipe.macros.carbs}g`
+    currentRecipe?.carbs ??
+    (currentRecipe?.macros?.carbs != null
+      ? `${currentRecipe.macros.carbs}g`
       : defaultRecipe.carbs);
   const getFat = () =>
-    recipe?.fat ??
-    (recipe?.macros?.fats != null
-      ? `${recipe.macros.fats}g`
-      : recipe?.macros?.fat != null
-        ? `${recipe.macros.fat}g`
+    currentRecipe?.fat ??
+    (currentRecipe?.macros?.fats != null
+      ? `${currentRecipe.macros.fats}g`
+      : currentRecipe?.macros?.fat != null
+        ? `${currentRecipe.macros.fat}g`
         : defaultRecipe.fat);
 
   const getIngredients = () => {
-    const ingredients = recipe?.ingredients?.length ? recipe.ingredients : defaultRecipe.ingredients;
+    const ingredients = currentRecipe?.ingredients?.length ? currentRecipe.ingredients : defaultRecipe.ingredients;
     return ingredients.map((ing: string | { name: string; _id?: string }) =>
       typeof ing === 'string' ? ing : ing?.name || ''
     ).filter(Boolean);
   };
 
   const getSteps = () => {
-    const steps = recipe?.steps?.length
-      ? recipe.steps
-      : recipe?.instructions?.length
-        ? recipe.instructions
+    const steps = currentRecipe?.steps?.length
+      ? currentRecipe.steps
+      : currentRecipe?.instructions?.length
+        ? currentRecipe.instructions
         : defaultRecipe.steps;
     return steps.map((step: string | { name: string; _id?: string }) =>
       typeof step === 'string' ? step : step?.name || ''
@@ -107,23 +117,49 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
 
   const data = {
     ...defaultRecipe,
-    ...recipe,
+    ...currentRecipe,
     calories: getCalories(),
     protein: getProtein(),
     carbs: getCarbs(),
     fat: getFat(),
-    ingredients: recipe?.ingredients,
+    ingredients: currentRecipe?.ingredients,
     steps: getSteps(),
   };
 
-  const handleRegenerate = () => {
-    if (!aiInstruction.trim()) return;
-    setIsRegenerating(true);
-    setTimeout(() => {
-      setIsRegenerating(false);
-      setRegenerated(true);
+  const handleRegenerate = async () => {
+    // if (!aiInstruction.trim()) return;
+    // setIsRegenerating(true);
+    // setTimeout(() => {
+    //   setIsRegenerating(false);
+    //   setRegenerated(true);
+    //   setAiInstruction('');
+    // }, 2200);
+
+    try {
+      setIsRegenerating(true);
+      const RefineMealData: RefineMealData = {
+        refinement: aiInstruction,
+      };
+
+      const mealId = currentRecipe?._id as string
+
+      console.log(RefineMealData)
+      console.log(mealId)
+
+      const response = await nutritionService.refine(mealId, RefineMealData);
+
+      console.log("response", response);
+      setCurrentRecipe(response.meal);
+      onMealRefined?.(response.meal);
       setAiInstruction('');
-    }, 2200);
+      toast.success('Recipe refined successfully!');
+    } catch (error) {
+      console.error('Failed to regenerate recipe:', error);
+      toast.error('Failed to regenerate recipe. Please try again.');
+    } finally {
+      setRegenerated(true);
+      setIsRegenerating(false);
+    }
   };
 
   const suggestions = [
@@ -135,11 +171,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
   ];
 
   return (
-    <div className="fixed z-50 flex items-center justify-center p-0 bg-black/50 backdrop-blur-sm w-screen h-screen left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-none">
+    <div className="fixed z-50 w-full min-h-screen left-0 top-0 flex items-center justify-center bg-black/40 backdrop-blur-sm ">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full lg:w-3/4 lg:rounded-2xl overflow-hidden max-h-[calc(100vh-2rem)] sm:rounded-none"
+        className="w-full lg:w-3/4 lg:rounded-2xl overflow-hidden max-h-[calc(100vh-2rem)] sm:rounded-none shadow-2xl"
       >
         <button
           onClick={onClose}
@@ -257,7 +293,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
                   </div>
                 </div>
 
-                {/* AI Refinement Section */}
+                {canRefine && (
                 <div className="border-t border-slate-100 pt-6">
                   <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-green-600" /> Refine with AI
@@ -296,13 +332,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
                   </div>
 
                   <button
-                    onClick={() => {
-                      setIsRegenerating(true);
-                      setTimeout(() => {
-                        setIsRegenerating(false);
-                        setRegenerated(true);
-                      }, 2200);
-                    }}
+                    onClick={handleRegenerate}
                     disabled={isRegenerating}
                     className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm"
                   >
@@ -310,19 +340,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, recipe }) =
                     Regenerate this Meal (AI Surprise)
                   </button>
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="mt-6 flex gap-3">
-                <button className="flex-1 bg-gradient-to-r from-green-800 to-green-700 text-white py-3 rounded-xl font-bold hover:opacity-90 transition-colors">
-                  Add to Log
-                </button>
-                <button
-                  onClick={() => setLiked(!liked)}
-                  className={`p-3 border rounded-xl transition-colors ${liked ? 'border-red-300 bg-red-50 text-red-500' : 'border-slate-200 hover:bg-slate-50 text-slate-400 hover:text-red-500'}`}
-                >
-                  <Heart className={`w-6 h-6 ${liked ? 'fill-current' : ''}`} />
-                </button>
+                )}
               </div>
             </div>
           </div>

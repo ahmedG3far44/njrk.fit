@@ -93,10 +93,6 @@ router.post(
   },
 );
 
-type RefinedPlan = {
-  meals: Meal[];
-  targetMacros: Macros;
-};
 
 router.post(
   "/refine/:mealId",
@@ -147,16 +143,10 @@ router.post(
         userContext,
       );
 
-      // const updatedMealsList = nutritionPlan.meals.map((meal: Meal) => {
-      //   if (meal._id?.toString() === mealId) {
-      //     return refinedMeal;
-      //   }
-      //   return meal;
-      // });
-
-      // nutritionPlan.meals = updatedMealsList;
-
-      // await nutritionPlan.save();
+      const refinedMealWithId = {
+        ...refinedMeal,
+        _id: currentMeal._id,
+      };
 
       const updatedNutritionPlan = await NutritionPlan.findOneAndUpdate(
         {
@@ -164,7 +154,7 @@ router.post(
           "meals._id": mealId as string,
         },
         {
-          $set: { "meals.$": refinedMeal },
+          $set: { "meals.$": refinedMealWithId },
         },
         {
           new: true,
@@ -175,9 +165,9 @@ router.post(
       console.log(
         "updated Nutrition Plan in refined meal",
         updatedNutritionPlan,
-      );
+      ); 
 
-      res.status(200).json({ plan: updatedNutritionPlan });
+      res.status(200).json({ meal: refinedMealWithId });
     } catch (error) {
       console.error("Nutrition refine error:", error);
       next(error);

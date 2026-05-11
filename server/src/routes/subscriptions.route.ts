@@ -86,11 +86,38 @@ router.post('/create-portal-session', authMiddleware, async (req: Request, res: 
     }
 });
 
+const PRICE_ID_MAP: Record<string, { name: string; price: number }> = {
+    'price_1TJWzbRPSIjKJwi65DaSICYd': { name: 'Pro', price: 12 },
+    'price_1TJX1mRPSIjKJwi6YpH18JNr': { name: 'Family', price: 24 },
+};
+
 function getPlanTier(planName: string): number {
     const name = planName.toLowerCase();
     if (name.includes('family') || name.includes('elite')) return 3;
     if (name.includes('pro')) return 2;
     return 1;
+}
+
+async function getSubscriptionDetails(stripeSubscriptionId: string) {
+    try {
+        const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const defaultPaymentMethodId = subscription.default_payment_method as string;
+        
+        let cardLast4: string | undefined;
+        
+        if (defaultPaymentMethodId) {
+            const paymentMethod = await stripe.paymentMethods.retrieve(defaultPaymentMethodId);
+            cardLast4 = paymentMethod.card?.last4;
+        }
+        
+        return {
+            cardLast4,
+            subscriptionStartDate: new Date(subscription.created * 1000).toISOString(),
+        };
+    } catch (error) {
+        console.error('Error fetching subscription details:', error);
+        return { cardLast4: undefined, subscriptionStartDate: undefined };
+    }
 }
 
 router.post('/cancel', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
@@ -127,12 +154,28 @@ router.get('/status', authMiddleware, async (req: Request, res: Response, next: 
             return res.status(404).json({ error: 'User not found' });
         }
 
+        const planId = user.subscription?.planId;
+        const planInfo = planId ? PRICE_ID_MAP[planId] : undefined;
+        
+        let cardLast4: string | undefined;
+        let subscriptionStartDate: string | undefined;
+
+        if (user.subscription?.stripeSubscriptionId && user.subscription?.status === 'active') {
+            const details = await getSubscriptionDetails(user.subscription.stripeSubscriptionId);
+            cardLast4 = details.cardLast4;
+            subscriptionStartDate = details.subscriptionStartDate;
+        }
+
         res.status(200).json({
             status: user.subscription?.status || 'none',
-            planId: user.subscription?.planId,
+            planId: planId,
             currentPeriodEnd: user.subscription?.currentPeriodEnd,
             cancelAtPeriodEnd: user.subscription?.cancelAtPeriodEnd || false,
             subscriptionTier: user.subscription?.subscriptionTier,
+            cardLast4: cardLast4,
+            subscriptionStartDate: subscriptionStartDate,
+            planName: planInfo?.name,
+            planPrice: planInfo?.price,
         });
     } catch (error) {
         next(error);
