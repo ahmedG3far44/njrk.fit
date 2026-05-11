@@ -44,6 +44,7 @@ export interface IUser extends Document {
   estimatedSleepHours: number;
   estimatedWaterOz: number;
   onboardingCompleted: boolean;
+  lastStatsUpdate?: Date;
   preferences: {
     notifications: boolean;
     weeklySummary: boolean;
@@ -109,6 +110,7 @@ const UserSchema = new Schema<IUser>({
   estimatedSteps: { type: Number, default: 5000 },
   estimatedSleepHours: { type: Number, default: 7.5 },
   estimatedWaterOz: { type: Number, default: 64 },
+  lastStatsUpdate: { type: Date },
   preferences: {
     notifications: { type: Boolean, default: true },
     weeklySummary: { type: Boolean, default: true },

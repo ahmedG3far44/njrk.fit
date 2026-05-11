@@ -14,11 +14,76 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+router.get('/can-update', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // // TEMPORARILY DISABLED FOR TESTING - Remove this to enable restriction
+        // return res.status(200).json({ canUpdate: true, daysUntilUpdate: 0 });
+
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.userId;
+        const now = new Date();
+
+        const user = await User.findById(userId).select('lastStatsUpdate');
+
+        if (!user || !user.lastStatsUpdate) {
+            const nextSunday = new Date(now);
+            nextSunday.setDate(now.getDate() + (7 - now.getDay()));
+            nextSunday.setHours(0, 0, 0, 0);
+
+            const isSunday = now.getDay() === 0;
+
+            return res.status(200).json({
+                canUpdate: isSunday,
+                message: isSunday ? 'You can update today!' : 'Waiting for first Sunday',
+                daysUntilUpdate: isSunday ? 0 : Math.ceil((nextSunday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+                nextUpdateDate: nextSunday
+            });
+        }
+
+        const lastUpdate = new Date(user.lastStatsUpdate);
+        const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff >= 7) {
+            return res.status(200).json({ canUpdate: true, daysUntilUpdate: 0 });
+        }
+
+        const nextAllowedDate = new Date(lastUpdate);
+        nextAllowedDate.setDate(lastUpdate.getDate() + 7);
+
+        return res.status(200).json({
+            canUpdate: true,
+            message: `You can update on ${nextAllowedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`,
+            daysUntilUpdate: 7 - daysDiff,
+            nextUpdateDate: nextAllowedDate
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const { weightKg, bodyFatPercentage, muscleMass, dailySteps, tags, notes, source } = req.body;
+
+        const user = await User.findById(userId).select('lastStatsUpdate');
+
+        // TEMPORARILY DISABLED FOR TESTING - Remove this to enable restriction
+        // if (user?.lastStatsUpdate) {
+        //     const lastUpdate = new Date(user.lastStatsUpdate);
+        //     const now = new Date();
+        //     const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+        //     
+        //     if (daysDiff < 7) {
+        //         const nextAllowedDate = new Date(lastUpdate);
+        //         nextAllowedDate.setDate(lastUpdate.getDate() + 7);
+        //         return res.status(403).json({ 
+        //             error: 'You can only update your stats once per week',
+        //             nextAllowedDate: nextAllowedDate
+        //         });
+        //     }
+        // }
 
         let scanFileUrl: string | undefined;
 
@@ -46,7 +111,12 @@ router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Reque
         });
 
         if (weightKg) {
-            await User.findByIdAndUpdate(userId, { weight: parseFloat(weightKg) });
+            await User.findByIdAndUpdate(userId, {
+                weight: parseFloat(weightKg),
+                lastStatsUpdate: new Date()
+            });
+        } else {
+            await User.findByIdAndUpdate(userId, { lastStatsUpdate: new Date() });
         }
 
         await awardPoints(userId!, 15, 'Progress log recorded');

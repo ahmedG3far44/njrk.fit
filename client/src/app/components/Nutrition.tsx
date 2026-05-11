@@ -6,14 +6,18 @@ import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider';
 import { NutritionPlan, MealResponse, GenerateResponse, Meal } from '../services/nutritionService';
-import type { FamilyMember, PendingInvitation, FamilyResponse, SearchResult } from '../services';
+import { type FamilyMember, type PendingInvitation, type FamilyResponse, type SearchResult, familyService } from '../services';
 
 interface MealCardProps {
   meal: Meal;
   index: number;
   targetMacros: { calories: number; protein: number; carbs: number; fats: number };
   isFamilyMode: boolean;
-  activeUserName: string;
+  activeUser: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+  };
   activeProfileId: string;
   canInteract: boolean;
   onViewRecipe: () => void;
@@ -26,7 +30,7 @@ const MealCard: React.FC<MealCardProps> = ({
   index,
   targetMacros,
   isFamilyMode,
-  activeUserName,
+  activeUser,
   activeProfileId,
   canInteract,
   onViewRecipe,
@@ -55,7 +59,7 @@ const MealCard: React.FC<MealCardProps> = ({
               </div>
               {isFamilyMode && activeProfileId !== 'me' && (
                 <div className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-bold">
-                  <User className="w-3 h-3" /> {activeUserName}
+                  <img src={activeUser.avatarUrl} alt={activeUser.name} className="w-4 h-4 rounded-full" />{activeUser.name}
                 </div>
               )}
             </div>
@@ -145,6 +149,24 @@ export const Nutrition: React.FC = () => {
       setCurrentMeals(response.meals);
       setTargetMacros(response.targetMacros);
     } catch (error) {
+      console.error(`[${(error as Error)?.name}] - Failed to fetch meals: ${(error as Error).message}`);
+    } finally {
+      setIsLoadingMeals(false);
+    }
+  }, []);
+  const fetchFamilyMemberMeals = useCallback(async (memberId?: string) => {
+    setIsLoadingMeals(true);
+    try {
+
+      if (!memberId) return;
+
+      const response = await familyService.getFamilyMemberNutritionPlan(memberId as string);
+      console.log("memebr meals of user:", memberId)
+      console.log(response);
+
+      setCurrentMeals(response.meals);
+      setTargetMacros(response.targetMacros);
+    } catch (error) {
       console.error('Failed to fetch meals:', error);
     } finally {
       setIsLoadingMeals(false);
@@ -172,12 +194,19 @@ export const Nutrition: React.FC = () => {
   };
 
   const handleProfileChange = async (profileId: 'me' | string, member?: FamilyMember) => {
-    setActiveProfileId(profileId);
-    setActiveUserId(profileId === 'me' ? (user?._id || null) : (member?._id || null));
+    console.log("profileId", profileId)
+    console.log("member", member)
+    console.log("activeProfileId", activeProfileId)
+    console.log("activeUserId", activeUserId)
 
-    // Fetch meals for the selected profile
-    const targetUserId = profileId !== 'me' ? profileId : undefined;
-    await fetchMeals(viewMode, targetUserId);
+    setActiveProfileId(profileId);
+    setActiveUserId(profileId === 'me' ? (user?._id || null) : (member?.id || null));
+
+    if (profileId === 'me') {
+      await fetchMeals(viewMode, undefined);
+    } else {
+      await fetchFamilyMemberMeals(member?.id);
+    }
   };
 
   // Check if viewing own profile
@@ -229,9 +258,11 @@ export const Nutrition: React.FC = () => {
   };
 
   useEffect(() => {
+    // Only fetch on initial load or when viewMode or family mode changes
+    // Profile switching is handled in handleProfileChange
     const userId = activeProfileId !== 'me' ? activeProfileId : undefined;
-    fetchMeals(viewMode, userId);
-  }, [viewMode, activeProfileId]);
+    activeProfileId === "me" ? fetchMeals(viewMode, userId) : fetchFamilyMemberMeals(activeProfileId as string);
+  }, [viewMode, isFamilyMode]);
 
   useEffect(() => {
     fetchFamily();
@@ -289,9 +320,14 @@ export const Nutrition: React.FC = () => {
     }
   };
 
+  const foundMember = familyMembers.find(m => m.id === activeProfileId);
   const activeUser = activeProfileId === 'me'
     ? { id: 'me', name: 'You', avatarUrl: '' }
-    : familyMembers.find(m => m._id === activeProfileId) || { id: 'me', name: 'You', avatarUrl: '' };
+    : {
+        id: foundMember?.id || 'me',
+        name: foundMember?.name || 'You',
+        avatarUrl: foundMember?.avatarUrl || ''
+      };
 
   return (
     <div className="space-y-6 relative">
@@ -388,34 +424,34 @@ export const Nutrition: React.FC = () => {
         </motion.div>
       )}
       <div className="flex flex-col gap-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Nutrition Plan</h1>
-            <p className="text-slate-500">AI-optimized meal plans for your goals.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Nutrition Plan</h1>
+            <p className="text-slate-500 text-sm">AI-optimized meal plans for your goals.</p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
             >
               {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
-              {isFamilyMode ? 'Family Plan' : 'Solo Mode'}
+              <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
             </button>
 
 
             <div className="flex bg-slate-100 p-1 rounded-xl">
               <button
                 onClick={() => handleViewModeChange('today')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
               >
-                <Clock className="w-3.5 h-3.5" /> Today
+                <Clock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Today</span>
               </button>
               <button
                 onClick={() => handleViewModeChange('week')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
               >
-                <CalendarDays className="w-3.5 h-3.5" /> Full Week
+                <CalendarDays className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Full Week</span>
               </button>
             </div>
 
@@ -424,7 +460,7 @@ export const Nutrition: React.FC = () => {
               whileTap={{ scale: 0.96 }}
               onClick={generatePlan}
               disabled={isGenerating}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group"
+              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
             >
               {isGenerating ? (
                 <>
@@ -450,48 +486,62 @@ export const Nutrition: React.FC = () => {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 p-1 overflow-x-auto pb-2">
+
+              <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 sm:gap-3 p-1 overflow-x-auto sm:overflow-x-visible pb-2 scrollbar-hide w-full -mx-2 sm:mx-0 px-2 sm:px-1">
+
+                {/* "You" Profile Button */}
                 <button
                   onClick={() => handleProfileChange('me')}
-                  className={`flex items-center gap-3 pl-2 pr-5 py-2 rounded-full border transition-all min-w-[140px] ${activeProfileId === 'me'
+                  className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${activeProfileId === 'me'
                     ? 'border-green-600 bg-green-50 ring-2 ring-green-200'
                     : 'border-slate-200 hover:bg-slate-50 bg-white'
                     }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
-                    <User className="w-5 h-5 text-green-700" />
+                  <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-100 flex items-center justify-center">
+                    <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-700" />
                   </div>
                   <div className="text-left">
-                    <div className={`font-bold text-sm ${activeProfileId === 'me' ? 'text-slate-900' : 'text-slate-600'}`}>You</div>
-                    <div className="text-[10px] font-medium text-slate-400">{totals.calories} kcal</div>
+                    <div className={`font-bold text-xs sm:text-sm ${activeProfileId === 'me' ? 'text-slate-900' : 'text-slate-600'}`}>
+                      You
+                    </div>
+                    <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                      {totals.calories} kcal
+                    </div>
                   </div>
                 </button>
 
-                {familyMembers.map(member => (
+                {/* Family Members Profile Buttons */}
+                {familyMembers.map((member) => (
                   <button
-                    key={member._id}
-                    onClick={() => handleProfileChange(member._id, member)}
-                    className={`flex items-center gap-3 pl-2 pr-5 py-2 rounded-full border transition-all min-w-[140px] ${activeProfileId === member._id
-                      ? 'border-green-600 bg-green-50 ring-2 ring-green-200'
-                      : 'border-slate-200 hover:bg-slate-50 bg-white'
+                    key={member.id}
+                    onClick={() => handleProfileChange(member.id, member)}
+                    className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${activeProfileId === member.id ? 'border-green-600 bg-green-50 ring-2 ring-green-200' : 'border-slate-200 hover:bg-slate-50 bg-white'
                       }`}
                   >
                     {member.avatarUrl ? (
-                      <img src={member.avatarUrl} alt={member.name} className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" />
+                      <img
+                        src={member.avatarUrl}
+                        alt={member.name}
+                        className="w-7 sm:w-9 h-7 sm:h-9 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center">
-                        <User className="w-5 h-5 text-slate-400" />
+                      <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-slate-200 flex items-center justify-center">
+                        <User className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
                       </div>
                     )}
                     <div className="text-left">
-                      <div className={`font-bold text-sm ${activeProfileId === member._id ? 'text-slate-900' : 'text-slate-600'}`}>{member.name}</div>
-                      <div className="text-[10px] font-medium text-slate-400">View plan</div>
+                      <div className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? 'text-slate-900' : 'text-slate-600'}`}>
+                        {member.name}
+                      </div>
+                      <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                        {member.calories} kcal
+                      </div>
                     </div>
                   </button>
                 ))}
 
                 {isFamilyMode && (
-                  <div className="w-14 h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-white hover:bg-green-100 cursor-pointer">
+                  <div className="shrink-0 w-10 sm:w-14 h-10 sm:h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-white hover:bg-green-100 cursor-pointer">
                     <button
                       onClick={() => setShowInviteModal(true)}
                       className="flex items-center gap-2 p-2 text-sm font-semibold text-green-500 rounded-full transition-color cursor-pointer"
@@ -585,7 +635,7 @@ export const Nutrition: React.FC = () => {
                                   index={dayGroup.startIndex + mealIndex}
                                   targetMacros={targetMacros}
                                   isFamilyMode={isFamilyMode}
-                                  activeUserName={activeUser.name}
+                                  activeUser={activeUser}
                                   activeProfileId={activeProfileId}
                                   canInteract={isOwnProfile}
                                   onViewRecipe={() => setSelectedMeal(meal)}
@@ -615,7 +665,7 @@ export const Nutrition: React.FC = () => {
                               index={mealsWithDay.length + index}
                               targetMacros={targetMacros}
                               isFamilyMode={isFamilyMode}
-                              activeUserName={activeUser.name}
+                              activeUser={activeUser}
                               activeProfileId={activeProfileId}
                               canInteract={isOwnProfile}
                               onViewRecipe={() => setSelectedMeal(meal)}
@@ -637,7 +687,7 @@ export const Nutrition: React.FC = () => {
                 index={index}
                 targetMacros={targetMacros}
                 isFamilyMode={isFamilyMode}
-                activeUserName={activeUser.name}
+                activeUser={activeUser}
                 activeProfileId={activeProfileId}
                 canInteract={isOwnProfile}
                 onViewRecipe={() => setSelectedMeal(meal)}

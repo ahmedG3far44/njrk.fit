@@ -47,6 +47,13 @@ export interface FeelingLog {
   notes?: string;
 }
 
+export interface CanUpdateResponse {
+  canUpdate: boolean;
+  message?: string;
+  daysUntilUpdate: number | null;
+  nextUpdateDate?: string;
+}
+
 export interface Pagination {
   page: number;
   limit: number;
@@ -96,5 +103,9 @@ export const progressService = {
   async getFeelings(params?: { days?: number }): Promise<{ feelings: FeelingLog[] }> {
     const query = params?.days ? `?days=${params.days}` : '';
     return api.get<{ feelings: FeelingLog[] }>(`/progress/feelings${query}`);
+  },
+
+  async canUpdate(): Promise<CanUpdateResponse> {
+    return api.get<CanUpdateResponse>('/progress/can-update');
   },
 };

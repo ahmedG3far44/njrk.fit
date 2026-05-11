@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import User from "../models/user.model";
 import ProgressLog from "../models/progress.model";
 import FamilyInvitation from "../models/familyInvitation.model";
+import NutritionPlan from "../models/nutrition.model";
+
 
 import {
   authMiddleware,
@@ -21,6 +23,7 @@ router.get(
       const userId = authReq.user?.userId;
 
       const user = await User.findById(userId);
+
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -30,13 +33,43 @@ router.get(
         _id: { $in: user.familyMembers || [] },
       }).select("name avatarUrl email");
 
+      console.log("familyMembers"); 
+      console.log(familyMembers);
+
+      const nutritionPlans = await NutritionPlan.find({
+        userId: { $in: user.familyMembers || [] },
+      });
+
+      const nutritionPlansForFamily = familyMembers.map((member) => {
+        return {
+          id: member._id,
+          name: member.name,
+          avatarUrl: member.avatarUrl,
+          email: member.email,
+          calories: nutritionPlans.find(
+            (plan) => plan.userId.toString() === member._id.toString(),
+          )?.targetMacros.calories || 0,
+          protein: nutritionPlans.find(
+            (plan) => plan.userId.toString() === member._id.toString(),
+          )?.targetMacros.protein || 0,
+          carbs: nutritionPlans.find(
+            (plan) => plan.userId.toString() === member._id.toString(),
+          )?.targetMacros.carbs || 0,
+          fats: nutritionPlans.find(
+            (plan) => plan.userId.toString() === member._id.toString(),
+          )?.targetMacros.fats || 0,
+        }
+      });
+
+      console.log(nutritionPlansForFamily); 
+
       const pendingInvitations = await FamilyInvitation.find({
         toUserId: userId,
         status: "pending",
       }).populate("fromUserId", "name avatarUrl");
 
       res.status(200).json({
-        familyMembers,
+        familyMembers: nutritionPlansForFamily,
         pendingInvitations: pendingInvitations.map((inv) => ({
           id: inv._id,
           user: {
@@ -282,7 +315,7 @@ router.post(
     try {
       const authReq = req as AuthRequest;
       const userId = authReq.user?.userId;
-      const invitationId = req.params.invitationId; 
+      const invitationId = req.params.invitationId;
 
       if (!invitationId) {
         return res.status(400).json({ error: "invitationId is required" });
@@ -455,4 +488,60 @@ router.get(
     }
   },
 );
+
+
+
+router.get(
+  "/plan/member/:memberId",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.user?.userId;
+      const memberId = req.params.memberId as string;
+
+
+      const date = new Date();
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!memberId) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      if (memberId === userId) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+
+      const members = user.familyMembers?.map((memberId) => memberId.toString());
+
+      if (!members.includes(memberId)) {
+        return res
+          .status(200)
+          .json({ familyMembers: "This member is not a member of your family" });
+      }
+
+      const plan = await NutritionPlan.findOne({ userId: memberId });
+
+      if (!plan) {
+        return res.status(404).json({ error: "No plan found for this member" });
+      }
+
+      const todayMeals = plan.meals.filter((meal) => Number(meal.day.split(' ')[1]) - 1 === date.getDay());
+
+      res.status(200).json({
+        meals: todayMeals,
+        targetMacros: plan.targetMacros
+      })
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+
 export default router;

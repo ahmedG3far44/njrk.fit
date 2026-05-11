@@ -1,10 +1,15 @@
 import { api } from '../lib/api';
+import { NutritionPlan } from './nutritionService';
 
 export interface FamilyMember {
-  _id: string;
+  id: string;
   name: string;
   avatarUrl?: string;
   email: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
 }
 
 export interface PendingInvitation {
@@ -41,9 +46,15 @@ export interface RespondResponse {
   success: boolean;
 }
 
+
+
 export const familyService = {
   async getFamily(): Promise<FamilyResponse> {
     return api.get<FamilyResponse>('/family');
+  },
+
+  async getFamilyMemberNutritionPlan(memberId: string): Promise<NutritionPlan> {
+    return api.get<NutritionPlan>(`/family/plan/member/${memberId}`);
   },
 
   async searchUsers(query: string): Promise<SearchResponse> {

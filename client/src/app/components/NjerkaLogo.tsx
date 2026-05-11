@@ -13,7 +13,6 @@ const NjerkaLogo = ({ className, text, size }: { className?: string, text?: bool
         height={dimensions}
         className={`${sizeClass} mix-blend-multiply`}
         decoding="async"
-        fetchPriority="high"
       />
       {text && <span className="font-extrabold text-sm sm:text-xl md:text-2xl p-0 text-green-800 tracking-tight">Njerka</span>}
     </Link>

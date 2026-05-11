@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { TrendingUp, Upload, X, Brain, Send, Scale, Sparkles, Check } from 'lucide-react';
+import { TrendingUp, X, Brain, Send, Scale, Sparkles, Check, Lock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { progressService, CanUpdateResponse } from '../services/progressService';
 
 interface WeightEntry {
   date: string;
@@ -18,34 +19,69 @@ export const Progress: React.FC = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [currentWeight, setCurrentWeight] = useState('');
   const [aiFeeling, setAiFeeling] = useState('');
-  const [inbodyFile, setInbodyFile] = useState<string | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const [weightData, setWeightData] = useState<WeightEntry[]>([]);
   const [activityData] = useState<ActivityEntry[]>([]);
+  const [canUpdateInfo, setCanUpdateInfo] = useState<CanUpdateResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState<'7days' | '30days' | '7weeks'>('7weeks');
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [dashboardRes, canUpdateRes] = await Promise.all([
+          progressService.getDashboard({ timeframe }),
+          progressService.canUpdate()
+        ]);
+
+        if (dashboardRes.weightTrend) {
+          const formattedData: WeightEntry[] = dashboardRes.weightTrend.map(item => ({
+            date: new Date(item._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            weight: item.weightKg || 0
+          }));
+          setWeightData(formattedData);
+        }
+
+        setCanUpdateInfo(canUpdateRes);
+      } catch (error) {
+        console.error('Error fetching progress data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [timeframe, submitted]);
+
+  const handleSubmit = async () => {
     if (!currentWeight && !aiFeeling) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (currentWeight) {
-        setWeightData(prev => [
-          ...prev,
-          { date: `Week ${prev.length + 1}`, weight: parseFloat(currentWeight) }
-        ]);
-      }
-      setIsSubmitting(false);
+
+    try {
+      await progressService.log({
+        weightKg: currentWeight ? parseFloat(currentWeight) : undefined,
+        notes: aiFeeling || undefined,
+        source: 'manual'
+      });
+
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
         setShowUpdateModal(false);
         setCurrentWeight('');
         setAiFeeling('');
-        setInbodyFile(null);
       }, 2000);
-    }, 2000);
+    } catch (error) {
+      console.error('Error submitting progress:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTimeframe(e.target.value as '7days' | '30days' | '7weeks');
   };
 
   return (
@@ -56,31 +92,56 @@ export const Progress: React.FC = () => {
           <p className="text-slate-500">Track your journey to a healthier you.</p>
         </div>
         <div className="flex items-center gap-3">
-          <select className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg outline-none text-sm">
-            <option>Last 7 Weeks</option>
-            <option>Last Month</option>
-            <option>This Year</option>
-          </select>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowUpdateModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200 hover:opacity-90 transition-all"
+          <select
+            value={timeframe}
+            onChange={handleTimeframeChange}
+            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg outline-none text-sm"
           >
-            <TrendingUp className="w-4 h-4" />
-            Update My Stats
-          </motion.button>
+            <option value="7weeks">Last 7 Weeks</option>
+            <option value="30days">Last Month</option>
+            <option value="7days">Last 7 Days</option>
+          </select>
+          {!canUpdateInfo?.canUpdate ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowUpdateModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200 hover:opacity-90 transition-all"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Update My Stats
+            </motion.button>
+          ) : (
+            <div className="relative group">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled
+                className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
+              >
+                <Lock className="w-4 h-4" />
+                Update My Stats
+              </motion.button>
+              {canUpdateInfo && (
+                <div className="absolute right-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    {canUpdateInfo.message}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Update Stats Modal */}
       <AnimatePresence>
         {showUpdateModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed min-h-screen w-full left-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={e => e.target === e.currentTarget && setShowUpdateModal(false)}
           >
             <motion.div
@@ -129,49 +190,6 @@ export const Progress: React.FC = () => {
                       />
                     </div>
 
-                    {/* InBody Upload */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-green-700" /> Upload New InBody / Body Composition Scan
-                      </label>
-                      <div
-                        onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
-                        onDragLeave={() => setIsDragOver(false)}
-                        onDrop={e => {
-                          e.preventDefault();
-                          setIsDragOver(false);
-                          const f = e.dataTransfer.files[0];
-                          if (f) setInbodyFile(f.name);
-                        }}
-                        className={`border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer ${
-                          isDragOver ? 'border-green-600 bg-green-50' : 'border-slate-200 hover:border-green-400 hover:bg-slate-50'
-                        }`}
-                      >
-                        {inbodyFile ? (
-                          <div className="flex items-center gap-3 justify-center">
-                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                              <Check className="w-4 h-4 text-green-600" />
-                            </div>
-                            <span className="text-sm font-medium text-slate-700">{inbodyFile}</span>
-                            <button onClick={e => { e.stopPropagation(); setInbodyFile(null); }} className="text-slate-400 hover:text-red-500">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="text-sm text-slate-500">Drag & drop or <label className="text-green-700 font-semibold cursor-pointer underline">
-                              browse
-                              <input type="file" className="hidden" accept=".pdf,.png,.jpg" onChange={e => {
-                                if (e.target.files?.[0]) setInbodyFile(e.target.files[0].name);
-                              }} />
-                            </label></p>
-                            <p className="text-xs text-slate-400 mt-1">PDF, PNG, JPG up to 10MB</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
                     {/* AI Feeling */}
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -218,13 +236,13 @@ export const Progress: React.FC = () => {
                 <AreaChart data={weightData}>
                   <defs>
                     <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#166534" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#166534" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#166534" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#166534" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <YAxis domain={['dataMin - 1', 'dataMax + 1']} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   <Area type="monotone" dataKey="weight" stroke="#166534" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" />
                 </AreaChart>
@@ -249,8 +267,8 @@ export const Progress: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={activityData} barSize={32}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                  <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   <Bar dataKey="steps" radius={[6, 6, 6, 6]}>
                     {activityData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
