@@ -1,8 +1,9 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "njerka.fit-client",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Njerka.fit frontend, A modern web application for health and fitness management with AI coaching.",
   "scripts": {
     "build": "vite build",
     "dev": "vite"

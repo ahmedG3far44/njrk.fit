@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, Flame, ChefHat, PlayCircle, Heart, RefreshCw, Sparkles, Send } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { MealItem, nutritionService, RefineMealData } from '../services/nutritionService';
+import { MealItem, nutritionService } from '../services/nutritionService';
 import { toast } from 'sonner';
 
 
@@ -10,6 +10,8 @@ interface RecipeDetailProps {
   onClose: () => void;
   canRefine?: boolean;
   onMealRefined?: (meal: any) => void;
+  onReplaced?: (meal: any) => void;
+  replacementsLeft?: number;
   recipe?: {
     _id: string;
     name?: string;
@@ -32,7 +34,7 @@ interface RecipeDetailProps {
   };
 }
 
-export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefined, recipe, canRefine = true }) => {
+export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefined, onReplaced, recipe, canRefine = true, replacementsLeft = 3 }) => {
   const [aiInstruction, setAiInstruction] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [regenerated, setRegenerated] = useState(false);
@@ -126,33 +128,34 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
     steps: getSteps(),
   };
 
-  const handleRegenerate = async () => {
-    // if (!aiInstruction.trim()) return;
-    // setIsRegenerating(true);
-    // setTimeout(() => {
-    //   setIsRegenerating(false);
-    //   setRegenerated(true);
-    //   setAiInstruction('');
-    // }, 2200);
-
+  const handleRefine = async () => {
+    if (!aiInstruction.trim()) return;
+    setIsRegenerating(true);
     try {
-      setIsRegenerating(true);
-      const RefineMealData: RefineMealData = {
-        refinement: aiInstruction,
-      };
-
-      const mealId = currentRecipe?._id as string
-
-      console.log(RefineMealData)
-      console.log(mealId)
-
-      const response = await nutritionService.refine(mealId, RefineMealData);
-
-      console.log("response", response);
+      const mealId = currentRecipe?._id as string;
+      const response = await nutritionService.refine(mealId, { refinement: aiInstruction });
       setCurrentRecipe(response.meal);
       onMealRefined?.(response.meal);
       setAiInstruction('');
       toast.success('Recipe refined successfully!');
+    } catch (error) {
+      console.error('Failed to refine recipe:', error);
+      toast.error('Failed to refine recipe. Please try again.');
+    } finally {
+      setRegenerated(true);
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleReplace = async () => {
+    if (replacementsLeft <= 0) return;
+    setIsRegenerating(true);
+    try {
+      const mealId = currentRecipe?._id as string;
+      const response = await nutritionService.replace(mealId);
+      setCurrentRecipe(response.meal);
+      onReplaced?.(response.meal);
+      toast.success('Recipe regenerated successfully!');
     } catch (error) {
       console.error('Failed to regenerate recipe:', error);
       toast.error('Failed to regenerate recipe. Please try again.');
@@ -318,12 +321,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       type="text"
                       value={aiInstruction}
                       onChange={e => setAiInstruction(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleRegenerate()}
+                      onKeyDown={e => e.key === 'Enter' && handleRefine()}
                       placeholder="e.g. Make it vegan and under 400 calories..."
                       className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                     />
                     <button
-                      onClick={handleRegenerate}
+                      onClick={handleRefine}
                       disabled={!aiInstruction.trim() || isRegenerating}
                       className="bg-gradient-to-r from-green-800 to-green-700 text-white p-3 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
@@ -331,13 +334,19 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                     </button>
                   </div>
 
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-slate-400">
+                      Replacements left: <strong>{replacementsLeft}</strong>/3
+                    </span>
+                  </div>
+
                   <button
-                    onClick={handleRegenerate}
-                    disabled={isRegenerating}
+                    onClick={handleReplace}
+                    disabled={replacementsLeft <= 0 || isRegenerating}
                     className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm"
                   >
                     <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
-                    Regenerate this Meal (AI Surprise)
+                    {replacementsLeft <= 0 ? 'No Replacements Left' : 'Regenerate this Meal (AI Surprise)'}
                   </button>
                 </div>
                 )}

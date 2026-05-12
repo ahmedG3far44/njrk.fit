@@ -3,6 +3,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, X, Brain, Send, Scale, Sparkles, Check, Lock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { progressService, CanUpdateResponse } from '../services/progressService';
+import { gamificationService } from '../services/gamificationService';
+import { nutritionService } from '../services/nutritionService';
+import { fitnessService } from '../services/fitnessService';
 
 interface WeightEntry {
   date: string;
@@ -27,9 +30,15 @@ export const Progress: React.FC = () => {
   const [canUpdateInfo, setCanUpdateInfo] = useState<CanUpdateResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'7days' | '30days' | '7weeks'>('7weeks');
+  const [streakDays, setStreakDays] = useState(0);
+  const [avgProtein, setAvgProtein] = useState(0);
+  const [weightLost, setWeightLost] = useState(0);
+  const [totalWorkouts, setTotalWorkouts] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+
       try {
         const [dashboardRes, canUpdateRes] = await Promise.all([
           progressService.getDashboard({ timeframe }),
@@ -42,14 +51,48 @@ export const Progress: React.FC = () => {
             weight: item.weightKg || 0
           }));
           setWeightData(formattedData);
+
+          if (dashboardRes.weightTrend.length >= 2) {
+            const first = dashboardRes.weightTrend[0].weightKg || 0;
+            const last = dashboardRes.weightTrend[dashboardRes.weightTrend.length - 1].weightKg || 0;
+            const lost = first - last;
+            setWeightLost(lost > 0 ? Math.round(lost * 10) / 10 : 0);
+          }
         }
 
         setCanUpdateInfo(canUpdateRes);
       } catch (error) {
         console.error('Error fetching progress data:', error);
-      } finally {
-        setIsLoading(false);
       }
+
+      try {
+        const streakRes = await gamificationService.getStatus();
+        if (streakRes) setStreakDays(streakRes.currentStreak || 0);
+      } catch (error) {
+        console.error('Error fetching streak:', error);
+      }
+
+      try {
+        const nutritionRes = await nutritionService.getCurrent({ date: 'week' });
+        if (nutritionRes?.meals?.length > 0) {
+          const totalProtein = nutritionRes.meals.reduce((sum: number, meal: any) => sum + (meal.macros?.protein || 0), 0);
+          const uniqueDays = new Set(nutritionRes.meals.map((m: any) => m.day));
+          setAvgProtein(Math.round(totalProtein / Math.max(uniqueDays.size, 1)));
+        }
+      } catch (error) {
+        console.error('Error fetching nutrition:', error);
+      }
+
+      try {
+        const fitnessRes = await fitnessService.getCurrent({ date: 'week' });
+        if (fitnessRes?.data && Array.isArray(fitnessRes.data)) {
+          setTotalWorkouts(fitnessRes.data.filter((s: any) => s.isCompleted).length);
+        }
+      } catch (error) {
+        console.error('Error fetching fitness:', error);
+      }
+
+      setIsLoading(false);
     };
 
     fetchData();
@@ -291,10 +334,10 @@ export const Progress: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Workouts', val: '0', change: '', color: 'text-green-700', bg: 'bg-green-50' },
-          { label: 'Weight Lost', val: '0 kg', change: '', color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Avg. Protein', val: '0g', change: '', color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Streak Days', val: '0', change: '', color: 'text-orange-500', bg: 'bg-orange-50' },
+          { label: 'Total Workouts', val: String(totalWorkouts), change: '', color: 'text-green-700', bg: 'bg-green-50' },
+          { label: 'Weight Lost', val: `${weightLost > 0 ? weightLost : 0} kg`, change: '', color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Avg. Protein', val: `${avgProtein > 0 ? avgProtein : 0}g`, change: '', color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Streak Days', val: String(streakDays), change: '', color: 'text-orange-500', bg: 'bg-orange-50' },
         ].map((stat) => (
           <motion.div
             key={stat.label}

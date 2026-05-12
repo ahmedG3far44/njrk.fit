@@ -104,7 +104,7 @@ export const api = {
   async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
     const { skipAuthRefresh, ...requestOptions } = options;
     const headers: ApiHeaders = {
-      'Content-Type': 'application/json',
+      ...(requestOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(requestOptions.headers as ApiHeaders | undefined),
     };
 
@@ -136,7 +136,7 @@ export const api = {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : (body instanceof FormData ? body : JSON.stringify(body)),
     });
   },
 
@@ -144,7 +144,7 @@ export const api = {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : (body instanceof FormData ? body : JSON.stringify(body)),
     });
   },
 
@@ -156,7 +156,7 @@ export const api = {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : (body instanceof FormData ? body : JSON.stringify(body)),
     });
   },
 };

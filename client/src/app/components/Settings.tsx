@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Bell, Shield, Scale, Ruler, Target, CreditCard, Users, Stethoscope, Sparkles, Check, X, UserCheck, UtensilsCrossed, Clock, ChevronRight, Save, LogOut, Loader2, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ interface Notification {
 }
 
 export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -184,6 +184,26 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    try {
+      await userService.uploadAvatar(file);
+      await refreshUser();
+      toast.success('Profile picture updated!');
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      toast.error('Failed to upload profile picture');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -383,8 +403,13 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       {/* Profile Card */}
       <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
         <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-          <div className="w-20 h-20 rounded-full bg-slate-200 overflow-hidden relative group cursor-pointer flex items-center justify-center">
-            {user?.avatarUrl ? (
+          <div
+            className="w-20 h-20 rounded-full bg-slate-200 overflow-hidden relative group cursor-pointer flex items-center justify-center"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadingAvatar ? (
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            ) : user?.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
             ) : (
               <User className="w-10 h-10 text-slate-400" />
@@ -392,6 +417,13 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="text-xs text-white font-bold">Edit</span>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
           </div>
           <div>
             <h3 className="text-xl font-bold text-slate-900">{user?.name || formData.name || 'Your Name'}</h3>

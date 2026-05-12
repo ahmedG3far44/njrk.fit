@@ -7,11 +7,11 @@ import {
 import { AuthRequest, authMiddleware } from "../middlewares/authMiddleware";
 import User from "../models/user.model";
 import NutritionPlan from "../models/nutrition.model";
-import { generateMealPlan, refineMeal } from "../services/llm.service";
+import { generateMealPlan, refineMeal, regenerateMeal } from "../services/llm.service";
 import { awardPoints } from "../services/gamification.service";
 
-import { UserContext, Meal, Macros } from "../types";
-// import { weekDays } from './fitness.route';
+import { UserContext, Meal } from "../types";
+
 
 const router = Router();
 
@@ -69,7 +69,7 @@ router.post(
         userId: user._id,
       });
 
-      if(nutritionPlan) {
+      if (nutritionPlan) {
         nutritionPlan.meals = plan.meals;
         nutritionPlan.targetMacros = plan.targetMacros;
         nutritionPlan.date = startDate;
@@ -82,8 +82,8 @@ router.post(
         });
       }
 
-      await nutritionPlan.save(); 
-      
+      await nutritionPlan.save();
+
 
       res.status(201).json({ plan: nutritionPlan });
     } catch (error) {
@@ -165,11 +165,86 @@ router.post(
       console.log(
         "updated Nutrition Plan in refined meal",
         updatedNutritionPlan,
-      ); 
+      );
 
       res.status(200).json({ meal: refinedMealWithId });
     } catch (error) {
       console.error("Nutrition refine error:", error);
+      next(error);
+    }
+  },
+);
+
+router.post(
+  "/replace/:mealId",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.user?._id;
+      const { mealId } = req.params;
+
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const nutritionPlan = await NutritionPlan.findOne({
+        userId,
+      });
+
+      if (!nutritionPlan) {
+        return res.status(404).json({ error: "Meal plan not found" });
+      }
+
+      const currentMeal = nutritionPlan?.meals.find(
+        (m) => m._id?.toString() === mealId,
+      ) as Meal | undefined;
+
+      if (!currentMeal) {
+        return res.status(404).json({ error: "Meal not found in plan" });
+      }
+
+      const userContext: UserContext = {
+        name: user.name,
+        weight: user.weight,
+        height: user.height,
+        age: user.age,
+        activityLevel: user.activityLevel,
+        fitnessGoals: user.fitnessGoals,
+        dietaryRestrictions: user.dietaryRestrictions,
+      };
+
+      const regeneratedMeal = await regenerateMeal(currentMeal, userContext);
+
+      const regeneratedMealWithId = {
+        ...regeneratedMeal,
+        _id: currentMeal._id,
+      };
+
+      const updatedNutritionPlan = await NutritionPlan.findOneAndUpdate(
+        {
+          userId: userId,
+          "meals._id": mealId as string,
+        },
+        {
+          $set: { "meals.$": regeneratedMealWithId },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+      console.log(
+        "updated Nutrition Plan in refined meal",
+        updatedNutritionPlan,
+      );
+
+      res.status(200).json({ meal: regeneratedMealWithId });
+    } catch (error) {
+      console.error("Nutrition regenerate error:", error);
       next(error);
     }
   },

@@ -41,7 +41,10 @@ const envSchema = z.object({
 
     OPENROUTER_API_KEY: z.string().default('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'),
 
-    GOOGLE_API_KEY: z.string().default('AIzaSyC3bY3mYGc6bwa0yJxjAtnQ-SIsTah85PA')
+    GOOGLE_API_KEY: z.string().default('AIzaSyC3bY3mYGc6bwa0yJxjAtnQ-SIsTah85PA'),
+    CLOUDINARY_NAME: z.string().default('drjne80qo'),
+    CLOUDINARY_API_KEY: z.string().default('915692518451686'),
+    CLOUDINARY_API_SECRET: z.string().default('Jmf5qnqzDlPevD7NAYvUevLSNDg'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

@@ -1,24 +1,15 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import multer from 'multer';
 import mongoose from 'mongoose';
-import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
-import ProgressLog from '../models/progress.model';
 import User from '../models/user.model';
-import { uploadFile } from '../configs/aws';
+import ProgressLog from '../models/progress.model';
+
+import { Router, Request, Response, NextFunction } from 'express';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import { awardPoints } from '../services/gamification.service';
-import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 },
-});
 
 router.get('/can-update', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // // TEMPORARILY DISABLED FOR TESTING - Remove this to enable restriction
-        // return res.status(200).json({ canUpdate: true, daysUntilUpdate: 0 });
-
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const now = new Date();
@@ -61,7 +52,7 @@ router.get('/can-update', authMiddleware, async (req: Request, res: Response, ne
     }
 });
 
-router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/log', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -69,33 +60,22 @@ router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Reque
 
         const user = await User.findById(userId).select('lastStatsUpdate');
 
-        // TEMPORARILY DISABLED FOR TESTING - Remove this to enable restriction
-        // if (user?.lastStatsUpdate) {
-        //     const lastUpdate = new Date(user.lastStatsUpdate);
-        //     const now = new Date();
-        //     const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
-        //     
-        //     if (daysDiff < 7) {
-        //         const nextAllowedDate = new Date(lastUpdate);
-        //         nextAllowedDate.setDate(lastUpdate.getDate() + 7);
-        //         return res.status(403).json({ 
-        //             error: 'You can only update your stats once per week',
-        //             nextAllowedDate: nextAllowedDate
-        //         });
-        //     }
-        // }
+        if (user?.lastStatsUpdate) {
+            const lastUpdate = new Date(user.lastStatsUpdate);
+            const now = new Date();
+            const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 7) {
+                const nextAllowedDate = new Date(lastUpdate);
+                nextAllowedDate.setDate(lastUpdate.getDate() + 7);
+                return res.status(403).json({ 
+                    error: 'You can only update your stats once per week',
+                    nextAllowedDate: nextAllowedDate
+                });
+            }
+        }
 
         let scanFileUrl: string | undefined;
-
-        if (req.file) {
-            const key = `scans/${userId}/${uuidv4()}.${req.file.originalname.split('.').pop()}`;
-            scanFileUrl = await uploadFile({
-                originalname: req.file.originalname,
-                buffer: req.file.buffer,
-                mimetype: req.file.mimetype,
-                size: req.file.size,
-            }, key);
-        }
 
         const progressLog = await ProgressLog.create({
             userId,
@@ -205,7 +185,7 @@ router.get('/history', authMiddleware, async (req: Request, res: Response, next:
     }
 });
 
-router.post('/extract-inbody', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/extract-inbody', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });

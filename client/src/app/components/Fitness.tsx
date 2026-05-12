@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Clock, Award, Dumbbell, Zap, X, Sparkles, ArrowRight, Target, ChevronRight, Flame, RefreshCw, CheckCircle2, BarChart3, Calendar, Filter, Loader2 } from 'lucide-react';
+import { Play, Clock, Award, Dumbbell, Zap, X, Sparkles, ArrowRight, Target, ChevronRight, Flame, CheckCircle2, BarChart3, Calendar, Filter, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { fitnessService, WorkoutSession, WorkoutPlan, Exercise } from '../services/fitnessService';
+import { FitnessPlanLoader } from './GeneratingLoaders';
 
 interface Workout {
   _id: string;
@@ -140,7 +141,7 @@ export const Fitness: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch workout plan:', error);
       setHasPlan(false);
-      toast.error('Failed to load workout plan');
+      // toast.error('Failed to load workout plan');
     } finally {
       setLoading(false);
     }
@@ -312,6 +313,10 @@ export const Fitness: React.FC = () => {
     ? weeklySessions.filter(s => s.session)
     : weeklySessions.filter(s => s.session && s.type === activeFilter);
 
+
+  if (isGenerating) return <div className="w-full bg-black/80 backdrop-blur-md z-50 fixed left-0 top-0 min-h-screen flex items-center justify-center">
+    <FitnessPlanLoader />
+  </div>
   return (
     <div className="space-y-7 relative">
       {/* Generate Plan Modal */}
@@ -485,7 +490,7 @@ export const Fitness: React.FC = () => {
             className="fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }} 
+              initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl max-h-[88vh] flex flex-col"
@@ -655,33 +660,35 @@ export const Fitness: React.FC = () => {
           <p className="text-slate-500">Your AI-personalized training schedule.</p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-            <button
-              onClick={() => setPlanView('daily')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'daily' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              Daily
-            </button>
-            <button
-              onClick={() => setPlanView('weekly')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'weekly' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-              Weekly
-            </button>
-          </div>
+        {
+          workoutPlan && <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+              <button
+                onClick={() => setPlanView('daily')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'daily' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                Daily
+              </button>
+              <button
+                onClick={() => setPlanView('weekly')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'weekly' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                Weekly
+              </button>
+            </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setShowStyleModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <Sparkles className="w-4 h-4" />
-            {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
-          </motion.button>
-        </div>
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setShowStyleModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <Sparkles className="w-4 h-4" />
+              {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
+            </motion.button>
+          </div>
+        }
       </div>
 
       {/* Weekly Stats Strip */}

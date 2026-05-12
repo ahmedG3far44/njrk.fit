@@ -399,15 +399,11 @@ function toResponseItem(
   },
   daysAhead: number,
 ) {
-  // FIX #2 & #5 — totalQuantity is stored as a plain number; multiply before formatting.
-  // daysAhead scaling is applied consistently in one place only.
+
   return {
     name: item.name,
     category: item.category,
-    // Only multiply here if plans are single-day documents.
-    // If the DB query already spans daysAhead days and aggregation sums them,
-    // set daysAhead = 1 at the call site instead of changing this function.
-    quantity: formatQuantity(item.totalQuantity * daysAhead, item.unit), // ✅
+    quantity: formatQuantity(item.totalQuantity * daysAhead, item.unit),
     checked: item.isPurchased,
     isPurchased: item.isPurchased,
   };

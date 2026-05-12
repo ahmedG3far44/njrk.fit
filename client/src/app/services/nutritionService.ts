@@ -62,6 +62,10 @@ export const nutritionService = {
     return api.post<{ plan: NutritionPlan }>('/nutrition/generate', data);
   },
 
+  async replace(mealId: string): Promise<{ meal: Meal }> {
+    return api.post<{ meal: Meal }>(`/nutrition/replace/${mealId}`);
+  },
+
   async refine(mealId: string, data: RefineMealData): Promise<{ meal: Meal }> {
     return api.post<{ meal: Meal }>(`/nutrition/refine/${mealId}`, data);
   },

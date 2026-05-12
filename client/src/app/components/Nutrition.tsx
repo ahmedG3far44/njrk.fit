@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider';
 import { NutritionPlan, MealResponse, GenerateResponse, Meal } from '../services/nutritionService';
 import { type FamilyMember, type PendingInvitation, type FamilyResponse, type SearchResult, familyService } from '../services';
+import { MealPlanLoader } from './GeneratingLoaders';
 
 interface MealCardProps {
   meal: Meal;
@@ -134,6 +135,11 @@ export const Nutrition: React.FC = () => {
   const [inviteStatus, setInviteStatus] = useState<Record<string, 'idle' | 'sending' | 'sent' | 'error'>>({});
 
   const [swappingMeal, setSwappingMeal] = useState<string | null>(null);
+
+  const [replacementsLeft, setReplacementsLeft] = useState<number>(() => {
+    const stored = localStorage.getItem(`replacements_left_${user?._id}`);
+    return stored !== null ? parseInt(stored, 10) : 3;
+  });
 
   const fetchMeals = useCallback(async (mode: 'today' | 'week', userId?: string) => {
     setIsLoadingMeals(true);
@@ -329,14 +335,32 @@ export const Nutrition: React.FC = () => {
       avatarUrl: foundMember?.avatarUrl || ''
     };
 
+
+  if (isGenerating) return <div className="w-full bg-black/80 backdrop-blur-md z-50 fixed left-0 top-0 min-h-screen flex items-center justify-center">
+    <MealPlanLoader />
+  </div>
+
   return (
     <div className="space-y-6 relative">
       <AnimatePresence>
         {selectedMeal && (
-          <RecipeDetail recipe={selectedMeal} onClose={() => setSelectedMeal(null)} canRefine={isOwnProfile} onMealRefined={(refinedMeal) => {
-            setSelectedMeal(refinedMeal);
-            setCurrentMeals(prev => prev.map(m => m._id === refinedMeal._id ? refinedMeal : m));
-          }} />
+          <RecipeDetail
+            recipe={selectedMeal}
+            onClose={() => setSelectedMeal(null)}
+            canRefine={isOwnProfile}
+            replacementsLeft={replacementsLeft}
+            onMealRefined={(refinedMeal) => {
+              setSelectedMeal(refinedMeal);
+              setCurrentMeals(prev => prev.map(m => m._id === refinedMeal._id ? refinedMeal : m));
+            }}
+            onReplaced={(newMeal) => {
+              const updated = replacementsLeft - 1;
+              setReplacementsLeft(updated);
+              localStorage.setItem(`replacements_left_${user?._id}`, String(updated));
+              setSelectedMeal(newMeal);
+              setCurrentMeals(prev => prev.map(m => m._id === newMeal._id ? newMeal : m));
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -433,52 +457,54 @@ export const Nutrition: React.FC = () => {
             <p className="text-slate-500 text-sm">AI-optimized meal plans for your goals.</p>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button
-              onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
-            >
-              {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
-              <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
-            </button>
+          {
+             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <button
+                onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
+              >
+                {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
+              </button>
 
 
-            <div className="flex bg-slate-100 p-1 rounded-xl">
-              <button
-                onClick={() => handleViewModeChange('today')}
-                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              <div className="flex bg-slate-100 p-1 rounded-xl">
+                <button
+                  onClick={() => handleViewModeChange('today')}
+                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                >
+                  <Clock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Today</span>
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('week')}
+                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Full Week</span>
+                </button>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
+                whileTap={{ scale: 0.96 }}
+                onClick={generatePlan}
+                disabled={isGenerating}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
               >
-                <Clock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Today</span>
-              </button>
-              <button
-                onClick={() => handleViewModeChange('week')}
-                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-              >
-                <CalendarDays className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Full Week</span>
-              </button>
+                {isGenerating ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <Sparkles className="w-4 h-4" />
+                    Generate {viewMode === 'today' ? 'Today' : 'Full Week'}
+                  </>
+                )}
+              </motion.button>
             </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
-              whileTap={{ scale: 0.96 }}
-              onClick={generatePlan}
-              disabled={isGenerating}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
-            >
-              {isGenerating ? (
-                <>
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <Sparkles className="w-4 h-4" />
-                  Generate {viewMode === 'today' ? 'Today' : 'Full Week'}
-                </>
-              )}
-            </motion.button>
-          </div>
+          }
         </div>
 
         <AnimatePresence>
@@ -562,37 +588,39 @@ export const Nutrition: React.FC = () => {
 
 
 
-      <motion.div
-        key={activeProfileId}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
-      >
-        {[
-          { label: 'Calories', current: totals.calories, target: targetMacros.calories, unit: 'kcal', color: 'bg-orange-500' },
-          { label: 'Protein', current: totals.protein, target: targetMacros.protein, unit: 'g', color: 'bg-blue-500' },
-          { label: 'Carbs', current: totals.carbs, target: targetMacros.carbs, unit: 'g', color: 'bg-green-600' },
-          { label: 'Fats', current: totals.fats, target: targetMacros.fats, unit: 'g', color: 'bg-yellow-500' },
-        ].map((macro) => {
-          return (
-            <div key={macro.label} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-slate-500 text-sm font-medium">{macro.label}</span>
-                <Info className="w-4 h-4 text-slate-300" />
+      {
+        nutritionPlan && <motion.div
+          key={activeProfileId}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          {[
+            { label: 'Calories', current: totals.calories, target: targetMacros.calories, unit: 'kcal', color: 'bg-orange-500' },
+            { label: 'Protein', current: totals.protein, target: targetMacros.protein, unit: 'g', color: 'bg-blue-500' },
+            { label: 'Carbs', current: totals.carbs, target: targetMacros.carbs, unit: 'g', color: 'bg-green-600' },
+            { label: 'Fats', current: totals.fats, target: targetMacros.fats, unit: 'g', color: 'bg-yellow-500' },
+          ].map((macro) => {
+            return (
+              <div key={macro.label} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-slate-500 text-sm font-medium">{macro.label}</span>
+                  <Info className="w-4 h-4 text-slate-300" />
+                </div>
+                <div className="text-2xl font-bold text-slate-900 mb-2">
+                  {macro.current}<span className="text-sm font-normal text-slate-400"> / {macro.unit}</span>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${macro.color}`}
+                  />
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{getCalories(macro.label.toLowerCase(), macro.current)} kcal</div>
               </div>
-              <div className="text-2xl font-bold text-slate-900 mb-2">
-                {macro.current}<span className="text-sm font-normal text-slate-400"> / {macro.unit}</span>
-              </div>
-              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${macro.color}`}
-                />
-              </div>
-              <div className="text-xs text-slate-500 mt-1">{getCalories(macro.label.toLowerCase(), macro.current)} kcal</div>
-            </div>
-          );
-        })}
-      </motion.div>
+            );
+          })}
+        </motion.div>
+      }
 
       <div className="space-y-4">
         {isLoadingMeals ? (
@@ -627,7 +655,20 @@ export const Nutrition: React.FC = () => {
                               <div className="flex items-center gap-3 my-4">
                                 <div className="h-px flex-1 bg-slate-200" />
                                 <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-                                  {dayGroup.day || `Day ${dayIndex + 1}`}
+                                  {(() => {
+                    const dayNum = parseInt((dayGroup.day || '').split(' ')[1]);
+                    if (dayNum >= 1 && dayNum <= 7) {
+                      const today = new Date();
+                      const startOfWeek = new Date(today);
+                      startOfWeek.setDate(today.getDate() - today.getDay());
+                      const dayDate = new Date(startOfWeek);
+                      dayDate.setDate(startOfWeek.getDate() + dayNum - 1);
+                      const weekday = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
+                      const monthDay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      return `${weekday}: ${monthDay}`;
+                    }
+                    return dayGroup.day || `Day ${dayIndex + 1}`;
+                  })()}
                                 </span>
                                 <div className="h-px flex-1 bg-slate-200" />
                               </div>
@@ -700,44 +741,48 @@ export const Nutrition: React.FC = () => {
             ))}
           </>
         ) : (
-          <div className="text-center py-12 text-slate-400">
-            <Utensils className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No meal plan yet</p>
-            <p className="text-sm">Generate a meal plan to get started</p>
+          <div className="w-full min-h-96 text-center  flex items-center flex-col justify-center gap-3 p-3 rounded-2xl  mb-3 text-white"
+            style={{ background: 'linear-gradient(135deg, #1a6b3a 0%, #145c30 100%)' }}
+          >
+            {/* Icon in rounded square */}
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-1"
+              style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
+            >
+              <Utensils className="w-7 h-7 text-white opacity-80" />
+            </div>
+
+            <p className="font-bold text-2xl text-white">No meal plan yet</p>
+
+            <p className="text-sm text-white/70 max-w-xs leading-relaxed">
+              Get a personalized meal plan tailored to your goals, schedule, and dietary preferences.
+            </p>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={generatePlan}
+              disabled={isGenerating}
+              className="flex cursor-pointer items-center gap-2 bg-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 relative overflow-hidden group mt-2"
+              style={{ color: '#145c30' }}
+            >
+              {isGenerating ? (
+                <>
+
+                  Generating...
+
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Build My AI Plan</span>
+                  <span>→</span>
+                </>
+              )}
+            </motion.button>
           </div>
         )}
       </div>
 
-      <button className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-medium hover:border-green-500 hover:text-green-600 hover:bg-green-50 transition-all flex items-center justify-center gap-2">
-        <Plus className="w-5 h-5" />
-        Log Extra Snack
-      </button>
     </div>
   );
 };
-
-
-// interface MealRecipeProps {
-//   meal: Meal;
-//   onClose: () => void;
-// }
-
-// const MealRecipe = ({ meal, onClose }: MealRecipeProps) => {
-//   return (
-//     <div>
-//       <h1>{meal.name}</h1>
-//       <p>{meal.macros.calories}</p>
-//       <p>{meal.macros.protein}</p>
-//       <p>{meal.macros.carbs}</p>
-//       <p>{meal.macros.fats}</p>
-//       <p>{meal.time}</p>
-//       {meal.ingredients?.map((ingredient) => (
-//         <p key={ingredient}>{ingredient}</p>
-//       ))}
-//       {meal.instructions?.map((instruction) => (
-//         <p key={instruction}>{instruction}</p>
-//       ))}
-//       <button onClick={onClose}>Close</button>
-//     </div>
-//   );
-// }

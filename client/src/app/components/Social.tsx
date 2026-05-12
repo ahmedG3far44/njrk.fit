@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Trophy, Users, Medal, Search, UserPlus, Check, TrendingUp, Target, Flame, Loader2, X, Image, Send, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Trophy, Users, Medal, Search, TrendingUp, Target, Flame, Loader2, X, Image, Send, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider';
@@ -327,62 +327,68 @@ export const Social: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed w-full min-h-screen left-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+              initial={{ scale: 0.95, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 16, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-3xl w-full max-w-lg shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="px-6 pt-6 pb-4 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900 text-lg">Create Post</h3>
-                <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={posting}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-30"
+                >
                   <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
 
-              <div className="p-4 space-y-4">
+              <div className={`px-6 pb-4 space-y-4 ${posting ? 'pointer-events-none opacity-50' : ''}`}>
                 <textarea
                   value={postContent}
                   onChange={e => setPostContent(e.target.value)}
                   placeholder="Share your progress..."
-                  className="w-full h-32 p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none resize-none text-sm"
+                  disabled={posting}
+                  className="w-full h-28 p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none resize-none text-sm placeholder:text-slate-400 disabled:cursor-not-allowed"
                 />
 
                 {mediaPreview && (
-                  <div className="relative rounded-xl overflow-hidden">
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-100">
                     <img src={mediaPreview} alt="Preview" className="w-full h-48 object-cover" />
                     <button
                       onClick={removeMedia}
-                      className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70"
+                      disabled={posting}
+                      className="absolute top-3 right-3 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-colors disabled:opacity-30"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 )}
 
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 cursor-pointer">
-                    <Image className="w-5 h-5" />
-                    <span>Add Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleMediaSelect}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
+                <label className={`flex items-center gap-2.5 w-fit px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-colors ${posting ? 'pointer-events-none opacity-50' : ''}`}>
+                  <Image className="w-4 h-4" />
+                  <span>Add Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleMediaSelect}
+                    disabled={posting}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
-              <div className="p-4 border-t border-slate-100">
+              <div className="px-6 py-4 border-t border-slate-100">
                 <button
                   onClick={handleCreatePost}
                   disabled={posting || !postContent.trim()}
-                  className="w-full bg-gradient-to-r from-green-800 to-green-700 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full bg-green-700 text-white py-3 rounded-xl font-semibold hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {posting ? (
                     <>

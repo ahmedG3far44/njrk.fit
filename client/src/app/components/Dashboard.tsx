@@ -175,7 +175,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         className="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div>
-          <p className="text-slate-400 text-sm font-medium mb-0.5">Loading...</p>
+
           <h1 className="text-3xl font-bold text-slate-900">
             Good Morning, {user?.name || 'Friend'}! ☀️
           </h1>
@@ -215,7 +215,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
       {/* ── Streak Banner ── */}
       <motion.div
-        onClick={() => onChangeView('rewards')}
+        onClick={() => onChangeView('streaks')}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
@@ -449,7 +449,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          onClick={() => onChangeView('social')}
+          onClick={() => onChangeView('community')}
           className="group relative h-44 rounded-3xl overflow-hidden cursor-pointer"
         >
           <img
@@ -513,7 +513,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          onClick={() => onChangeView('rewards')}
+          onClick={() => onChangeView('streaks')}
           className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden group"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-6 -mt-6" />

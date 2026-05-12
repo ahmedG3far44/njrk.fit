@@ -69,14 +69,14 @@ const extractJSON = (text: string): any => {
 
   try {
     return JSON.parse(text);
-  } catch {}
+  } catch { }
 
   // محاولة استخراج من code block
   const match = text.match(/```json([\s\S]*?)```/i);
   if (match) {
     try {
       return JSON.parse(match[1]);
-    } catch {}
+    } catch { }
   }
 
   // fallback: حاول قص أول وأخر { }
@@ -86,7 +86,7 @@ const extractJSON = (text: string): any => {
     const sliced = text.slice(first, last + 1);
     try {
       return JSON.parse(sliced);
-    } catch {}
+    } catch { }
   }
 
   throw new Error("Failed to extract valid JSON from LLM");
@@ -356,6 +356,57 @@ ${refinementPrompt}
   return callLLMWithRecovery(prompt, mealSchema);
 };
 
+
+export const regenerateMeal = async (
+  meal: Meal,
+  user: UserContext,
+): Promise<MealPlanRefineResponse> => {
+  const prompt = `
+You are a professional nutritionist AI.
+
+Your task is to regenerate the provided meal using DIFFERENT ingredients while preserving the nutritional profile and respecting the user's dietary constraints.
+
+Return ONLY valid JSON.
+Do NOT return markdown.
+Do NOT add explanations, comments, or extra text.
+
+JSON Schema:
+${mealSchema.toString()}
+
+STRICT RULES:
+1. Generate a NEW variation of the meal using different ingredients whenever possible.
+2. Preserve the TOTAL calories as closely as possible.
+3. Keep calories within ±3%.
+4. Keep protein, carbs, and fats within ±5%.
+5. Maintain similar meal volume and satiety.
+6. Respect ALL allergies, intolerances, dietary restrictions, and religious constraints.
+7. Never include forbidden ingredients.
+8. If the user is fasting, ensure the meal is suitable for fasting.
+9. Prefer realistic ingredient substitutions.
+10. Keep measurements practical (grams, cups, tbsp, pieces, etc.).
+11. Keep the meal culturally and nutritionally coherent.
+12. Do not remove major meal components unless necessary.
+13. Ensure the generated meal is complete and edible in real life.
+14. Preserve the meal type (breakfast stays breakfast, etc.).
+15. Do not repeat the exact same ingredients unless required to preserve macros.
+16. Keep ingredient count reasonable and realistic.
+17. Output MUST strictly follow the provided schema.
+
+USER CONTEXT:
+Allergies:
+${user.allergies?.join(", ") || "None"}
+
+Religion:
+${user.religion || "None"}
+
+Fasting:
+${Boolean(user.isFasting)}
+
+ORIGINAL MEAL:
+${JSON.stringify(meal, null, 2)}
+`;
+  return callLLMWithRecovery(prompt, mealSchema);
+};
 // models
 // - inclusionai/ring-2.6-1t:free
 // - inclusionai/ling-2.6-1t:free
