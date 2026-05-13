@@ -36,6 +36,9 @@ export interface UserContext {
   isFasting?: boolean;
   trainingDays?: number;
   equipment?: string[];
+  mealsCount?: number;
+  snacksCount?: number;
+  favoriteFoods?: string[];
 }
 
 // ----------------------------------------------------------------------------
@@ -54,6 +57,7 @@ export interface Meal {
   day: string;
   name: string;
   time: string;
+  mealType?: 'meal' | 'snack';
   macros: {
     calories: number;
     protein: number;

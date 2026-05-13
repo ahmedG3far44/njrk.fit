@@ -12,6 +12,7 @@ interface IMeal {
   day: string;
   name: string;
   time: string;
+  mealType: 'meal' | 'snack';
   macros: IMacros;
   ingredients: { name: string; quantity: number; unit?: string }[];
   instructions: string[];
@@ -28,6 +29,7 @@ const MealSchema = new Schema<IMeal>({
   day: { type: String, required: true },
   name: { type: String, required: true },
   time: { type: String, required: true },
+  mealType: { type: String, enum: ['meal', 'snack'], default: 'meal' },
   macros: {
     calories: { type: Number, required: true },
     protein: { type: Number, required: true },

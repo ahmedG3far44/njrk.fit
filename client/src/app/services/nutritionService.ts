@@ -19,6 +19,7 @@ export interface Meal {
   day?: string;
   name: string;
   time: string;
+  mealType?: 'meal' | 'snack';
   macros: MealMacros;
   ingredients?: MealItem[];
   instructions?: string[];
@@ -34,7 +35,9 @@ export interface NutritionPlan {
 }
 
 export interface GenerateNutritionData {
-  calories?: number;
+  mealsCount?: number;
+  snacksCount?: number;
+  favoriteFoods?: string[];
   startDate?: string;
   userId?: string;
 }
@@ -51,6 +54,7 @@ export interface LogMealResponse {
 export interface MealResponse {
   meals: Meal[];
   targetMacros: MealMacros;
+  planDate?: string;
 }
 
 export interface GenerateResponse {

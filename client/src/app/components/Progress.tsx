@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { TrendingUp, X, Brain, Send, Scale, Sparkles, Check, Lock, Calendar } from 'lucide-react';
+import { TrendingUp, X, Brain, Send, Scale, Sparkles, Check, Lock, Calendar, Footprints, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { progressService, CanUpdateResponse } from '../services/progressService';
 import { gamificationService } from '../services/gamificationService';
 import { nutritionService } from '../services/nutritionService';
 import { fitnessService } from '../services/fitnessService';
+import { useAuth } from '../context/AuthProvider';
+import { googleFitService, GoogleFitWeeklyStepsResponse } from '../services/googleFitService';
 
 interface WeightEntry {
   date: string;
   weight: number;
-}
-
-interface ActivityEntry {
-  name: string;
-  steps: number;
-  color: string;
 }
 
 export const Progress: React.FC = () => {
@@ -25,8 +21,9 @@ export const Progress: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const { user, isGoogleUser } = useAuth();
+
   const [weightData, setWeightData] = useState<WeightEntry[]>([]);
-  const [activityData] = useState<ActivityEntry[]>([]);
   const [canUpdateInfo, setCanUpdateInfo] = useState<CanUpdateResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'7days' | '30days' | '7weeks'>('7weeks');
@@ -34,6 +31,8 @@ export const Progress: React.FC = () => {
   const [avgProtein, setAvgProtein] = useState(0);
   const [weightLost, setWeightLost] = useState(0);
   const [totalWorkouts, setTotalWorkouts] = useState(0);
+  const [googleFitData, setGoogleFitData] = useState<GoogleFitWeeklyStepsResponse | null>(null);
+  const [googleFitLoading, setGoogleFitLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,11 +91,24 @@ export const Progress: React.FC = () => {
         console.error('Error fetching fitness:', error);
       }
 
+      if (isGoogleUser) {
+        setGoogleFitLoading(true);
+        try {
+          const fitData = await googleFitService.getWeeklySteps();
+          setGoogleFitData(fitData);
+        } catch (error) {
+          console.error('Error fetching Google Fit data:', error);
+          setGoogleFitData({ connected: false, steps: [], avgSteps: 0 });
+        } finally {
+          setGoogleFitLoading(false);
+        }
+      }
+
       setIsLoading(false);
     };
 
     fetchData();
-  }, [timeframe, submitted]);
+  }, [timeframe, submitted, isGoogleUser]);
 
   const handleSubmit = async () => {
     if (!currentWeight && !aiFeeling) return;
@@ -306,26 +318,73 @@ export const Progress: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-6">Daily Steps</h3>
           <div className="h-[240px] w-full min-w-0">
-            {activityData.length > 0 ? (
+            {isGoogleUser && googleFitData?.connected && googleFitData.steps.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activityData} barSize={32}>
+                <BarChart data={googleFitData.steps} barSize={32}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
                   <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   <Bar dataKey="steps" radius={[6, 6, 6, 6]}>
-                    {activityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {googleFitData.steps.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#14532d', '#166534', '#15803d', '#16a34a', '#22c55e', '#4ade80', '#86efac'][index % 7]} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
+            ) : isGoogleUser && googleFitLoading ? (
+              <div className="flex items-center justify-center h-full text-slate-400">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-8 h-8 border-2 border-green-700/30 border-t-green-700 rounded-full" />
+              </div>
+            ) : isGoogleUser && googleFitData?.connected ? (
               <div className="flex items-center justify-center h-full text-slate-400">
                 <div className="text-center">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p className="font-medium">No activity data yet</p>
-                  <p className="text-sm">Start tracking your daily steps</p>
+                  <Smartphone className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                  <p className="font-medium">No step data from Google Fit</p>
+                  <p className="text-sm">Sync your device and try again</p>
                 </div>
+              </div>
+            ) : isGoogleUser ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="text-center mb-4">
+                  <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Footprints className="w-7 h-7 text-green-700" />
+                  </div>
+                  <p className="font-medium text-slate-700">Track Your Steps</p>
+                  <p className="text-sm text-slate-400">Connect Google Fit to see your daily steps</p>
+                </div>
+                <motion.a
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  href={`${import.meta.env.VITE_API_BASE_URL || ''}/auth/google/fit-connect`}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200 hover:opacity-90 transition-all text-sm"
+                >
+                  <Smartphone className="w-4 h-4" /> Connect Google Fit
+                </motion.a>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="text-center mb-3">
+                  <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Footprints className="w-7 h-7 text-green-700" />
+                  </div>
+                  <div className="text-3xl font-bold text-slate-900">
+                    {((user?.estimatedSteps || 5000)).toLocaleString()}
+                  </div>
+                  <div className="text-slate-500 text-sm">Daily Step Goal</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                    <div className="text-lg font-bold text-green-700">{(user?.estimatedSteps || 5000).toLocaleString()}</div>
+                    <div className="text-xs text-slate-500">Goal</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-xl p-3 text-center">
+                    <div className="text-lg font-bold text-amber-600">{(user?.estimatedSteps || 5000).toLocaleString()}</div>
+                    <div className="text-xs text-slate-500">To Reach Goal</div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
+                  <Smartphone className="w-3 h-3" /> Sign in with Google to track real steps
+                </p>
               </div>
             )}
           </div>
@@ -336,9 +395,12 @@ export const Progress: React.FC = () => {
         {[
           { label: 'Total Workouts', val: String(totalWorkouts), change: '', color: 'text-green-700', bg: 'bg-green-50' },
           { label: 'Weight Lost', val: `${weightLost > 0 ? weightLost : 0} kg`, change: '', color: 'text-green-600', bg: 'bg-green-50' },
+          isGoogleUser && googleFitData?.connected
+            ? { label: 'Avg. Steps', val: `${googleFitData.avgSteps.toLocaleString()}`, change: '', color: 'text-emerald-600', bg: 'bg-emerald-50' }
+            : { label: 'Daily Goal', val: `${(user?.estimatedSteps || 5000).toLocaleString()}`, change: '', color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Avg. Protein', val: `${avgProtein > 0 ? avgProtein : 0}g`, change: '', color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Streak Days', val: String(streakDays), change: '', color: 'text-orange-500', bg: 'bg-orange-50' },
-        ].map((stat) => (
+        ].filter(Boolean).map((stat: any) => (
           <motion.div
             key={stat.label}
             whileHover={{ y: -4 }}

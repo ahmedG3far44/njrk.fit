@@ -13,34 +13,35 @@ export interface AuthRequest extends Request {
     onboardingCompleted: boolean;
     subscriptionTier: string;
     googleId?: string;
+    googleAccessToken?: string;
   };
 }
 
-export const requireAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
+// export const requireAuth = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction,
+// ) => {
+//   try {
+//     const token = req.headers.authorization?.replace("Bearer ", "");
 
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
+//     if (!token) {
+//       return res.status(401).json({ error: "Authentication required" });
+//     }
 
-    const payload = jwtUtils.verifyAccessToken(token);
+//     const payload = jwtUtils.verifyAccessToken(token);
 
-    const user = await User.findById(payload.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
+//     const user = await User.findById(payload.userId);
+//     if (!user) {
+//       return res.status(401).json({ error: "User not found" });
+//     }
 
-    (req as AuthRequest).user = payload;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: "Invalid or expired token" });
-  }
-};
+//     (req as AuthRequest).user = payload;
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({ error: "Invalid or expired token" });
+//   }
+// };
 
 export const authMiddleware = async (
   req: Request,
@@ -50,7 +51,9 @@ export const authMiddleware = async (
   try {
     let accessToken = req.cookies.accessToken;
     let refreshToken = req.cookies.refreshToken;
+    let googleAccessToken = req.cookies.googleAccessToken;
 
+    console.log("google user access token from cookies", googleAccessToken); 
 
     if (!accessToken && !refreshToken) {
       const authHeader = req.headers.authorization?.replace("Bearer ", "");
@@ -64,29 +67,20 @@ export const authMiddleware = async (
       }
     }
 
-    // Note: Remove console.log of tokens in production to prevent leaking secrets in logs!
 
-    // 1. Try to verify the access token first
     if (accessToken) {
       try {
         const payload = jwtUtils.verifyAccessToken(accessToken);
-
-        // PERFORMANCE FIX: Trust the JWT payload. Do NOT hit the database here.
         (req as AuthRequest).user = payload;
         console.log("access token verified successfully");
 
-        // console.log("user", payload);
         return next();
       } catch (accessError) {
         console.log("access token verification failed", accessError);
-        // CRITICAL FIX: Do NOT return a 401 here.
-        // We intentionally swallow this error so the code continues
-        // to the refresh token fallback logic below.
         console.log(accessError);
       }
     }
 
-    // 2. Not valid (or missing) => Verify refresh token
     if (!refreshToken) {
       return res
         .status(401)
@@ -96,8 +90,6 @@ export const authMiddleware = async (
     try {
       const refreshPayload = jwtUtils.verifyRefreshToken(refreshToken);
       console.log("refresh token verified successfully");
-      // SECURITY CHECK: We DO hit the database here to ensure the user
-      // still exists and hasn't been banned before issuing a fresh session.
       const user = await User.findById(refreshPayload?._id);
 
       if (!user) {
@@ -107,7 +99,6 @@ export const authMiddleware = async (
         return res.status(401).json({ error: "User not found" });
       }
 
-      // 3. Create the rich payload for the new access token and req.user
       const userPayload = {
         _id: user._id.toString(),
         userId: user._id.toString(),
@@ -116,19 +107,18 @@ export const authMiddleware = async (
         avatarUrl: user.avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
         subscriptionTier: user.subscription?.subscriptionTier,
+        googleAccessToken: googleAccessToken || null,
       };
 
       const newAccessToken = jwtUtils.generateAccessToken(userPayload);
 
-      // Attach the new token to the response cookies
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 15 * 60 * 1000, // FIX: 15 minutes (Standard access token life)
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
-      // FIX: Ensure req.user has the full data, not just the refresh payload
       (req as AuthRequest).user = userPayload;
       return next();
     } catch (refreshError) {

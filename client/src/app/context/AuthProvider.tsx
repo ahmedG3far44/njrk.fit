@@ -11,6 +11,8 @@ export interface AuthUser {
   avatarUrl?: string;
   onboardingCompleted?: boolean;
   subscriptionTier?: string;
+  googleId?: string;
+  estimatedSteps?: number;
   [key: string]: unknown;
 }
 
@@ -32,12 +34,14 @@ export interface OnboardingData {
   userGoal: 'lose_weight' | 'gain_weight' | 'maintain_weight';
   targetWeight: number;
   fitnessGoal: string;
+  medicalDocuments?: string[];
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isGoogleUser: boolean;
   login: (credentials: Credentials) => Promise<{ needsOnboarding: boolean }>;
   register: (credentials: Credentials) => Promise<{ needsOnboarding: boolean }>;
   completeOnboarding: (data: OnboardingData) => Promise<void>;
@@ -159,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Auto check-in failed on register:', checkInError);
     }
     
-    return { needsOnboarding: true };
+    return { needsOnboarding: !response.user.onboardingCompleted };
   }, []);
 
   const completeOnboarding = useCallback(async (data: OnboardingData) => {
@@ -190,16 +194,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('njerka:unauthorized', handleUnauthorized);
   }, [clearSession]);
 
+  const isGoogleUser = Boolean(user?.googleId);
+
   const value = useMemo<AuthContextValue>(() => ({
     user,
     isAuthenticated: Boolean(user),
     isLoading,
+    isGoogleUser,
     login,
     register,
     completeOnboarding,
     logout,
     refreshUser,
-  }), [completeOnboarding, isLoading, login, logout, refreshUser, register, user]);
+  }), [completeOnboarding, isLoading, isGoogleUser, login, logout, refreshUser, register, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

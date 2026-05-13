@@ -30,3 +30,6 @@ export type { CheckInResponse, GamificationStatus, Reward } from './gamification
 
 export { subscriptionService } from './subscriptionService';
 export type { CreateSubscriptionData, SubscriptionStatus } from './subscriptionService';
+
+export { googleFitService } from './googleFitService';
+export type { GoogleFitStepEntry, GoogleFitWeeklyStepsResponse } from './googleFitService';

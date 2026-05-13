@@ -19,6 +19,7 @@ interface InsightsResult {
     estimatedSteps: number;
     estimatedSleepHours: number;
     estimatedWaterOz: number;
+    userEstimatedSteps: number;
 }
 
 interface ActivityResult {
@@ -95,6 +96,7 @@ export const getInsights = async (userId: string): Promise<InsightsResult> => {
         estimatedSteps,
         estimatedSleepHours: user.estimatedSleepHours || 7.5,
         estimatedWaterOz: estimatedWater,
+        userEstimatedSteps: user.estimatedSteps || 5000,
     };
 };
 
@@ -192,78 +194,50 @@ export const checkIn = async (userId: string, timezoneOffset: number = 0): Promi
     const today = getDateKey(now, timezoneOffset);
     const lastCheckInKey = lastCheckIn ? getDateKey(lastCheckIn, timezoneOffset) : null;
     
-    let newStreak = user.currentStreak;
-    let longestStreak = user.longestStreak;
-    let isFrozen = false;
-    
     if (lastCheckInKey === today) {
         return {
-            currentStreak: newStreak,
-            longestStreak: longestStreak,
+            currentStreak: user.currentStreak,
+            longestStreak: user.longestStreak,
             availableFreezes: user.availableFreezes,
             isFirstCheckIn: false,
             isFrozen: false,
         };
     }
-    
-    if (lastCheckIn) {
-        const hoursSinceLastCheckIn = (now.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60);
-        
-        if (hoursSinceLastCheckIn < 24) {
-            return {
-                currentStreak: newStreak,
-                longestStreak: longestStreak,
-                availableFreezes: user.availableFreezes,
-                isFirstCheckIn: false,
-                isFrozen: false,
-            };
-        }
-        
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayKey = getDateKey(yesterday, timezoneOffset);
-        
-        if (lastCheckInKey !== yesterdayKey && lastCheckInKey !== getDateKey(new Date(lastCheckIn.getTime() - 86400000), timezoneOffset)) {
-            const yesterdayActivity = await Activity.findOne({
-                userId: new mongoose.Types.ObjectId(userId),
-                type: 'freeze',
-            }).sort({ date: -1 });
-            
-            if (!yesterdayActivity || yesterdayActivity.type !== 'freeze') {
-                newStreak = 1;
-            } else {
-                isFrozen = true;
-            }
-        } else if (hoursSinceLastCheckIn < 48) {
-            newStreak = user.currentStreak + 1;
-        } else {
-            newStreak = 1;
-        }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = getDateKey(yesterday, timezoneOffset);
+
+    let newStreak: number;
+
+    if (!lastCheckIn) {
+        newStreak = 1;
+    } else if (lastCheckInKey === yesterdayKey) {
+        newStreak = user.currentStreak + 1;
     } else {
         newStreak = 1;
     }
-    
-    if (newStreak > longestStreak) {
-        longestStreak = newStreak;
+
+    if (newStreak > user.longestStreak) {
+        user.longestStreak = newStreak;
     }
-    
+
     user.currentStreak = newStreak;
-    user.longestStreak = longestStreak;
     user.lastCheckInDate = now;
-    
+
     if (newStreak % 7 === 0 && newStreak > 0) {
         user.availableFreezes += 1;
     }
-    
+
     await user.save();
     await recordActivity(userId, 'check-in', timezoneOffset);
-    
+
     return {
         currentStreak: newStreak,
-        longestStreak: longestStreak,
+        longestStreak: user.longestStreak,
         availableFreezes: user.availableFreezes,
-        isFirstCheckIn,
-        isFrozen,
+        isFirstCheckIn: isFirstCheckIn,
+        isFrozen: false,
     };
 };
 

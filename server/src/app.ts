@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
 import familyRoutes from "./routes/family.route";
+import googleFitRoutes from "./routes/googleFit.route";
 import exportRoutes from "./routes/export.route";
 import fitnessRoutes from "./routes/fitness.route";
 import groceryRoutes from "./routes/grocery.route";
@@ -53,6 +54,7 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/subscriptions", subscriptionsRoutes);
 app.use("/api/groceries", groceryRoutes);
 app.use("/api/family", familyRoutes);
+app.use("/api/google-fit", googleFitRoutes);
 
 app.use(errorHandler);
 

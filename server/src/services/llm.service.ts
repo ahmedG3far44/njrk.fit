@@ -5,7 +5,7 @@ import {
   adjustCaloriesForGoal,
   calculateMacros,
   activityMultipliers,
-} from "../utils/caloriesCalculations";
+} from "../utils/calculations";
 import { Meal, UserContext } from "../types";
 import { openrouter } from "../configs/llm";
 // import { normalizeMeal } from '../utils/parser';
@@ -20,6 +20,7 @@ export const mealSchema = z.object({
   day: z.string(),
   name: z.string(),
   time: z.string(),
+  mealType: z.enum(['meal', 'snack']).default('meal'),
   macros: z.object({
     calories: z.number(),
     protein: z.number(),
@@ -209,7 +210,12 @@ OUTPUT VALID JSON ONLY:
 `;
 };
 
-const generateMealPlanPrompt = (user: UserContext): string => {
+const generateMealPlanPrompt = (
+  user: UserContext,
+  mealsCount: number = 3,
+  snacksCount: number = 0,
+  favoriteFoods: string[] = [],
+): string => {
   const bmr = calculateBMR(user);
   const tdee = calculateTDEE(user, bmr);
   const dailyCalories = adjustCaloriesForGoal(tdee, user.goal);
@@ -222,6 +228,10 @@ const generateMealPlanPrompt = (user: UserContext): string => {
       .map(([, val]) => `${val}x basal metabolic rate`)[0] || "1.55x";
   const restrictions = user.dietaryRestrictions?.length
     ? `Dietary restrictions: ${user.dietaryRestrictions}`
+    : "";
+  const totalItemsPerDay = mealsCount + snacksCount;
+  const favFoods = favoriteFoods?.length
+    ? `Favorite foods (incorporate these where possible): ${favoriteFoods.join(", ")}`
     : "";
 
   return `
@@ -240,11 +250,13 @@ USER DIETARY CONTEXT:
 - Allergies: ${user?.allergies || "none"}
 - Religion: ${user?.religion || "none"}
 - Christian fasting: ${user?.isFasting ?? false}
+${favFoods ? `\n${favFoods}` : ""}
 
 STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
 1. CALORIES & MACROS:
    - Each day MUST total ~${calories} kcal (±50 kcal)
-   - Each meal ≈ 1/3 of daily macros
+   - Distribute calories across ${totalItemsPerDay} items: ${mealsCount} meals + ${snacksCount} snacks
+   - Meals should be larger (approx 70-80% of daily calories), snacks lighter (20-30%)
    - Adjust macro distribution based on goal:
      - lose_weight → higher protein, moderate fats, lower carbs
      - gain_weight → higher carbs + protein
@@ -268,13 +280,22 @@ STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
    - Avoid repeating the same meal more than twice in the week
 
 5. STRUCTURE:
-   - EXACTLY 21 meals (3 per day × 7 days)
-   - Meal times:
+   - EXACTLY ${totalItemsPerDay} items per day × 7 days = ${totalItemsPerDay * 7} total items
+   - ${mealsCount} meals + ${snacksCount} snacks per day
+   - Meal times (approximate):
      - Breakfast → "08:00 AM"
      - Lunch → "12:30 PM"
      - Dinner → "07:00 PM"
+     ${snacksCount > 0 ? `- Snacks → "10:30 AM", "03:30 PM" (distribute snacks across day)` : ""}
+   - Each item MUST include: "mealType": "meal" for meals, "mealType": "snack" for snacks
 
-6. RECOVERY / DIGESTION BALANCE:
+6. INGREDIENT EFFICIENCY (CRITICAL FOR PERFORMANCE):
+   - ONLY include substantial ingredients with meaningful nutritional value
+   - EXCLUDE negligible items: salt, pepper, individual spices/herbs, cooking oil, vinegar, baking powder/soda, garlic, small amounts of garnishes
+   - Keep ingredient lists concise (4-8 per meal, 1-3 per snack)
+   - This reduces response size and improves latency
+
+7. RECOVERY / DIGESTION BALANCE:
    - Distribute heavy vs light meals properly
    - Avoid overly heavy dinners for weight loss goal
 
@@ -285,14 +306,15 @@ OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
       "day": "Day 1",
       "name": "Meal name",
       "time": "08:00 AM",
+      "mealType": "meal",
       "macros": {
-        "calories": ${Math.round(calories / 3)},
-        "protein": ${Math.round(protein / 3)},
-        "carbs": ${Math.round(carbs / 3)},
-        "fats": ${Math.round(fats / 3)}
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fats": 0
       },
       "ingredients": [
-        { "name": "ingredient", "quantity": "amount as number", "unit": "g/ml/cups/etc" }
+        { "name": "ingredient", "quantity": 100, "unit": "g" }
       ],
       "instructions": ["step 1", "step 2"]
     }
@@ -309,8 +331,11 @@ OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
 
 export const generateMealPlan = async (
   user: UserContext,
+  mealsCount: number = 3,
+  snacksCount: number = 0,
+  favoriteFoods: string[] = [],
 ): Promise<MealPlanResponse> => {
-  const prompt = generateMealPlanPrompt(user);
+  const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods);
 
   return callLLMWithRecovery(prompt, mealPlanResponseSchema);
 };

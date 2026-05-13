@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Clock, Award, Dumbbell, Zap, X, Sparkles, ArrowRight, Target, ChevronRight, Flame, CheckCircle2, BarChart3, Calendar, Filter, Loader2 } from 'lucide-react';
+import { Play, Clock, Award, Dumbbell, Zap, X, Sparkles, ArrowRight, Target, ChevronRight, Flame, CheckCircle2, BarChart3, Calendar, Loader2, FileDown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { fitnessService, WorkoutSession, WorkoutPlan, Exercise } from '../services/fitnessService';
 import { FitnessPlanLoader } from './GeneratingLoaders';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api' || '/api';
 
 interface Workout {
   _id: string;
@@ -50,6 +52,7 @@ export const Fitness: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [hasPlan, setHasPlan] = useState(false);
+  const [planEndDate, setPlanEndDate] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
 
   // Generate form state
@@ -100,6 +103,7 @@ export const Fitness: React.FC = () => {
 
       if (response.data && response.data.length > 0) {
         setHasPlan(true);
+        setPlanEndDate(response.planEndDate || null);
         const sessions = response.data.map((session: WorkoutSession): Workout => ({
           _id: session._id,
           title: session.name,
@@ -134,6 +138,7 @@ export const Fitness: React.FC = () => {
         setHasGenerated(true);
       } else {
         setHasPlan(false);
+        setPlanEndDate(null);
         setTodayWorkout(null);
         setWeeklySessions([]);
         setHasGenerated(false);
@@ -141,6 +146,7 @@ export const Fitness: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch workout plan:', error);
       setHasPlan(false);
+      setPlanEndDate(null);
       // toast.error('Failed to load workout plan');
     } finally {
       setLoading(false);
@@ -308,6 +314,17 @@ export const Fitness: React.FC = () => {
   const totalSessions = weeklySessions.filter(s => s.session).length;
   const totalCalories = weeklySessions.reduce((acc, s) => acc + (s.session?.calories || 0), 0);
   const totalMinutes = weeklySessions.reduce((acc, s) => acc + (s.session?.durationMin || 0), 0);
+
+  const generationLock = (() => {
+    if (!planEndDate) return { canGenerate: true, message: null as string | null };
+    const unlockDate = new Date(planEndDate);
+    unlockDate.setDate(unlockDate.getDate() + 1);
+    if (new Date() >= unlockDate) return { canGenerate: true, message: null };
+    return {
+      canGenerate: false,
+      message: `New plan available on ${unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    };
+  })();
 
   const filteredUpcoming = activeFilter === 'All'
     ? weeklySessions.filter(s => s.session)
@@ -661,7 +678,7 @@ export const Fitness: React.FC = () => {
         </div>
 
         {
-          workoutPlan && <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
               <button
                 onClick={() => setPlanView('daily')}
@@ -677,16 +694,48 @@ export const Fitness: React.FC = () => {
               </button>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setShowStyleModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
+            {generationLock.canGenerate ? (
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setShowStyleModal(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <Sparkles className="w-4 h-4" />
+                {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
+              </motion.button>
+            ) : (
+              <div className="relative group">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled
+                  className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
+                >
+                  <Lock className="w-4 h-4" />
+                  {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
+                </motion.button>
+                {generationLock.message && (
+                  <div className="absolute right-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {generationLock.message}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => window.open(`${API_URL}/fitness/export/pdf`, '_blank')}
+              disabled={!hasPlan}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Export PDF"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <Sparkles className="w-4 h-4" />
-              {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
-            </motion.button>
+              <FileDown className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
           </div>
         }
       </div>
@@ -795,7 +844,13 @@ export const Fitness: React.FC = () => {
                     whileHover={{ scale: 1.01 }}
                     className="relative h-80 rounded-3xl overflow-hidden group cursor-pointer shadow-xl"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-700" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-700">
+                      <img
+                        src={"/gym.jpg"}
+                        alt="Fitness"
+                        className="object-cover opacity-60"
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
 
                     <div className="absolute top-5 right-5">

@@ -5,6 +5,7 @@ import NutritionPlan from "../models/nutrition.model";
 import GroceryList from "../models/groceryList.model";
 // import ShareList from "../models/sharedList.model";
 import User from "../models/user.model";
+import { generatePDF } from "../services/pdf.service";
 import {
   parseAndAggregateIngredients,
   formatQuantity,
@@ -759,5 +760,33 @@ router.post(
 //     }
 //   },
 // );
+
+router.get(
+  "/export/pdf",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthRequest).user?.userId;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const [user, groceryList] = await Promise.all([
+        User.findById(userId),
+        GroceryList.findOne({ userId }),
+      ]);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!groceryList || groceryList.items.length === 0)
+        return res.status(400).json({ message: "Grocery list is empty, sync from your meal plan first" });
+
+      const pdfBuffer = await generatePDF("grocery", groceryList, user);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="grocery-list.pdf"');
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

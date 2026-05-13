@@ -8,6 +8,7 @@ import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware'
 import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
 import { UserContext } from '../types';
+import { generatePDF } from '../services/pdf.service';
 
 const router = Router();
 
@@ -23,6 +24,13 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    const existingPlan = await WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 });
+    if (existingPlan && existingPlan.endDate > new Date()) {
+      return res.status(403).json({
+        error: `This workout plan is still active. You can generate a new plan after ${existingPlan.endDate.toLocaleDateString()}.`,
+      });
     }
 
     const userContext: UserContext = {
@@ -165,10 +173,40 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
       workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
     }
 
-    res.status(200).json({ data: workouts ? workouts : "No workouts scheduled for today." });
+    res.status(200).json({
+      data: workouts ? workouts : "No workouts scheduled for today.",
+      planEndDate: workoutPlan?.endDate || null,
+    });
   } catch (error) {
     next(error);
   }
 });
+
+router.get(
+  '/export/pdf',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthRequest).user?.userId;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+      const [user, fitnessPlan] = await Promise.all([
+        User.findById(userId),
+        WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 }),
+      ]);
+
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!fitnessPlan) return res.status(404).json({ message: 'No fitness plan found, create a workout plan first' });
+
+      const pdfBuffer = await generatePDF('workout', fitnessPlan, user);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="workout-plan.pdf"');
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

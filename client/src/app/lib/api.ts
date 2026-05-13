@@ -20,7 +20,7 @@ class ApiError extends Error {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-const AUTH_REFRESH_ENDPOINT = import.meta.env.VITE_AUTH_REFRESH_ENDPOINT ?? '/auth/refresh';
+const AUTH_REFRESH_ENDPOINT = import.meta.env.VITE_AUTH_REFRESH_ENDPOINT ?? '/auth/refresh-token';
 
 let refreshPromise: Promise<void> | null = null;
 

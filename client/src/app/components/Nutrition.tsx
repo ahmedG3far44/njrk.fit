@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, Clock, Flame, Info, Utensils, Users, User, Search, X, Check, Sparkles, CalendarDays } from 'lucide-react';
+import { Plus, Minus, RefreshCw, Clock, Flame, Info, Utensils, Users, User, Search, X, Check, Sparkles, CalendarDays, FileDown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RecipeDetail } from './RecipeDetail';
 import { api } from '../lib/api';
@@ -8,6 +8,9 @@ import { useAuth } from '../context/AuthProvider';
 import { NutritionPlan, MealResponse, GenerateResponse, Meal } from '../services/nutritionService';
 import { type FamilyMember, type PendingInvitation, type FamilyResponse, type SearchResult, familyService } from '../services';
 import { MealPlanLoader } from './GeneratingLoaders';
+
+
+const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080/api';
 
 interface MealCardProps {
   meal: Meal;
@@ -55,6 +58,11 @@ const MealCard: React.FC<MealCardProps> = ({
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" /> {meal.time || 'Any time'}
               </div>
+              {meal.mealType === 'snack' && (
+                <div className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-bold">
+                  Snack
+                </div>
+              )}
               <div className="flex items-center gap-1">
                 <Flame className="w-4 h-4 text-orange-500" /> {meal.macros?.calories || 0} kcal
               </div>
@@ -124,6 +132,7 @@ export const Nutrition: React.FC = () => {
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(null);
   const [currentMeals, setCurrentMeals] = useState<Meal[]>([]);
   const [targetMacros, setTargetMacros] = useState({ calories: 0, protein: 0, carbs: 0, fats: 0 });
+  const [planDate, setPlanDate] = useState<string | null>(null);
 
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
@@ -141,6 +150,12 @@ export const Nutrition: React.FC = () => {
     return stored !== null ? parseInt(stored, 10) : 3;
   });
 
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [mealsCount, setMealsCount] = useState(3);
+  const [snacksCount, setSnacksCount] = useState(0);
+  const [favoriteFoods, setFavoriteFoods] = useState<string[]>([]);
+  const [foodInput, setFoodInput] = useState('');
+
   const fetchMeals = useCallback(async (mode: 'today' | 'week', userId?: string) => {
     setIsLoadingMeals(true);
     try {
@@ -154,6 +169,7 @@ export const Nutrition: React.FC = () => {
       console.log(response);
       setCurrentMeals(response.meals);
       setTargetMacros(response.targetMacros);
+      setPlanDate(response.planDate || null);
     } catch (error) {
       console.error(`[${(error as Error)?.name}] - Failed to fetch meals: ${(error as Error).message}`);
     } finally {
@@ -179,10 +195,10 @@ export const Nutrition: React.FC = () => {
     }
   }, []);
 
-  const generatePlan = async () => {
+  const generatePlan = async (counts?: { mealsCount: number; snacksCount: number; favoriteFoods: string[] }) => {
     setIsGenerating(true);
     try {
-      const data = await api.post<GenerateResponse>('/nutrition/generate');
+      const data = await api.post<GenerateResponse>('/nutrition/generate', counts || {});
       setNutritionPlan(data.plan);
       toast.success('Meal plan generated successfully!');
       await fetchMeals(viewMode, activeProfileId !== 'me' ? activeProfileId : undefined);
@@ -191,6 +207,30 @@ export const Nutrition: React.FC = () => {
       console.error('Generate plan error:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateWithConfig = () => {
+    setShowGenerateModal(false);
+    generatePlan({ mealsCount, snacksCount, favoriteFoods });
+    setMealsCount(3);
+    setSnacksCount(0);
+    setFavoriteFoods([]);
+    setFoodInput('');
+  };
+
+  const removeFavoriteFood = (food: string) => {
+    setFavoriteFoods(prev => prev.filter(f => f !== food));
+  };
+
+  const handleFoodKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === 'Enter' || e.key === ',') && foodInput.trim()) {
+      e.preventDefault();
+      const food = foodInput.trim().replace(/,/g, '');
+      if (!favoriteFoods.includes(food)) {
+        setFavoriteFoods(prev => [...prev, food]);
+      }
+      setFoodInput('');
     }
   };
 
@@ -302,6 +342,17 @@ export const Nutrition: React.FC = () => {
     );
     return totals;
   };
+
+  const generationLock = (() => {
+    if (!planDate) return { canGenerate: true, message: null as string | null };
+    const unlockDate = new Date(planDate);
+    unlockDate.setDate(unlockDate.getDate() + 7);
+    if (new Date() >= unlockDate) return { canGenerate: true, message: null };
+    return {
+      canGenerate: false,
+      message: `New plan available on ${unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    };
+  })();
 
   const totals = calculateMacros();
 
@@ -450,6 +501,111 @@ export const Nutrition: React.FC = () => {
           </motion.div>
         </motion.div>
       )}
+      {showGenerateModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed min-h-screen w-full left-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-slate-900 to-green-900 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-white text-lg">Generate Meal Plan</h3>
+                  <p className="text-slate-400 text-sm">Customize your plan preferences</p>
+                </div>
+                <button onClick={() => setShowGenerateModal(false)} className="p-2 text-slate-400 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Meals Counter */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 block">Number of Meals</label>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setMealsCount(prev => Math.max(1, prev - 1))}
+                    disabled={mealsCount <= 1}
+                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                  >
+                    <Minus className="w-4 h-4 text-slate-700" />
+                  </button>
+                  <span className="text-2xl font-bold text-slate-900 w-8 text-center">{mealsCount}</span>
+                  <button
+                    onClick={() => setMealsCount(prev => Math.min(5, prev + 1))}
+                    disabled={mealsCount >= 5}
+                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                  >
+                    <Plus className="w-4 h-4 text-slate-700" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Snacks Counter */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 block">Number of Snacks</label>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setSnacksCount(prev => Math.max(0, prev - 1))}
+                    disabled={snacksCount <= 0}
+                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                  >
+                    <Minus className="w-4 h-4 text-slate-700" />
+                  </button>
+                  <span className="text-2xl font-bold text-slate-900 w-8 text-center">{snacksCount}</span>
+                  <button
+                    onClick={() => setSnacksCount(prev => Math.min(3, prev + 1))}
+                    disabled={snacksCount >= 3}
+                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                  >
+                    <Plus className="w-4 h-4 text-slate-700" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Favorite Foods */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 block">Favorite Foods</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {favoriteFoods.map(food => (
+                    <span key={food} className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
+                      {food}
+                      <button onClick={() => removeFavoriteFood(food)} className="hover:text-green-900">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={foodInput}
+                  onChange={e => setFoodInput(e.target.value)}
+                  onKeyDown={handleFoodKeyDown}
+                  placeholder="Type a food and press Enter..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
+                />
+                <p className="text-xs text-slate-400 mt-1">Press Enter or comma to add</p>
+              </div>
+
+              <button
+                onClick={handleGenerateWithConfig}
+                className="w-full py-4 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-5 h-5" /> Generate Plan
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
       <div className="flex flex-col gap-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -458,7 +614,7 @@ export const Nutrition: React.FC = () => {
           </div>
 
           {
-             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <button
                 onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
@@ -483,26 +639,58 @@ export const Nutrition: React.FC = () => {
                 </button>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
-                whileTap={{ scale: 0.96 }}
-                onClick={generatePlan}
-                disabled={isGenerating}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
-              >
-                {isGenerating ? (
-                  <>
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                    <Sparkles className="w-4 h-4" />
+              {generationLock.canGenerate ? (
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setShowGenerateModal(true)}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
+                >
+                  {isGenerating ? (
+                    <>
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                      <Sparkles className="w-4 h-4" />
+                      Generate {viewMode === 'today' ? 'Today' : 'Full Week'}
+                    </>
+                  )}
+                </motion.button>
+              ) : (
+                <div className="relative group">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled
+                    className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
+                  >
+                    <Lock className="w-4 h-4" />
                     Generate {viewMode === 'today' ? 'Today' : 'Full Week'}
-                  </>
-                )}
-              </motion.button>
+                  </motion.button>
+                  {generationLock.message && (
+                    <div className="absolute right-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4" />
+                        {generationLock.message}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={() => window.open(`${API_URL}/nutrition/export/pdf`, '_blank')}
+                disabled={generationLock.canGenerate}
+                className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
+                title="Export PDF"
+              >
+                <FileDown className="w-4 h-4" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
             </div>
           }
         </div>
@@ -589,7 +777,7 @@ export const Nutrition: React.FC = () => {
 
 
       {
-        nutritionPlan && <motion.div
+        currentMeals && <motion.div
           key={activeProfileId}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -656,19 +844,19 @@ export const Nutrition: React.FC = () => {
                                 <div className="h-px flex-1 bg-slate-200" />
                                 <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
                                   {(() => {
-                    const dayNum = parseInt((dayGroup.day || '').split(' ')[1]);
-                    if (dayNum >= 1 && dayNum <= 7) {
-                      const today = new Date();
-                      const startOfWeek = new Date(today);
-                      startOfWeek.setDate(today.getDate() - today.getDay());
-                      const dayDate = new Date(startOfWeek);
-                      dayDate.setDate(startOfWeek.getDate() + dayNum - 1);
-                      const weekday = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
-                      const monthDay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      return `${weekday}: ${monthDay}`;
-                    }
-                    return dayGroup.day || `Day ${dayIndex + 1}`;
-                  })()}
+                                    const dayNum = parseInt((dayGroup.day || '').split(' ')[1]);
+                                    if (dayNum >= 1 && dayNum <= 7) {
+                                      const today = new Date();
+                                      const startOfWeek = new Date(today);
+                                      startOfWeek.setDate(today.getDate() - today.getDay());
+                                      const dayDate = new Date(startOfWeek);
+                                      dayDate.setDate(startOfWeek.getDate() + dayNum - 1);
+                                      const weekday = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
+                                      const monthDay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                      return `${weekday}: ${monthDay}`;
+                                    }
+                                    return dayGroup.day || `Day ${dayIndex + 1}`;
+                                  })()}
                                 </span>
                                 <div className="h-px flex-1 bg-slate-200" />
                               </div>
@@ -760,7 +948,7 @@ export const Nutrition: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={generatePlan}
+              onClick={() => setShowGenerateModal(true)}
               disabled={isGenerating}
               className="flex cursor-pointer items-center gap-2 bg-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 relative overflow-hidden group mt-2"
               style={{ color: '#145c30' }}

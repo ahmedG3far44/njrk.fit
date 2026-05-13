@@ -23,6 +23,7 @@ const setAuthCookies = (
   res: Response,
   accessToken: string,
   refreshToken: string,
+  googleAccessToken?: string
 ) => {
   const isProduction = env.NODE_ENV === "production";
 
@@ -39,11 +40,21 @@ const setAuthCookies = (
     sameSite: "strict",
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
+
+  if (googleAccessToken) {
+    res.cookie("googleAccessToken", googleAccessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+  }
 };
 
 const clearAuthCookies = (res: Response) => {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
+  res.clearCookie("googleAccessToken");
 };
 
 interface GoogleUserProfile {
@@ -56,16 +67,28 @@ interface GoogleUserProfile {
 }
 
 router.get("/google", (req: Request, res: Response) => {
-  const redirectUri = `${env.API_URL || "http://localhost:8080"}/api/auth/google/callback`;
+  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
   const clientId = env.GOOGLE_CLIENT_ID;
 
   const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent`;
   res.redirect(url);
 });
 
+router.get("/google/fit-connect", authMiddleware, (req: Request, res: Response) => {
+  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const userId = (req as AuthRequest).user?._id;
+
+  const state = `fit_connect:${userId}`;
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=https://www.googleapis.com/auth/fitness.activity.read&include_granted_scopes=true&access_type=offline&prompt=consent&state=${state}`;
+  res.redirect(url);
+});
+
 router.get("/google/callback", async (req: Request, res: Response) => {
-  const code = req.query.code;
-  const redirectUri = `${env.API_URL || "http://localhost:8080"}/api/auth/google/callback`;
+  const code = req.query.code as string;
+  const state = req.query.state as string;
+  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+  const clientUrl = env.CLIENT_URL;
 
   if (!code) {
     return res.status(400).json({ error: "Missing authorization code" });
@@ -78,7 +101,7 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       body: new URLSearchParams({
         client_id: env.GOOGLE_CLIENT_ID!,
         client_secret: env.GOOGLE_CLIENT_SECRET!,
-        code: code as string,
+        code,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
@@ -91,6 +114,32 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       throw new Error("Failed to fetch access token");
     }
 
+    // --- FIT CONNECT flow (incremental authorization for fitness scope) ---
+    if (state?.startsWith("fit_connect:")) {
+      const userId = state.split(":")[1];
+      if (!userId) {
+        return res.redirect(`${clientUrl}/login`);
+      }
+
+      const fitUpdate: Record<string, any> = {
+        googleTokenExpiry: new Date(Date.now() + (data.expires_in || 3600) * 1000),
+      };
+      if (data.refresh_token) {
+        fitUpdate.googleRefreshToken = data.refresh_token;
+      }
+      await User.findByIdAndUpdate(userId, { $set: fitUpdate });
+
+      res.cookie("googleAccessToken", data.access_token, {
+        httpOnly: true,
+        secure: env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      return res.redirect(`${clientUrl}/dashboard/progress`);
+    }
+
+    // --- LOGIN flow ---
     const profileRes = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -120,6 +169,21 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       user = result.user;
     }
 
+    if (data.refresh_token) {
+      await User.findByIdAndUpdate(user._id, {
+        $set: {
+          googleRefreshToken: data.refresh_token,
+          googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
+        },
+      });
+    } else {
+      await User.findByIdAndUpdate(user._id, {
+        $set: {
+          googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
+        },
+      });
+    }
+
     let userPayload = {
       _id: user._id.toString(),
       userId: user._id.toString(),
@@ -130,16 +194,13 @@ router.get("/google/callback", async (req: Request, res: Response) => {
       subscriptionTier: user.subscriptionTier,
     };
 
-    // FIX: Generate and set cookies REGARDLESS of onboarding status
     const accessToken = jwtUtils.generateAccessToken(userPayload);
     const refreshToken = jwtUtils.generateRefreshToken(userPayload);
+    const googleAccessToken = data.access_token;
 
-    setAuthCookies(res, accessToken, refreshToken);
 
-    // Now redirect based on onboarding status
-    const clientUrl = env.CLIENT_URL;
-    console.log("redirect client url", clientUrl);
-    console.log("user onboarding completed", user.onboardingCompleted);
+    setAuthCookies(res, accessToken, refreshToken, googleAccessToken);
+
     if (!user.onboardingCompleted) {
       res.redirect(`${clientUrl}/onboarding`);
     } else {

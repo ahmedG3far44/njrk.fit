@@ -55,7 +55,7 @@ export const fitnessService = {
     return api.patch<CompleteSessionResponse>(`/fitness/session/${sessionId}/complete`, data ?? {});
   },
 
-  async getCurrent(params: { date: 'today' | 'week' }): Promise<{ data: WorkoutSession[] }> {
-    return api.get<{ data: WorkoutSession[] }>(`/fitness/current?date=${params.date}`);
+  async getCurrent(params: { date: 'today' | 'week' }): Promise<{ data: WorkoutSession[]; planEndDate?: string }> {
+    return api.get<{ data: WorkoutSession[]; planEndDate?: string }>(`/fitness/current?date=${params.date}`);
   },
 };

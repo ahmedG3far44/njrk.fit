@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { nutritionService } from '../services/nutritionService';
 import { fitnessService } from '../services/fitnessService';
-import { gamificationService } from '../services/gamificationService';
+import { gamificationService, InsightsData } from '../services/gamificationService';
 import { toast } from 'sonner';
 
 interface DashboardProps {
@@ -142,16 +142,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
   const fetchGamificationData = useCallback(async () => {
     try {
-      const response = await gamificationService.getStatus();
-      if (response) {
+      const [statusRes, insightsRes] = await Promise.all([
+        gamificationService.getStatus(),
+        gamificationService.getInsights(),
+      ]);
+
+      if (statusRes) {
         setStreakData({
-          currentStreak: response.currentStreak || 0,
-          personalBest: response.longestStreak || 0,
+          currentStreak: statusRes.currentStreak || 0,
+          personalBest: statusRes.longestStreak || 0,
         });
         setPointsData({
-          current: response.totalPoints || 0,
+          current: statusRes.totalPoints || 0,
           nextReward: 500,
         });
+      }
+
+      if (insightsRes) {
+        const stepGoal = insightsRes.userEstimatedSteps || 5000;
+
+        setVitals([
+          {
+            label: 'Water',
+            value: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
+            target: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
+            icon: Droplets,
+            color: 'text-blue-500',
+            bg: 'bg-blue-50',
+            progress: 100,
+            progressColor: 'bg-blue-500',
+          },
+          {
+            label: 'Sleep',
+            value: `${insightsRes.estimatedSleepHours}h`,
+            target: `8h`,
+            icon: Moon,
+            color: 'text-teal-500',
+            bg: 'bg-teal-50',
+            progress: Math.min(100, Math.round((insightsRes.estimatedSleepHours / 8) * 100)),
+            progressColor: 'bg-teal-500',
+          },
+          {
+            label: 'Steps',
+            value: stepGoal.toLocaleString(),
+            target: stepGoal.toLocaleString(),
+            icon: Activity,
+            color: 'text-green-500',
+            bg: 'bg-green-50',
+            progress: 100,
+            progressColor: 'bg-green-500',
+          },
+        ]);
       }
     } catch (error) {
       console.error('Failed to fetch gamification data:', error);

@@ -10,13 +10,13 @@ import { IUser } from '../models/user.model';
 export interface UserProfile {
   name: string;
   email: string;
-  avatarPath?: string; // optional local path to user avatar
+  avatarPath?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const BRAND = {
-  primary: '#2D6A4F',      // deep green
+  primary: '#2D6A4F',
   secondary: '#40916C',
   accent: '#74C69D',
   light: '#D8F3DC',
@@ -39,24 +39,18 @@ const CONTENT_WIDTH = PAGE.width - PAGE.margins.left - PAGE.margins.right;
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
-/**
- * Generates a branded PDF and returns it as a Buffer.
- * Usage in Express:
- *   const buffer = await generatePDF('meal', data, user);
- *   res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': '...' });
- *   res.send(buffer);
- */
 export const generatePDF = (
   type: 'grocery' | 'workout' | 'meal',
   data: IWeeklyFitnessPlan | INutritionPlan | IGroceryList,
   user: IUser,
-  logoPath?: string, // absolute path to logo PNG
+  logoPath?: string,
 ): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
       margins: PAGE.margins,
       bufferPages: true,
+      autoFirstPage: true,
       info: {
         Title: getPDFTitle(type),
         Author: 'Njerka.fit',
@@ -71,12 +65,10 @@ export const generatePDF = (
     stream.on('error', reject);
     doc.pipe(stream);
 
-    // ── Render ──────────────────────────────────────────────────────────────
+    // ── Render body ─────────────────────────────────────────────────────────
     drawHeader(doc, user, type, logoPath);
     drawDivider(doc);
-
-    const contentStartY = doc.y + 12;
-    doc.y = contentStartY;
+    doc.y += 12;
 
     switch (type) {
       case 'grocery':
@@ -90,13 +82,21 @@ export const generatePDF = (
         break;
     }
 
-    // Footer on every page
-    const totalPages = (doc.bufferedPageRange().count);
+    // ── Footer pass ─────────────────────────────────────────────────────────
+    // FIX: Use doc.bufferedPageRange() BEFORE flushPages/end.
+    // Never call doc.addPage() after this point — only switchToPage + drawFooter.
+    const range = doc.bufferedPageRange();
+    const totalPages = range.count;
+
     for (let i = 0; i < totalPages; i++) {
-      doc.switchToPage(i);
+      doc.switchToPage(range.start + i);
       drawFooter(doc, i + 1, totalPages);
     }
 
+    // FIX: flushPages() releases the buffered pages to the stream without
+    // adding a new blank page, which is what doc.end() alone would do after
+    // switchToPage() calls when bufferPages=true.
+    doc.flushPages();
     doc.end();
   });
 };
@@ -109,15 +109,11 @@ function drawHeader(
   type: 'grocery' | 'workout' | 'meal',
   logoPath?: string,
 ) {
-  const top = PAGE.margins.top - 20;
-
-  // Background bar
   doc.save()
     .rect(0, 0, PAGE.width, 110)
     .fill(BRAND.primary)
     .restore();
 
-  // Logo or brand name
   if (logoPath) {
     try {
       doc.image(logoPath, PAGE.margins.left, 18, { height: 40, fit: [120, 40] });
@@ -128,21 +124,18 @@ function drawHeader(
     drawBrandText(doc, PAGE.margins.left, 22);
   }
 
-  // PDF Title (right-aligned)
-  const title = getPDFTitle(type);
   doc.font('Helvetica-Bold')
     .fontSize(18)
     .fillColor(BRAND.white)
-    .text(title, PAGE.margins.left, 30, {
+    .text(getPDFTitle(type), PAGE.margins.left, 30, {
       width: CONTENT_WIDTH,
       align: 'right',
     });
 
-  // User info row
   doc.font('Helvetica')
     .fontSize(9)
     .fillColor(BRAND.accent)
-    .text(`${user.name}  ·  ${user.email}`, PAGE.margins.left, 72, {
+    .text(`${user.name}  |  ${user.email}`, PAGE.margins.left, 72, {
       width: CONTENT_WIDTH,
       align: 'right',
     });
@@ -173,7 +166,7 @@ function drawFooter(doc: PDFKit.PDFDocument, pageNum: number, totalPages: number
     .fontSize(8)
     .fillColor(BRAND.white)
     .text(
-      `© ${new Date().getFullYear()} Njerka.fit — All rights reserved. | njerka.fit`,
+      `(c) ${new Date().getFullYear()} Njerka.fit - All rights reserved. | njerka.fit`,
       PAGE.margins.left,
       y + 2,
       { width: CONTENT_WIDTH, align: 'center' },
@@ -205,12 +198,12 @@ function drawDivider(doc: PDFKit.PDFDocument, color = BRAND.accent, yOffset = 0)
 }
 
 function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
-  ensureSpace(doc, 40);
+  ensureSpace(doc, 30);
   doc.font('Helvetica-Bold')
     .fontSize(13)
     .fillColor(BRAND.primary)
     .text(title, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
-  doc.moveDown(0.3);
+  doc.moveDown(0.2);
   drawDivider(doc, BRAND.secondary);
 }
 
@@ -220,15 +213,19 @@ function drawNotes(doc: PDFKit.PDFDocument, notes: string) {
   doc.font('Helvetica-Oblique')
     .fontSize(9)
     .fillColor(BRAND.muted)
-    .text(`📝 Notes: ${notes}`, PAGE.margins.left, doc.y, {
-      width: CONTENT_WIDTH,
-    });
+    .text(`Notes: ${notes}`, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
   doc.moveDown(0.5);
 }
 
-/** Ensures there's enough vertical space, adds a new page if not */
+/**
+ * FIX: The bottom boundary must account for the footer height (50px) so content
+ * never overlaps the footer bar — and never triggers a spurious new page too early.
+ * Old value was PAGE.margins.bottom (80), but footer starts at PAGE.height - 50,
+ * so the real safe bottom is PAGE.height - 60 (a small buffer above the footer).
+ */
 function ensureSpace(doc: PDFKit.PDFDocument, needed: number) {
-  if (doc.y + needed > PAGE.height - PAGE.margins.bottom - 50) {
+  const safeBottom = PAGE.height - 60; // 60px from bottom = just above footer bar
+  if (doc.y + needed > safeBottom) {
     doc.addPage();
     doc.y = PAGE.margins.top;
   }
@@ -296,13 +293,11 @@ function drawTable(
     ensureSpace(doc, cellHeight);
     const actualY = doc.y;
 
-    // Row background
     doc.save()
       .rect(startX, actualY, tableWidth, cellHeight)
       .fill(isAlt ? BRAND.tableRow : BRAND.tableRowAlt)
       .restore();
 
-    // Border bottom
     doc.save()
       .moveTo(startX, actualY + cellHeight)
       .lineTo(startX + tableWidth, actualY + cellHeight)
@@ -311,7 +306,6 @@ function drawTable(
       .stroke()
       .restore();
 
-    // Cell content
     x = startX;
     row.forEach((cell, ci) => {
       const col = columns[ci];
@@ -319,7 +313,7 @@ function drawTable(
       doc.font('Helvetica')
         .fontSize(8.5)
         .fillColor(BRAND.text)
-        .text(String(cell ?? '—'), x + 5, actualY + 6, {
+        .text(String(cell ?? '-'), x + 5, actualY + 6, {
           width: col.width - 10,
           align: col.align ?? 'left',
           height: cellHeight - 8,
@@ -336,7 +330,6 @@ function drawTable(
 // ─── Grocery Body ─────────────────────────────────────────────────────────────
 
 function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
-  // Meta info
   doc.font('Helvetica')
     .fontSize(9)
     .fillColor(BRAND.muted)
@@ -346,14 +339,13 @@ function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
     });
   doc.moveDown(0.5);
 
-  // Group by category
   const byCategory = data.items.reduce<Record<string, typeof data.items[0][]>>((acc, item) => {
     (acc[item.category] = acc[item.category] || []).push(item);
     return acc;
   }, {});
 
   Object.entries(byCategory).forEach(([category, items]) => {
-    drawSectionTitle(doc, `🛒 ${category}`);
+    drawSectionTitle(doc, `  ${category}`);
 
     const cols: ColDef[] = [
       { header: 'Item', width: 250 },
@@ -376,72 +368,87 @@ function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
 // ─── Meal Plan Body ───────────────────────────────────────────────────────────
 
 function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
-  // Plan meta
   doc.font('Helvetica')
     .fontSize(9)
     .fillColor(BRAND.muted)
     .text(
-      `Date: ${new Date(data.date).toLocaleDateString()}  ·  Daily Target: ${data.targetMacros?.calories ?? 0} kcal`,
+      `Date: ${new Date(data.date).toLocaleDateString()}  |  Daily Target: ${data.targetMacros?.calories ?? 0} kcal`,
       PAGE.margins.left,
       doc.y,
       { width: CONTENT_WIDTH, align: 'right' },
     );
   doc.moveDown(0.5);
 
-  // Group meals by day
   const mealsByDay = data.meals.reduce<Record<string, typeof data.meals>>((acc, meal) => {
     (acc[meal.day] = acc[meal.day] || []).push(meal);
     return acc;
   }, {});
 
   Object.entries(mealsByDay).forEach(([day, meals]) => {
-    drawSectionTitle(doc, `🗓 ${day}`);
-
-    const cols: ColDef[] = [
-      { header: 'Meal', width: 150 },
-      { header: 'Calories', width: 75, align: 'right' },
-      { header: 'Protein (g)', width: 80, align: 'right' },
-      { header: 'Carbs (g)', width: 80, align: 'right' },
-      { header: 'Fat (g)', width: 75, align: 'right' },
-      { header: 'Ingredients', width: 135 },
-    ];
+    drawSectionTitle(doc, `  ${day}`);
 
     let totalCals = 0, totalPro = 0, totalCarb = 0, totalFat = 0;
 
-    const rows = meals.map((meal) => {
+    meals.forEach((meal) => {
       totalCals += meal.macros.calories;
       totalPro += meal.macros.protein;
       totalCarb += meal.macros.carbs;
       totalFat += meal.macros.fats;
 
-      return [
-        meal.name,
-        String(meal.macros.calories),
-        String(meal.macros.protein),
-        String(meal.macros.carbs),
-        String(meal.macros.fats),
-        meal.ingredients?.map(i => `${i.quantity} ${i.name}`).join(', ') ?? '—',
-      ];
+      ensureSpace(doc, 28);
+
+      doc.font('Helvetica-Bold')
+        .fontSize(10)
+        .fillColor(BRAND.primary)
+        .text(`${meal.name} (${meal.time})`, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
+
+      doc.font('Helvetica')
+        .fontSize(8.5)
+        .fillColor(BRAND.text)
+        .text(
+          `Calories: ${meal.macros.calories} kcal  |  Protein: ${meal.macros.protein}g  |  Carbs: ${meal.macros.carbs}g  |  Fats: ${meal.macros.fats}g`,
+          PAGE.margins.left + 10,
+          doc.y + 2,
+          { width: CONTENT_WIDTH - 10 },
+        );
+
+      if (meal.ingredients && meal.ingredients.length > 0) {
+        ensureSpace(doc, 14 + meal.ingredients.length * 11);
+        doc.font('Helvetica-Oblique')
+          .fontSize(8.5)
+          .fillColor(BRAND.muted)
+          .text('Ingredients:', PAGE.margins.left + 10, doc.y + 2, { width: CONTENT_WIDTH - 10 });
+
+        meal.ingredients.forEach((ing) => {
+          const label = `  \u2022 ${ing.name}${ing.quantity ? ' - ' + ing.quantity : ''}${ing.unit ? ' ' + ing.unit : ''}`;
+          doc.font('Helvetica')
+            .fontSize(8.5)
+            .fillColor(BRAND.text)
+            .text(label, PAGE.margins.left + 20, doc.y, { width: CONTENT_WIDTH - 20 });
+        });
+      }
+
+      doc.moveDown(0.3);
     });
 
-    // Totals row
-    rows.push([
-      'DAILY TOTAL',
-      String(totalCals),
-      String(totalPro),
-      String(totalCarb),
-      String(totalFat),
-      '',
-    ]);
-
-    drawTable(doc, cols, rows);
+    ensureSpace(doc, 18);
+    drawDivider(doc, BRAND.secondary);
+    doc.font('Helvetica-Bold')
+      .fontSize(9)
+      .fillColor(BRAND.primary)
+      .text(
+        `Daily Total: ${totalCals} kcal  |  Protein: ${totalPro}g  |  Carbs: ${totalCarb}g  |  Fats: ${totalFat}g`,
+        PAGE.margins.left,
+        doc.y,
+        { width: CONTENT_WIDTH },
+      );
+    doc.moveDown(0.5);
   });
 }
 
 // ─── Workout Body ─────────────────────────────────────────────────────────────
 
 function drawWorkoutBody(doc: PDFKit.PDFDocument, data: IWeeklyFitnessPlan) {
-  // Plan meta
   doc.font('Helvetica')
     .fontSize(9)
     .fillColor(BRAND.muted)
@@ -455,8 +462,8 @@ function drawWorkoutBody(doc: PDFKit.PDFDocument, data: IWeeklyFitnessPlan) {
 
   data.sessions.forEach((session) => {
     const sectionLabel = session.durationMin
-      ? `💪 ${session.dayOfWeek} — ${session.name} (${session.type})  (${session.durationMin} min)`
-      : `💪 ${session.dayOfWeek} — ${session.name} (${session.type})`;
+      ? `${session.dayOfWeek} - ${session.name} (${session.type})  (${session.durationMin} min)`
+      : `${session.dayOfWeek} - ${session.name} (${session.type})`;
 
     drawSectionTitle(doc, sectionLabel);
 
@@ -470,10 +477,10 @@ function drawWorkoutBody(doc: PDFKit.PDFDocument, data: IWeeklyFitnessPlan) {
 
     const rows = session.exercises.map((ex) => [
       ex.name,
-      String(ex.sets || '—'),
-      ex.reps || '—',
-      ex.durationMin ? `${ex.durationMin} min` : '—',
-      '—', // no notes in IExercise
+      String(ex.sets || '-'),
+      ex.reps || '-',
+      ex.durationMin ? `${ex.durationMin} min` : '-',
+      '-',
     ]);
 
     drawTable(doc, cols, rows);
@@ -483,10 +490,5 @@ function drawWorkoutBody(doc: PDFKit.PDFDocument, data: IWeeklyFitnessPlan) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getPDFTitle(type: 'grocery' | 'workout' | 'meal'): string {
-  const map = {
-    grocery: 'Grocery List',
-    workout: 'Workout Plan',
-    meal: 'Diet & Nutrition Plan',
-  };
-  return map[type];
+  return { grocery: 'Grocery List', workout: 'Workout Plan', meal: 'Diet & Nutrition Plan' }[type];
 }

@@ -47,6 +47,17 @@ export interface ActivityParams {
   year?: number;
 }
 
+export interface InsightsData {
+  currentStreak: number;
+  longestStreak: number;
+  totalPoints: number;
+  pointsToRedeem: number;
+  estimatedSteps: number;
+  estimatedSleepHours: number;
+  estimatedWaterOz: number;
+  userEstimatedSteps: number;
+}
+
 export const gamificationService = {
   async checkIn(): Promise<CheckInResponse> {
     return api.post<CheckInResponse>('/gamification/check-in');
@@ -64,8 +75,8 @@ export const gamificationService = {
     return api.get<GamificationStatus>('/gamification/status');
   },
 
-  async getInsights(): Promise<unknown> {
-    return api.get('/gamification/insights');
+  async getInsights(): Promise<InsightsData> {
+    return api.get<InsightsData>('/gamification/insights');
   },
 
   async getActivity(params?: ActivityParams): Promise<unknown> {

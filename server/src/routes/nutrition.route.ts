@@ -9,6 +9,7 @@ import User from "../models/user.model";
 import NutritionPlan from "../models/nutrition.model";
 import { generateMealPlan, refineMeal, regenerateMeal } from "../services/llm.service";
 import { awardPoints } from "../services/gamification.service";
+import { generatePDF } from "../services/pdf.service";
 
 import { UserContext, Meal } from "../types";
 
@@ -43,6 +44,17 @@ router.post(
         return res.status(404).json({ error: "User not found" });
       }
 
+      const existingPlan = await NutritionPlan.findOne({ userId: user._id }).sort({ createdAt: -1 });
+      if (existingPlan) {
+        const weekEnd = new Date(existingPlan.date);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        if (new Date() < weekEnd) {
+          return res.status(403).json({
+            error: `This meal plan is still active. You can generate a new plan after ${weekEnd.toLocaleDateString()}.`,
+          });
+        }
+      }
+
       const userContext: UserContext = {
         name: user.name,
         weight: user.weight,
@@ -57,9 +69,17 @@ router.post(
         activityLevel: user.activityLevel,
         fitnessGoals: user.fitnessGoals,
         dietaryRestrictions: user.dietaryRestrictions,
+        mealsCount: req.body.mealsCount,
+        snacksCount: req.body.snacksCount,
+        favoriteFoods: req.body.favoriteFoods,
       };
 
-      const plan = await generateMealPlan(userContext);
+      const plan = await generateMealPlan(
+        userContext,
+        req.body.mealsCount,
+        req.body.snacksCount,
+        req.body.favoriteFoods,
+      );
 
       const startDate = req.body.startDate
         ? new Date(req.body.startDate)
@@ -322,7 +342,7 @@ router.get(
         return res.status(404).json({ error: "No meals found for this date" });
       }
 
-      res.status(200).json({ meals, targetMacros: nutritionPlan.targetMacros });
+      res.status(200).json({ meals, targetMacros: nutritionPlan.targetMacros, planDate: nutritionPlan.date });
     } catch (error) {
       next(error);
     }
@@ -382,6 +402,34 @@ router.post(
       await awardPoints(userId!, 25, `Meal logged: ${mealName}`);
 
       res.status(200).json({ message: "Meal logged, points awarded" });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.get(
+  "/export/pdf",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthRequest).user?.userId;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const [user, nutritionPlan] = await Promise.all([
+        User.findById(userId),
+        NutritionPlan.findOne({ userId }).sort({ createdAt: -1 }),
+      ]);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!nutritionPlan)
+        return res.status(404).json({ message: "No nutrition plan found, create a meal plan first" });
+
+      const pdfBuffer = await generatePDF("meal", nutritionPlan, user);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="meal-plan.pdf"');
+      res.send(pdfBuffer);
     } catch (error) {
       next(error);
     }

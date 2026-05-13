@@ -1,13 +1,14 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from '../models/user.model';
-
-// import { UserProfile } from '../types';
-
 import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
 import { TOnboarding } from '../routes/auth.route';
+import { calculateUserHealthTargets } from '../utils/calculations';
+
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import stripe from '../configs/stripe';
+import User from '../models/user.model';
+
+
 
 export const hashPassword = async (password: string): Promise<string> => {
     const salt = await bcrypt.genSalt(12);
@@ -202,6 +203,20 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
         if (!user) {
             return { success: false, message: 'User not found' };
         }
+
+    const result = calculateUserHealthTargets({
+      currentWeightKg: data.weight,
+      targetWeightKg: data.targetWeight,
+      age: data.age,
+      activityLevel: data.activityLevel,
+      daysToReachGoal: 120,
+      goal: data.userGoal,
+    });
+
+        console.log(result);
+
+        const { estimatedSteps, estimatedSleepHours, estimatedWaterOz } = result;
+
         user.weight = data.weight;
         user.height = data.height;
         user.age = data.age;
@@ -214,6 +229,10 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
         user.targetWeight = data.targetWeight;
         user.fitnessGoals = data.fitnessGoal;
         user.onboardingCompleted = true;
+        user.estimatedSteps = estimatedSteps;
+        user.estimatedSleepHours = estimatedSleepHours;
+        user.estimatedWaterOz = estimatedWaterOz;
+        
         await user.save();
         return { success: true, message: 'User onboarded successfully' };
     } catch (error) {
