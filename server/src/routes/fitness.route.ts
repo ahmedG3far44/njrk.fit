@@ -4,17 +4,18 @@ import WeeklyFitnessPlan from '../models/fitness.model';
 import { Router, Request, Response, NextFunction } from 'express';
 import { validate } from '../middlewares/validateResource';
 import { generateWorkoutPlanSchema, completeSessionSchema } from '../dtos/nutrition.dto';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
 import { UserContext } from '../types';
+import { generatePDF } from '../services/pdf.service';
 
 const router = Router();
 
 
-export const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]; 
+export const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
@@ -25,6 +26,13 @@ router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const existingPlan = await WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 });
+    if (existingPlan && existingPlan.endDate > new Date()) {
+      return res.status(403).json({
+        error: `This workout plan is still active. You can generate a new plan after ${existingPlan.endDate.toLocaleDateString()}.`,
+      });
+    }
+
     const userContext: UserContext = {
       name: user.name,
       weight: user.weight,
@@ -32,8 +40,11 @@ router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async
       age: user.age,
       gender: user.gender,
       activityLevel: user.activityLevel,
-      fitnessGoals: user.fitnessGoals || [],
-      dietaryRestrictions: user.dietaryRestrictions || [],
+      fitnessGoals: user.fitnessGoals,
+      goal: user.goal,
+      allergies: user.allergies,
+      dietaryRestrictions: user.dietaryRestrictions,
+      equipment: user.equipment,
     };
 
     const plan = await generateWorkoutPlan(
@@ -62,7 +73,7 @@ router.post('/generate', requireAuth, validate(generateWorkoutPlanSchema), async
 });
 router.patch(
   "/session/:sessionId/complete",
-  requireAuth,
+  authMiddleware,
   validate(completeSessionSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -128,14 +139,14 @@ router.patch(
   }
 );
 
-router.get('/current', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/current', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
 
     const dateParam = req.query.date as 'day' | 'week';
 
-    if(!dateParam){
+    if (!dateParam) {
       return res.status(400).json({ error: 'Invalid date parameter' });
     }
 
@@ -146,7 +157,7 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
 
-    
+
 
     const currentDay = weekDays[date.getDay()];
 
@@ -162,10 +173,40 @@ router.get('/current', requireAuth, async (req: Request, res: Response, next: Ne
       workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
     }
 
-    res.status(200).json({ data: workouts });
+    res.status(200).json({
+      data: workouts ? workouts : "No workouts scheduled for today.",
+      planEndDate: workoutPlan?.endDate || null,
+    });
   } catch (error) {
     next(error);
   }
 });
+
+router.get(
+  '/export/pdf',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthRequest).user?.userId;
+      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+      const [user, fitnessPlan] = await Promise.all([
+        User.findById(userId),
+        WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 }),
+      ]);
+
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!fitnessPlan) return res.status(404).json({ message: 'No fitness plan found, create a workout plan first' });
+
+      const pdfBuffer = await generatePDF('workout', fitnessPlan, user);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="workout-plan.pdf"');
+      res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 export default router;

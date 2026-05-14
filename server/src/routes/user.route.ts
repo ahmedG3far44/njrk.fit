@@ -1,27 +1,17 @@
+
 import { Router, Request, Response, NextFunction } from 'express';
-import multer from 'multer';
 import { validate } from '../middlewares/validateResource';
 import { updateProfileSchema } from '../dtos/user.dto';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
+import { upload } from '../configs/multer';
+import { uploadToCloudinary } from '../services/upload.service';
+
 import User from '../models/user.model';
-import { uploadFile } from '../configs/aws';
-import { v4 as uuidv4 } from 'uuid';
+
 
 const router = Router();
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-        if (allowed.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
-        }
-    }
-});
 
-router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/me', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as AuthRequest).user?._id;
         const user = await User.findById(userId).select('-passwordHash');
@@ -36,7 +26,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
     }
 });
 
-router.patch('/me', requireAuth, validate(updateProfileSchema), async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/me', authMiddleware, validate(updateProfileSchema), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as AuthRequest).user?._id;
         const updates = req.body;
@@ -57,7 +47,7 @@ router.patch('/me', requireAuth, validate(updateProfileSchema), async (req: Requ
     }
 });
 
-router.delete('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/me', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as AuthRequest).user?._id;
 
@@ -73,31 +63,30 @@ router.delete('/me', requireAuth, async (req: Request, res: Response, next: Next
     }
 });
 
-router.post('/me/avatar', requireAuth, upload.single('avatar'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/me/avatar', authMiddleware, upload.single('avatar'), async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const avatar = req.file
         const userId = (req as AuthRequest).user?._id;
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
+        const userExists = await User.findById(userId);
 
-        const fileExt = req.file.originalname.split('.').pop();
-        const key = `avatars/${userId}/${uuidv4()}.${fileExt}`;
+        if (!avatar) return res.status(400).json({ error: 'No file uploaded' });
 
-        const avatarUrl = await uploadFile({
-            originalname: req.file.originalname,
-            buffer: req.file.buffer,
-            mimetype: req.file.mimetype,
-            size: req.file.size,
-        }, key);
+        if (!userExists) return res.status(404).json({ error: 'User not found' });
+
+        const key = `/njerka/profiles/avatar`;
+
+        const { secure_url } = await uploadToCloudinary(avatar.buffer, key);
+
+        if (!secure_url) return res.status(500).json({ error: 'Failed to upload image' });
 
         const user = await User.findByIdAndUpdate(
             userId,
-            { $set: { avatarUrl } },
+            { $set: { avatarUrl: secure_url } },
             { new: true }
         ).select('-passwordHash');
 
-        res.status(200).json({ user, avatarUrl });
+        res.status(200).json({ user, avatarUrl: secure_url });
     } catch (error) {
         next(error);
     }

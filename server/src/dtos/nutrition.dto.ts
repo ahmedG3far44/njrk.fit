@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 export const generateMealPlanSchema = z.object({
-    calories: z.number().positive().optional(),
+    mealsCount: z.number().int().min(1).max(5).default(3),
+    snacksCount: z.number().int().min(0).max(3).default(0),
+    favoriteFoods: z.array(z.string()).default([]),
     startDate: z.string().optional(),
 });
 

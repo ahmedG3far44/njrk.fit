@@ -6,31 +6,45 @@ dotenv.config();
 const envSchema = z.object({
     PORT: z.string().default('8080'),
     NODE_ENV: z.string().default('development'),
-    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),  
+
+    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
     CLIENT_URL: z.string().default('http://localhost:5173'),
     API_URL: z.string().default('http://localhost:8080/api'),
-    MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-    OLLAMA_URL: z.string().default('http://localhost:11434/api/generate'),
-    OLLAMA_MODEL: z.string().default('qwen2.5-coder:1.5b'),
-    OLLAMA_API_KEY: z.string().optional(),
+
+    MONGODB_URI: z.string().default("mongodb://localhost:27017/njrk"),
+
+    
     S3_BUCKET_NAME: z.string().min(1, 'S3_BUCKET_NAME is required'),
     S3_REGION: z.string().default('us-east-1'),
     S3_ACCESS_KEY_ID: z.string().min(1, 'S3_ACCESS_KEY_ID is required'),
     S3_SECRET_ACCESS_KEY: z.string().min(1, 'S3_SECRET_ACCESS_KEY is required'),
-    STRIPE_SECRET_KEY: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
-    NODEMAILER_USER: z.string().email().default('njerka.fit@gmail.com'),
-    NODEMAILER_PASSWORD: z.string().default('nodemailer-password'),
-    NODEMAILER_HOST: z.string().default('smtp.gmail.com'),
-    NODEMAILER_PORT: z.string().default('587'),
+
+    STRIPE_SECRET_KEY: z.string().default('sk_test_51TJWvyRPSIjKJwi6NZEWveg1OOYEL3Z0aAJrGjeV8boI9yPPFEka3C0rvg3AfGJLCtda7zQSnN5JhKbIjx02W94t00GKZWRVb4'), 
+    STRIPE_WEBHOOK_SECRET: z.string().default('whsec_13d5831238f76ff2f8c8cd2f7cab809c04fef9ec0616e93b79ff9c1486cb50f4'),
+
+    EMAIL_USER: z.string().email().default('njerka.fit@gmail.com'),
+    EMAIL_PASSWORD: z.string().default('njrk fit@2026'),
+    EMAIL_HOST: z.string().default('smtp.gmail.com'),
+    EMAIL_PORT: z.string().default('587'),
+
     JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
     JWT_EXPIRATION: z.string().default('1h'),
     JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
     JWT_REFRESH_EXPIRATION: z.string().default('7d'),
-    GOOGLE_CLIENT_ID: z.string().optional(),
-    GOOGLE_CLIENT_SECRET: z.string().optional(),
-    GOOGLE_API_KEY: z.string().optional(),
-    OPENROUTER_API_KEY: z.string().optional()
+    
+    GOOGLE_CLIENT_ID: z.string().default('691688385657-i821cud5r17h2dfv7kmnk161701jcr6h.apps.googleusercontent.com'),
+    GOOGLE_CLIENT_SECRET: z.string().default('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'),
+
+    OLLAMA_URL: z.string().default('http://localhost:11434/api/generate'),
+    OLLAMA_MODEL: z.string().default('qwen2.5-coder:1.5b'),
+    OLLAMA_API_KEY: z.string().default('89dd178811ad48ee91a49437af6099d2.pp68HePfs7bMRJWPUEfBnaEL'),
+
+    OPENROUTER_API_KEY: z.string().default('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'),
+
+    GOOGLE_API_KEY: z.string().default('AIzaSyC3bY3mYGc6bwa0yJxjAtnQ-SIsTah85PA'),
+    CLOUDINARY_NAME: z.string().default('drjne80qo'),
+    CLOUDINARY_API_KEY: z.string().default('915692518451686'),
+    CLOUDINARY_API_SECRET: z.string().default('Jmf5qnqzDlPevD7NAYvUevLSNDg'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -41,35 +55,11 @@ if (!parsedEnv.success) {
 }
 
 export const env = {
-    ...parsedEnv.data,
-    mongodbUri: parsedEnv.data.MONGODB_URI,
-    nodeEnv: parsedEnv.data.NODE_ENV,
-    apiUrl: parsedEnv.data.API_URL,
-    clientUrl: parsedEnv.data.CLIENT_URL,
-    allowedOrigins: "http://localhost:5173",
-    ollamaUrl: parsedEnv.data.OLLAMA_URL,
-    ollamaModel: parsedEnv.data.OLLAMA_MODEL,
-    ollamaApiKey: parsedEnv.data.OLLAMA_API_KEY,
-    openrouterApiKey: parsedEnv.data.OPENROUTER_API_KEY,
-    s3BucketName: parsedEnv.data.S3_BUCKET_NAME,
-    googleApiKey: parsedEnv.data.GOOGLE_API_KEY,
-    s3Region: parsedEnv.data.S3_REGION,
-    s3AccessKeyId: parsedEnv.data.S3_ACCESS_KEY_ID,
-    s3SecretAccessKey: parsedEnv.data.S3_SECRET_ACCESS_KEY,
-    stripeSecretKey: parsedEnv.data.STRIPE_SECRET_KEY,
-    stripeWebhookSecret: parsedEnv.data.STRIPE_WEBHOOK_SECRET,
-    nodemailerUser: parsedEnv.data.NODEMAILER_USER,
-    nodemailerPassword: parsedEnv.data.NODEMAILER_PASSWORD,
-    nodemailerHost: parsedEnv.data.NODEMAILER_HOST,
-    nodemailerPort: parsedEnv.data.NODEMAILER_PORT,
-    jwtSecret: parsedEnv.data.JWT_SECRET,
-    jwtExpiration: parsedEnv.data.JWT_EXPIRATION,
-    jwtRefreshSecret: parsedEnv.data.JWT_REFRESH_SECRET,
-    jwtRefreshExpiration: parsedEnv.data.JWT_REFRESH_EXPIRATION,
+    ...parsedEnv.data
 };
 
 export const corsOptions = {
-    origin: env.allowedOrigins,
+    origin: env.ALLOWED_ORIGINS,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

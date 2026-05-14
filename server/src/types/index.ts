@@ -30,11 +30,15 @@ export interface UserContext {
   goal?: Goal;
   targetWeight?: number;
   activityLevel?: ActivityLevel;
-  fitnessGoals?: string[];
+  fitnessGoals?: string;
   dietaryRestrictions?: string[];
   allergies?: string[];
   isFasting?: boolean;
   trainingDays?: number;
+  equipment?: string[];
+  mealsCount?: number;
+  snacksCount?: number;
+  favoriteFoods?: string[];
 }
 
 // ----------------------------------------------------------------------------
@@ -53,13 +57,14 @@ export interface Meal {
   day: string;
   name: string;
   time: string;
+  mealType?: 'meal' | 'snack';
   macros: {
     calories: number;
     protein: number;
     carbs: number;
     fats: number;
   };
-  ingredients: string[];
+  ingredients: { name: string; quantity: string }[];
   instructions: string[];
 }
 
@@ -209,3 +214,12 @@ export interface UserProfile {
     mealReminders: boolean;
   };
 }
+
+
+export interface Groceries {
+  _id: string;
+  userId: string;
+  date: Date;
+  items: string[];
+
+} 

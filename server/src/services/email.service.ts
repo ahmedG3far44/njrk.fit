@@ -2,19 +2,19 @@ import { env } from "../configs/env";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host: env.nodemailerHost,
-  port: Number(env.nodemailerPort),
+  host: env.EMAIL_HOST,
+  port: Number(env.EMAIL_PORT),
   secure: false,
   auth: {
-    user: env.nodemailerUser,
-    pass: env.nodemailerPassword,
+    user: env.EMAIL_USER,
+    pass: env.EMAIL_PASSWORD,
   },
 });
 
 
 export const sendEmail = async (html: string, to: string, subject: string) => {
   const mailOptions = {
-    from: env.nodemailerUser,
+    from: env.EMAIL_USER,
     to,
     subject,
     html,

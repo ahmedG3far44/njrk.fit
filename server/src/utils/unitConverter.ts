@@ -101,12 +101,12 @@ const getEmojiForCategory = (category: string): string => {
 };
 
 export const parseAndAggregateIngredients = (
-  ingredients: Array<{ name: string; quantity: string }>
+  ingredients: Array<{ name: string; quantity: number; unit: string }>
 ): Array<{ name: string; totalQuantity: number; unit: string; category: string }> => {
   const aggregated = new Map<string, { baseValue: number; unitType: string; name: string; category: string }>();
   
   for (const ing of ingredients) {
-    const { value, unit } = parseQuantity(ing.quantity);
+    const { value, unit } = parseQuantity(Number(ing.quantity).toString() + ' ' + ing.unit);
     const unitType = UNIT_CATEGORIES.weight.includes(unit) ? 'weight' :
                       UNIT_CATEGORIES.volume.includes(unit) ? 'volume' : 'count';
     const baseValue = convertToBase(value, unit);

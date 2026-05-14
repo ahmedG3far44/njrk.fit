@@ -1,179 +1,170 @@
-import { z } from 'zod';
-import { GoogleGenAI } from '@google/genai';
-import { env } from '../configs/env';
+import { z } from "zod";
 import {
-    calculateBMR,
-    calculateTDEE,
-    adjustCaloriesForGoal,
-    calculateMacros,
-    activityMultipliers,
-} from '../utils/caloriesCalculations';
-import { Meal, UserContext } from '../types';
-import { openrouter } from '../configs/llm';
-import { normalizeMeal } from '../utils/parser';
+  calculateBMR,
+  calculateTDEE,
+  adjustCaloriesForGoal,
+  calculateMacros,
+  activityMultipliers,
+} from "../utils/calculations";
+import { Meal, UserContext } from "../types";
+import { openrouter } from "../configs/llm";
+// import { normalizeMeal } from '../utils/parser';
+
+const ingredientSchema = z.object({
+  name: z.string(),
+  quantity: z.number(),
+  unit: z.string().optional(),
+});
 
 export const mealSchema = z.object({
-    day: z.string(),
-    name: z.string(),
-    time: z.string(),
-    macros: z.object({
-        calories: z.number(),
-        protein: z.number(),
-        carbs: z.number(),
-        fats: z.number(),
-    }),
-
-    ingredients: z.array(z.string()),
-    instructions: z.array(z.string()),
+  day: z.string(),
+  name: z.string(),
+  time: z.string(),
+  mealType: z.enum(['meal', 'snack']).default('meal'),
+  macros: z.object({
+    calories: z.number(),
+    protein: z.number(),
+    carbs: z.number(),
+    fats: z.number(),
+  }),
+  ingredients: z.array(ingredientSchema),
+  instructions: z.array(z.string()),
 });
 
 export const mealPlanResponseSchema = z.object({
-    meals: z.array(mealSchema),
-    targetMacros: z.object({
-        calories: z.number(),
-        protein: z.number(),
-        carbs: z.number(),
-        fats: z.number(),
-    }),
+  meals: z.array(mealSchema),
+  targetMacros: z.object({
+    calories: z.number(),
+    protein: z.number(),
+    carbs: z.number(),
+    fats: z.number(),
+  }),
 });
 
 const workoutPlanResponseSchema = z.object({
-    sessions: z.array(z.object({
-        dayOfWeek: z.string(),
-        name: z.string(),
-        type: z.enum(['Strength', 'Cardio', 'Yoga', 'Mixed', 'Recovery']),
-        durationMin: z.number(),
-        estimatedCaloriesBurn: z.number(),
-        exercises: z.array(z.object({
-            name: z.string(),
-            sets: z.number(),
-            reps: z.string(),
-            durationMin: z.number().optional(),
-        })),
-    })),
+  sessions: z.array(
+    z.object({
+      dayOfWeek: z.string(),
+      name: z.string(),
+      type: z.enum(["Strength", "Cardio", "Yoga", "Mixed", "Recovery"]),
+      durationMin: z.number(),
+      estimatedCaloriesBurn: z.number(),
+      exercises: z.array(
+        z.object({
+          name: z.string(),
+          sets: z.number(),
+          reps: z.string(),
+          durationMin: z.number().optional(),
+        }),
+      ),
+    }),
+  ),
 });
 
 export type MealPlanResponse = z.infer<typeof mealPlanResponseSchema>;
 export type WorkoutPlanResponse = z.infer<typeof workoutPlanResponseSchema>;
 export type MealPlanRefineResponse = z.infer<typeof mealSchema>;
 
-// Initialize Gemini client
-const gemini = new GoogleGenAI({
-    apiKey: env.googleApiKey || '',
-});
+const extractJSON = (text: string): any => {
+  if (!text) throw new Error("Empty LLM response");
 
-const generateMealPlanPrompt = (user: UserContext): string => {
-    const bmr = calculateBMR(user);
-    const tdee = calculateTDEE(user, bmr);
-    const dailyCalories = adjustCaloriesForGoal(tdee, user.goal);
-    const targetMacros = calculateMacros(dailyCalories, user);
+  try {
+    return JSON.parse(text);
+  } catch { }
 
-    const { calories, protein, carbs, fats } = targetMacros;
-    const activityLevel = user.activityLevel || 'moderate';
-    const activityDesc = Object.entries(activityMultipliers)
-        .filter(([key]) => key === activityLevel)
-        .map(([, val]) => `${val}x basal metabolic rate`)[0] || '1.55x';
-
-    const restrictions = user.dietaryRestrictions?.length
-        ? `Dietary restrictions: ${user.dietaryRestrictions.join(', ')}. `
-        : '';
-
-    return `
-You are a professional nutritionist. Generate a personalized 7-day meal plan.
-
-USER PROFILE:
-- Name: ${user.name}
-- Target daily calories: ${calories} kcal
-- Target macros: Protein ${protein}g, Carbs ${carbs}g, Fats ${fats}g
-- Activity level: ${activityLevel} (${activityDesc})
-- Goal: ${user?.goal || 'balance_weight'}
-- Fitness goals: ${user?.fitnessGoals?.join(', ') || 'general fitness'}
-
-USER DIETARY CONTEXT:
-- Allergies: ${user?.allergies?.join(', ') || 'none'}
-- Religion: ${user?.religion || 'none'}
-- Christian fasting: ${user?.isFasting ?? false}
-
-STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
-
-1. CALORIES & MACROS:
-- Each day MUST total ~${calories} kcal (±50 kcal)
-- Each meal ≈ 1/3 of daily macros
-- Adjust macro distribution based on goal:
-  - lose_weight → higher protein, moderate fats, lower carbs
-  - gain_weight → higher carbs + protein
-  - balance_weight → balanced macros
-
-2. ALLERGIES (CRITICAL):
-- NEVER include any ingredient listed in allergies
-- If common protein sources are restricted, substitute with safe alternatives
-- Adapt macro sources intelligently (e.g., legumes, plant protein, fish if allowed)
-
-3. RELIGION RULES (CRITICAL):
-- If religion = "muslim":
-  - STRICTLY FORBIDDEN: pork, alcohol, any non-halal ingredients
-- If religion = "christian" AND isFasting = true:
-  - STRICTLY FORBIDDEN: ALL animal products (meat, chicken, fish, eggs, dairy, cheese, milk, butter)
-  - Meals MUST be 100% plant-based (vegan)
-
-4. FOOD QUALITY:
-- Use realistic, culturally neutral meals
-- Prefer whole foods over processed foods
-- Avoid repeating the same meal more than twice in the week
-
-5. STRUCTURE:
-- EXACTLY 21 meals (3 per day × 7 days)
-- Meal times:
-  - Breakfast → "08:00 AM"
-  - Lunch → "12:30 PM"
-  - Dinner → "07:00 PM"
-
-6. RECOVERY / DIGESTION BALANCE:
-- Distribute heavy vs light meals properly
-- Avoid overly heavy dinners for weight loss goal
-
-OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
-
-{
-  "meals": [
-    {
-      "day": "Day 1",
-      "name": "Meal name",
-      "time": "08:00 AM",
-      "macros": {
-        "calories": ${Math.round(calories / 3)},
-        "protein": ${Math.round(protein / 3)},
-        "carbs": ${Math.round(carbs / 3)},
-        "fats": ${Math.round(fats / 3)}
-      },
-      "ingredients": [
-        {"name": "ingredient", "quantity": "amount"}
-      ],
-      "instructions": ["step 1", "step 2"]
-    }
-  ],
-  "targetMacros": {
-    "calories": ${calories},
-    "protein": ${protein},
-    "carbs": ${carbs},
-    "fats": ${fats}
+  // محاولة استخراج من code block
+  const match = text.match(/```json([\s\S]*?)```/i);
+  if (match) {
+    try {
+      return JSON.parse(match[1]);
+    } catch { }
   }
-}
-`;
+
+  // fallback: حاول قص أول وأخر { }
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first !== -1 && last !== -1) {
+    const sliced = text.slice(first, last + 1);
+    try {
+      return JSON.parse(sliced);
+    } catch { }
+  }
+
+  throw new Error("Failed to extract valid JSON from LLM");
 };
 
+const MAX_RETRIES = 2;
 
-const generateWorkoutPlanPrompt = (user: UserContext, training_days: number, equipment: string[], duration: number = 60): string => {
-    const equip = equipment?.length > 0 ? equipment.join(', ') : "Gym equipment available for use";
-    const activityLevel = user.activityLevel || 'moderate';
+const callLLMWithRecovery = async <T>(
+  prompt: string,
+  schema: z.ZodSchema<T>,
+): Promise<T> => {
+  let lastError: any;
 
-    return `
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const raw = await callOpenRouter(prompt);
+      const parsed = extractJSON(raw!);
+
+      const normalized = normalizeLLMOutput(parsed);
+
+      return schema.parse(normalized);
+    } catch (err: any) {
+      lastError = err;
+
+      // retry with correction prompt
+      prompt = `
+The previous response was invalid JSON or didn't match schema.
+
+ERROR:
+${err.message}
+
+Fix it and return ONLY valid JSON matching this schema:
+
+${schema.toString()}
+`;
+    }
+  }
+
+  throw lastError;
+};
+
+const normalizeLLMOutput = (data: any) => {
+  if (data?.meals) {
+    data.meals = data.meals.map((meal: any) => ({
+      ...meal,
+      ingredients: meal.ingredients?.map((ing: any) =>
+        typeof ing === "string" ? { name: ing, quantity: "" } : ing,
+      ),
+      macros: {
+        calories: Number(meal?.macros?.calories) || 0,
+        protein: Number(meal?.macros?.protein) || 0,
+        carbs: Number(meal?.macros?.carbs) || 0,
+        fats: Number(meal?.macros?.fats) || 0,
+      },
+    }));
+  }
+
+  return data;
+};
+
+const generateWorkoutPlanPrompt = (
+  user: UserContext,
+  training_days: number,
+  equipment: string[],
+  duration: number = 60,
+): string => {
+  const equip =
+    equipment?.length > 0 ? equipment : "Gym equipment available for use";
+  const activityLevel = user.activityLevel || "moderate";
+
+  return `
 You are a professional fitness coach. Generate a structured weekly workout plan.
 
 USER PROFILE:
 - Name: ${user.name}
 - Activity level: ${activityLevel}
-- Fitness goals: ${user.fitnessGoals?.join(', ') || 'general fitness'}
+- Fitness goals: ${user.fitnessGoals || "general fitness"}
 
 CONSTRAINTS (STRICT — MUST FOLLOW):
 - Training days per week: ${training_days}
@@ -190,7 +181,7 @@ OUTPUT REQUIREMENTS:
 - Always return exactly 7 sessions (one per day)
 - Respect training_days count strictly (e.g., if 4 → only 4 non-recovery sessions)
 - Each session must include:
-  - dayOfWeek: "Monday" to "Sunday"
+- dayOfWeek: "Monday" to "Sunday"
   - name: Workout name
   - type: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery"
   - durationMin: number (use ${duration} for training, 0 for recovery)
@@ -212,230 +203,268 @@ OUTPUT VALID JSON ONLY:
       "estimatedCaloriesBurn": 400,
       "exercises": [
         {"name":"Push-ups","sets":3,"reps":"10-15"}
-      ]
+        ]
     }
   ]
 }
 `;
 };
 
-// const callGeminiAPI = async (prompt: string): Promise<string> => {
-//     if (!env.googleApiKey) {
-//         throw new Error('Google API key not configured');
-//     }
+const generateMealPlanPrompt = (
+  user: UserContext,
+  mealsCount: number = 3,
+  snacksCount: number = 0,
+  favoriteFoods: string[] = [],
+): string => {
+  const bmr = calculateBMR(user);
+  const tdee = calculateTDEE(user, bmr);
+  const dailyCalories = adjustCaloriesForGoal(tdee, user.goal);
+  const targetMacros = calculateMacros(dailyCalories, user);
+  const { calories, protein, carbs, fats } = targetMacros;
+  const activityLevel = user.activityLevel || "moderate";
+  const activityDesc =
+    Object.entries(activityMultipliers)
+      .filter(([key]) => key === activityLevel)
+      .map(([, val]) => `${val}x basal metabolic rate`)[0] || "1.55x";
+  const restrictions = user.dietaryRestrictions?.length
+    ? `Dietary restrictions: ${user.dietaryRestrictions}`
+    : "";
+  const totalItemsPerDay = mealsCount + snacksCount;
+  const favFoods = favoriteFoods?.length
+    ? `Favorite foods (incorporate these where possible): ${favoriteFoods.join(", ")}`
+    : "";
 
-//     // Simple config without schema for now
-//     const config = {
-//         responseMimeType: 'application/json',
-//     };
+  return `
+You are a professional nutritionist. Generate a personalized 7-day meal plan.
 
-//     const response = await gemini.models.generateContent({
-//         model: 'gemini-2.5-flash-lite',
-//         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-//         config,
-//     });
+USER PROFILE:
+- Name: ${user.name}
+- Target daily calories: ${calories} kcal
+- Target macros: Protein ${protein}g, Carbs ${carbs}g, Fats ${fats}g
+- Activity level: ${activityLevel} (${activityDesc})
+- Goal: ${user?.goal || "balance_weight"}
+- Fitness goals: ${user?.fitnessGoals || "general fitness"}
 
-//     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+USER DIETARY CONTEXT:
+- Restrictions: ${restrictions || "none"}
+- Allergies: ${user?.allergies || "none"}
+- Religion: ${user?.religion || "none"}
+- Christian fasting: ${user?.isFasting ?? false}
+${favFoods ? `\n${favFoods}` : ""}
 
-//     if (!text) {
-//         throw new Error('Empty response from Gemini');
-//     }
+STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
+1. CALORIES & MACROS:
+   - Each day MUST total ~${calories} kcal (±50 kcal)
+   - Distribute calories across ${totalItemsPerDay} items: ${mealsCount} meals + ${snacksCount} snacks
+   - Meals should be larger (approx 70-80% of daily calories), snacks lighter (20-30%)
+   - Adjust macro distribution based on goal:
+     - lose_weight → higher protein, moderate fats, lower carbs
+     - gain_weight → higher carbs + protein
+     - balance_weight → balanced macros
 
-//     return text;
-// };
+2. ALLERGIES(CRITICAL):
+   - NEVER include any ingredient listed in allergies
+   - If common protein sources are restricted, substitute with safe alternatives
+   - Adapt macro sources intelligently(e.g., legumes, plant protein, fish if allowed)
 
-const safeParse = (text: string): any => {
-    try {
-        return JSON.parse(text);
-    } catch {
-        const tryAgain = text.match(/```json([\s\S]*?)```/);
-        if (tryAgain) {
-            return JSON.parse(tryAgain[1]);
-        }
-        throw new Error('Invalid JSON from Gemini');
+3. RELIGION RULES(CRITICAL):
+   - If religion = "muslim":
+     - STRICTLY FORBIDDEN: pork, alcohol, any non-halal ingredients
+   - If religion = "christian" AND isFasting = true:
+     - STRICTLY FORBIDDEN: ALL animal products(meat, chicken, fish, eggs, dairy, cheese, milk, butter)
+     - Meals MUST be 100% plant-based(vegan)
+
+4. FOOD QUALITY:
+   - Use realistic, culturally neutral meals
+   - Prefer whole foods over processed foods
+   - Avoid repeating the same meal more than twice in the week
+
+5. STRUCTURE:
+   - EXACTLY ${totalItemsPerDay} items per day × 7 days = ${totalItemsPerDay * 7} total items
+   - ${mealsCount} meals + ${snacksCount} snacks per day
+   - Meal times (approximate):
+     - Breakfast → "08:00 AM"
+     - Lunch → "12:30 PM"
+     - Dinner → "07:00 PM"
+     ${snacksCount > 0 ? `- Snacks → "10:30 AM", "03:30 PM" (distribute snacks across day)` : ""}
+   - Each item MUST include: "mealType": "meal" for meals, "mealType": "snack" for snacks
+
+6. INGREDIENT EFFICIENCY (CRITICAL FOR PERFORMANCE):
+   - ONLY include substantial ingredients with meaningful nutritional value
+   - EXCLUDE negligible items: salt, pepper, individual spices/herbs, cooking oil, vinegar, baking powder/soda, garlic, small amounts of garnishes
+   - Keep ingredient lists concise (4-8 per meal, 1-3 per snack)
+   - This reduces response size and improves latency
+
+7. RECOVERY / DIGESTION BALANCE:
+   - Distribute heavy vs light meals properly
+   - Avoid overly heavy dinners for weight loss goal
+
+OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
+{
+  "meals": [
+    {
+      "day": "Day 1",
+      "name": "Meal name",
+      "time": "08:00 AM",
+      "mealType": "meal",
+      "macros": {
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fats": 0
+      },
+      "ingredients": [
+        { "name": "ingredient", "quantity": 100, "unit": "g" }
+      ],
+      "instructions": ["step 1", "step 2"]
     }
+  ],
+  "targetMacros": {
+    "calories": ${calories},
+    "protein": ${protein},
+    "carbs": ${carbs},
+    "fats": ${fats}
+  }
+}
+`;
 };
 
-// const callOllamaAPI = async (prompt: string): Promise<string> => {
+export const generateMealPlan = async (
+  user: UserContext,
+  mealsCount: number = 3,
+  snacksCount: number = 0,
+  favoriteFoods: string[] = [],
+): Promise<MealPlanResponse> => {
+  const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods);
 
-//     console.log("Hitting ollama ")
-//     console.log("Ollama API key", env.ollamaApiKey);
-
-//     if (!env.ollamaApiKey) {
-//         throw new Error('Ollama API key not configured');
-//     }
-
-
-
-//     const response = await ollama.chat({
-//         model: 'qwen2.5-coder:1.5b',
-//         messages: [
-//             {
-//                 role: 'system',
-//                 content: `
-// You are a strict JSON API.
-// - Return ONLY valid JSON
-// - No explanations
-// - No repetition
-// - No extra text
-// - If unsure, return {"error": "unknown"}
-// `},
-//             { role: 'user', content: prompt }
-//         ],
-//         stream: false,
-//         format: 'json',
-//         options: {
-//             temperature: 0.2,        // 🔥 reduce randomness
-//             top_p: 0.8,              // reduce weird outputs
-//             repeat_penalty: 1.2,     // 🚫 stop loops
-//             num_predict: 300,        // limit response size
-//             num_ctx: 2048,           // keep context small for speed
-//             // stop: ["\n\n", "}"]      // 🧠 force early stop
-//         }
-
-//     });
-
-//     let text = response.message.content;
-
-//     if (!text) {
-//         throw new Error('Empty response from Ollama');
-//     }
-//     console.log("Ollama response", text);
-//     return text;
-// };
-
-
-const callOpenRouter = async (prompt: string) => {
-    try {
-
-        console.log("Hitting OpenRouter ");
-        const completion = await openrouter.chat.completions.create({
-            model: "inclusionai/ling-2.6-1t:free",
-
-            messages: [
-                { role: "system", content: "You are a strict JSON API. Return ONLY valid JSON, no explanations, no repetition, no extra text. If unsure, return {error: 'unknown'}" },
-                { role: "user", content: prompt }
-            ],
-        });
-
-        let text = completion.choices[0].message.content;
-
-        if (!text) {
-            throw new Error('Empty response from OpenRouter');
-        }
-        console.log("OpenRouter response", text);
-        return text;
-    } catch (error) {
-        console.log(error)
-        return null;
-    }
-}
-export const generateMealPlan = async (user: UserContext): Promise<MealPlanResponse> => {
-    try {
-        console.log("Generating meal plan for user", user.name);
-        const prompt = generateMealPlanPrompt(user);
-
-        const content = await callOpenRouter(prompt);
-        console.log("content", content);
-        if (!content) {
-            throw new Error('Empty response from OpenRouter');
-        }
-        const parsed = safeParse(content);
-        // console.dir(parsed, { depth: null });
-
-        // evaluating matching schema :
-        const parsedData = mealPlanResponseSchema.parse(parsed);
-        console.dir(parsedData, { depth: null });
-
-        return parsedData;
-    } catch (error) {
-        console.error('Error generating meal plan:', error);
-        throw new Error('Failed to generate meal plan. Check API key and Gemini quota.');
-    }
+  return callLLMWithRecovery(prompt, mealPlanResponseSchema);
 };
 
 export const generateWorkoutPlan = async (
-    user: UserContext,
-    equipment: string[] = [],
-    duration: number = 60
+  user: UserContext,
+  equipment: string[] = [],
+  duration: number = 60,
 ): Promise<WorkoutPlanResponse> => {
-    try {
-        const prompt = generateWorkoutPlanPrompt(user, duration, equipment, user?.trainingDays || 3);
+  const prompt = generateWorkoutPlanPrompt(
+    user,
+    user?.trainingDays || 3,
+    equipment,
+    duration,
+  );
 
-        // const content = await callOllamaAPI(prompt);
-
-        const content = await callOpenRouter(prompt);
-
-        if (!content) {
-            throw new Error('Workout Plan not generated,Empty response from OpenRouter');
-        }
-
-        const parsed = safeParse(content);
-
-        // console.dir(parsed, { depth: null });
-
-        // evaluating matching schema :
-
-        const parsedData = workoutPlanResponseSchema.parse(parsed);
-
-        // console.dir(parsedData, { depth: null });
-
-        return parsedData;
-    } catch (error) {
-        console.error('Error generating workout plan:', error);
-        throw new Error('Failed to generate workout plan. Check API key and Gemini quota.');
-    }
+  return callLLMWithRecovery(prompt, workoutPlanResponseSchema);
 };
 
 export const refineMeal = async (
-    currentMeal: Meal,
-    refinementPrompt: string,
-    user: UserContext
+  currentMeal: Meal,
+  refinementPrompt: string,
+  user: UserContext,
 ): Promise<MealPlanRefineResponse> => {
-    try {
-        const prompt = `
+  const prompt = `
 Return ONLY valid JSON.
 
 Schema:
-${mealSchema}
+${mealSchema.toString()}
 
 Rules:
 - Keep same calories exactly
-- Keep protein, carbs, fats within ±5%
-- Respect dietary Restrictions & allergies
-- Do not rename fields or change structure
-- No text, no markdown, JSON only
+- Keep macros within ±5%
+- Respect restrictions & allergies
 
-User Context:
-${JSON.stringify(user)}
-
-Current Meal:
+Meal:
 ${JSON.stringify(currentMeal)}
 
-User Refinement Prompt:
-"${refinementPrompt}"
+User request:
+${refinementPrompt}
 `;
 
-        const content = await callOpenRouter(prompt);
-
-        if (!content) {
-            throw new Error('Meal Plan not refined,Empty response from OpenRouter');
-        }
-
-        const parsed = safeParse(content);
+  return callLLMWithRecovery(prompt, mealSchema);
+};
 
 
-        console.dir(parsed, { depth: null });
+export const regenerateMeal = async (
+  meal: Meal,
+  user: UserContext,
+): Promise<MealPlanRefineResponse> => {
+  const prompt = `
+You are a professional nutritionist AI.
 
-        const refinedMeal = mealSchema.parse(normalizeMeal(parsed));
+Your task is to regenerate the provided meal using DIFFERENT ingredients while preserving the nutritional profile and respecting the user's dietary constraints.
 
-        const newRefinedMeal = refinedMeal as MealPlanRefineResponse;
+Return ONLY valid JSON.
+Do NOT return markdown.
+Do NOT add explanations, comments, or extra text.
 
-        console.dir(newRefinedMeal, { depth: null });
+JSON Schema:
+${mealSchema.toString()}
 
-        return newRefinedMeal;
-    } catch (error) {
-        console.error('Error refining meal plan:', error);
-        throw new Error('Failed to refine meal plan');
+STRICT RULES:
+1. Generate a NEW variation of the meal using different ingredients whenever possible.
+2. Preserve the TOTAL calories as closely as possible.
+3. Keep calories within ±3%.
+4. Keep protein, carbs, and fats within ±5%.
+5. Maintain similar meal volume and satiety.
+6. Respect ALL allergies, intolerances, dietary restrictions, and religious constraints.
+7. Never include forbidden ingredients.
+8. If the user is fasting, ensure the meal is suitable for fasting.
+9. Prefer realistic ingredient substitutions.
+10. Keep measurements practical (grams, cups, tbsp, pieces, etc.).
+11. Keep the meal culturally and nutritionally coherent.
+12. Do not remove major meal components unless necessary.
+13. Ensure the generated meal is complete and edible in real life.
+14. Preserve the meal type (breakfast stays breakfast, etc.).
+15. Do not repeat the exact same ingredients unless required to preserve macros.
+16. Keep ingredient count reasonable and realistic.
+17. Output MUST strictly follow the provided schema.
+
+USER CONTEXT:
+Allergies:
+${user.allergies?.join(", ") || "None"}
+
+Religion:
+${user.religion || "None"}
+
+Fasting:
+${Boolean(user.isFasting)}
+
+ORIGINAL MEAL:
+${JSON.stringify(meal, null, 2)}
+`;
+  return callLLMWithRecovery(prompt, mealSchema);
+};
+// models
+// - inclusionai/ring-2.6-1t:free
+// - inclusionai/ling-2.6-1t:free
+// - openai/gpt-oss-120b:free
+// - nvidia/nemotron-3-nano-30b-a3b:free
+// - nvidia/nemotron-3-super-120b-a12b:free
+// - inclusionai/ring-2.6-1t:free
+// - google/gemma-4-31b-it:free
+// - google/gemma-4-26b-a4b-it:free
+// - qwen/qwen3-vl-32b-instruct
+// - qwen/qwen3-embedding-4b
+
+const callOpenRouter = async (prompt: string) => {
+  console.log("LLM Prompt:", prompt);
+
+  const completion = await openrouter.chat.completions.create({
+    model: "qwen/qwen3-vl-32b-instruct",
+    temperature: 0.2, // reduce randomness
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a strict JSON API. Return ONLY valid JSON. No markdown, no text.",
+      },
+      { role: "user", content: prompt },
+    ],
+  });
+  for (const choice of completion.choices) {
+    if (!choice.message?.content) {
+      throw new Error("LLM did not return any content");
     }
+    const content = choice.message.content.trim();
+    console.log("LLM Raw Response:", content);
+  }
+  return completion.choices[0]?.message?.content ?? null;
 };

@@ -27,3 +27,22 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const onboardingSchema = z.object({
+    age: z.number().min(1, 'Age must be at least 1').max(120, 'Age must be at most 120'),
+    gender: z.enum(['male', 'female']),
+    height: z.number().min(50, 'Height must be at least 50').max(250, 'Height must be at most 250'),
+    weight: z.number().min(40, 'Weight must be at least 40').max(200, 'Weight must be at most 200'),
+    dietaryRestrictions: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
+    activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
+    goal: z.string().min(1, 'Goal is required'),
+    isFasting: z.boolean().default(false),
+    medicalDocuments: z.array(z.string()).optional(),
+    fitnessGoals: z.array(z.string()).optional(),
+    targetWeight: z.number().optional(),
+    weightUnit: z.enum(['kg', 'lb']).optional(),
+    heightUnit: z.enum(['cm', 'in']).optional(),
+});
+
+export type OnboardingInput = z.infer<typeof onboardingSchema>;

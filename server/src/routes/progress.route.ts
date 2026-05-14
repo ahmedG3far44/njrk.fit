@@ -1,37 +1,82 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import multer from 'multer';
 import mongoose from 'mongoose';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
-import ProgressLog from '../models/progress.model';
 import User from '../models/user.model';
-import { uploadFile } from '../configs/aws';
+import ProgressLog from '../models/progress.model';
+
+import { Router, Request, Response, NextFunction } from 'express';
+import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import { awardPoints } from '../services/gamification.service';
-import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 },
+
+router.get('/can-update', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.userId;
+        const now = new Date();
+
+        const user = await User.findById(userId).select('lastStatsUpdate');
+
+        if (!user || !user.lastStatsUpdate) {
+            const nextSunday = new Date(now);
+            nextSunday.setDate(now.getDate() + (7 - now.getDay()));
+            nextSunday.setHours(0, 0, 0, 0);
+
+            const isSunday = now.getDay() === 0;
+
+            return res.status(200).json({
+                canUpdate: isSunday,
+                message: isSunday ? 'You can update today!' : 'Waiting for first Sunday',
+                daysUntilUpdate: isSunday ? 0 : Math.ceil((nextSunday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+                nextUpdateDate: nextSunday
+            });
+        }
+
+        const lastUpdate = new Date(user.lastStatsUpdate);
+        const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff >= 7) {
+            return res.status(200).json({ canUpdate: true, daysUntilUpdate: 0 });
+        }
+
+        const nextAllowedDate = new Date(lastUpdate);
+        nextAllowedDate.setDate(lastUpdate.getDate() + 7);
+
+        return res.status(200).json({
+            canUpdate: true,
+            message: `You can update on ${nextAllowedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`,
+            daysUntilUpdate: 7 - daysDiff,
+            nextUpdateDate: nextAllowedDate
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
-router.post('/log', requireAuth, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/log', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const { weightKg, bodyFatPercentage, muscleMass, dailySteps, tags, notes, source } = req.body;
-        
-        let scanFileUrl: string | undefined;
-        
-        if (req.file) {
-            const key = `scans/${userId}/${uuidv4()}.${req.file.originalname.split('.').pop()}`;
-            scanFileUrl = await uploadFile({
-                originalname: req.file.originalname,
-                buffer: req.file.buffer,
-                mimetype: req.file.mimetype,
-                size: req.file.size,
-            }, key);
+
+        const user = await User.findById(userId).select('lastStatsUpdate');
+
+        if (user?.lastStatsUpdate) {
+            const lastUpdate = new Date(user.lastStatsUpdate);
+            const now = new Date();
+            const daysDiff = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 7) {
+                const nextAllowedDate = new Date(lastUpdate);
+                nextAllowedDate.setDate(lastUpdate.getDate() + 7);
+                return res.status(403).json({ 
+                    error: 'You can only update your stats once per week',
+                    nextAllowedDate: nextAllowedDate
+                });
+            }
         }
-        
+
+        let scanFileUrl: string | undefined;
+
         const progressLog = await ProgressLog.create({
             userId,
             date: new Date(),
@@ -44,11 +89,16 @@ router.post('/log', requireAuth, upload.single('scanFile'), async (req: Request,
             scanFileUrl,
             source: scanFileUrl ? 'inbody_scan' : (source as 'manual' | 'inbody_scan') || 'manual',
         });
-        
+
         if (weightKg) {
-            await User.findByIdAndUpdate(userId, { weight: parseFloat(weightKg) });
+            await User.findByIdAndUpdate(userId, {
+                weight: parseFloat(weightKg),
+                lastStatsUpdate: new Date()
+            });
+        } else {
+            await User.findByIdAndUpdate(userId, { lastStatsUpdate: new Date() });
         }
-        
+
         await awardPoints(userId!, 15, 'Progress log recorded');
 
         res.status(201).json({ progressLog });
@@ -57,12 +107,12 @@ router.post('/log', requireAuth, upload.single('scanFile'), async (req: Request,
     }
 });
 
-router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/dashboard', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const timeframe = req.query.timeframe as string || '7days';
-        
+
         let startDate = new Date();
         switch (timeframe) {
             case '7weeks':
@@ -74,9 +124,9 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: 
             default:
                 startDate.setDate(startDate.getDate() - 7);
         }
-        
+
         const userIdObj = new mongoose.Types.ObjectId(userId);
-        
+
         const pipeline = [
             { $match: { userId: userIdObj, date: { $gte: startDate } } },
             { $sort: { date: -1 } as any },
@@ -91,14 +141,14 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: 
             },
             { $sort: { _id: 1 } as any },
         ];
-        
+
         const weightTrend = await ProgressLog.aggregate(pipeline);
-        
+
         const latestLog = await ProgressLog.findOne({ userId })
             .sort({ date: -1 });
-        
+
         const totalLogs = await ProgressLog.countDocuments({ userId: userIdObj, date: { $gte: startDate } });
-        
+
         res.status(200).json({
             timeframe,
             weightTrend,
@@ -110,22 +160,22 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response, next: 
     }
 });
 
-router.get('/history', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/history', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
-        
+
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
         const skip = (page - 1) * limit;
-        
+
         const logs = await ProgressLog.find({ userId })
             .sort({ date: -1 })
             .skip(skip)
             .limit(limit);
-        
+
         const total = await ProgressLog.countDocuments({ userId });
-        
+
         res.status(200).json({
             logs,
             pagination: { page, limit, total, pages: Math.ceil(total / limit) },
@@ -135,7 +185,7 @@ router.get('/history', requireAuth, async (req: Request, res: Response, next: Ne
     }
 });
 
-router.post('/extract-inbody', requireAuth, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/extract-inbody', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -154,15 +204,15 @@ router.post('/extract-inbody', requireAuth, upload.single('scanFile'), async (re
     }
 });
 
-router.get('/feelings', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/feelings', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
         const days = parseInt(req.query.days as string) || 7;
-        
+
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
-        
+
         const logs = await ProgressLog.find({
             userId,
             date: { $gte: startDate },
@@ -171,13 +221,13 @@ router.get('/feelings', requireAuth, async (req: Request, res: Response, next: N
                 { notes: { $exists: true, $ne: '' } },
             ],
         }).sort({ date: -1 }).select('date tags notes');
-        
+
         const feelings = logs.map(log => ({
             date: log.date,
             tags: log.tags || [],
             notes: log.notes || '',
         }));
-        
+
         res.status(200).json({ feelings });
     } catch (error) {
         next(error);

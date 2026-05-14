@@ -1,13 +1,13 @@
+import { env } from '../configs/env';
 import { Router, Request, Response, NextFunction } from 'express';
-import { requireAuth, AuthRequest } from '../middlewares/requireAuth';
+import { authMiddleware, type AuthRequest } from '../middlewares/authMiddleware';
 
 import stripe from '../configs/stripe';
 import User from '../models/user.model';
-import { env } from '../configs/env';
 
 const router = Router();
 
-router.post('/create', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/create', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -29,89 +29,67 @@ router.post('/create', requireAuth, async (req: Request, res: Response, next: Ne
             stripeCustomerId = customer.id;
         }
 
-        // Handle upgrade/downgrade with proration
-        if (user.subscription?.stripeSubscriptionId && user.subscription.planId !== planId) {
-            const currentSub = await stripe.subscriptions.retrieve(user.subscription.stripeSubscriptionId);
-
-            // Calculate proration
-            const currentPeriodEnd = new Date((currentSub as any).current_period_end * 1000);
-            const now = new Date();
-            const daysRemaining = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            const totalDays = Math.ceil((currentPeriodEnd.getTime() - new Date((currentSub as any).current_period_start * 1000).getTime()) / (1000 * 60 * 60 * 24));
-            const prorationFraction = daysRemaining / totalDays;
-
-            // Get new price to calculate prorated amount
-            const newPrice = await stripe.prices.retrieve(planId);
-            const newAmount = newPrice.unit_amount || 0;
-
-            // Calculate prorated charge (only for upgrades)
-            const currentPrice = await stripe.prices.retrieve(user.subscription.planId);
-            const currentAmount = currentPrice.unit_amount || 0;
-
-            const currentPlanTier = getPlanTier(currentPrice.nickname || '');
-            const newPlanTier = getPlanTier(newPrice.nickname || '');
-
-            if (newPlanTier > currentPlanTier) {
-                const priceDiff = newAmount - currentAmount;
-                const proratedAmount = Math.round(priceDiff * prorationFraction / 100);
-
-                // Create invoice item for prorated charge
-                await stripe.invoiceItems.create({
-                    customer: stripeCustomerId,
-                    currency: 'usd',
-                    amount: proratedAmount,
-                    description: `Prorated charge for upgrade (${daysRemaining} days remaining)`,
-                });
-            }
-
-            // Update subscription
-            const subscription = await stripe.subscriptions.update(user.subscription.stripeSubscriptionId, {
-                items: [{ price: planId }],
-                proration_behavior: 'create_prorations',
-            });
-
-            user.subscription = {
-                ...user.subscription,
-                planId,
-                status: 'active',
-                stripeCustomerId,
-                stripeSubscriptionId: subscription.id,
-                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-            };
-            await user.save();
-
-            res.status(201).json({
-                subscriptionId: subscription.id,
-                status: 'active',
-                prorated: newPlanTier > currentPlanTier,
-            });
-            return;
-        }
-
-        // New subscription
-        const subscription = await stripe.subscriptions.create({
+        // Create a Stripe Checkout session for new subscriptions or upgrades
+        const session = await stripe.checkout.sessions.create({
             customer: stripeCustomerId,
-            items: [{ price: planId }],
-            metadata: { userId: userId! },
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: planId,
+                    quantity: 1,
+                },
+            ],
+            success_url: `${env.CLIENT_URL}/dashboard/subscriptions?success=true`,
+            cancel_url: `${env.CLIENT_URL}/dashboard/subscriptions?canceled=true`,
+            metadata: {
+                userId: userId!,
+                planId: planId,
+            },
         });
 
-        user.subscription = {
-            planId,
-            status: 'active',
-            stripeCustomerId,
-            stripeSubscriptionId: subscription.id,
-            currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-        };
-        await user.save();
-
         res.status(201).json({
-            subscriptionId: subscription.id,
-            status: 'active',
+            subscriptionId: session.id,
+            checkoutUrl: session.url,
+            status: 'pending',
         });
     } catch (error) {
         next(error);
     }
 });
+
+router.post('/create-portal-session', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user._id; // Adjust based on how your auth payload is structured
+
+        // 2. Find the user in your database
+        const user = await User.findById(userId);
+
+        // 3. Ensure they actually have a Stripe Customer ID
+        if (!user || !user.subscription?.stripeCustomerId) {
+            return res.status(400).json({ error: 'No Stripe customer associated with this user.' });
+        }
+
+        // 4. Create the Customer Portal session
+        const session = await stripe.billingPortal.sessions.create({
+            customer: user.subscription.stripeCustomerId,
+            // The URL Stripe will send them back to when they click "Return to Njerka.fit"
+            return_url: `${env.CLIENT_URL}/dashboard/subscription`,
+        });
+
+        // 5. Return the URL to the frontend
+        res.status(200).json({ url: session.url });
+
+    } catch (error: any) {
+        console.error('Error creating portal session:', error.message);
+        res.status(500).json({ error: 'Failed to create billing portal session' });
+    }
+});
+
+const PRICE_ID_MAP: Record<string, { name: string; price: number }> = {
+    'price_1TJWzbRPSIjKJwi65DaSICYd': { name: 'Pro', price: 12 },
+    'price_1TJX1mRPSIjKJwi6YpH18JNr': { name: 'Family', price: 24 },
+};
 
 function getPlanTier(planName: string): number {
     const name = planName.toLowerCase();
@@ -120,7 +98,29 @@ function getPlanTier(planName: string): number {
     return 1;
 }
 
-router.post('/cancel', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+async function getSubscriptionDetails(stripeSubscriptionId: string) {
+    try {
+        const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const defaultPaymentMethodId = subscription.default_payment_method as string;
+        
+        let cardLast4: string | undefined;
+        
+        if (defaultPaymentMethodId) {
+            const paymentMethod = await stripe.paymentMethods.retrieve(defaultPaymentMethodId);
+            cardLast4 = paymentMethod.card?.last4;
+        }
+        
+        return {
+            cardLast4,
+            subscriptionStartDate: new Date(subscription.created * 1000).toISOString(),
+        };
+    } catch (error) {
+        console.error('Error fetching subscription details:', error);
+        return { cardLast4: undefined, subscriptionStartDate: undefined };
+    }
+}
+
+router.post('/cancel', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -144,7 +144,7 @@ router.post('/cancel', requireAuth, async (req: Request, res: Response, next: Ne
     }
 });
 
-router.get('/status', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/status', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -154,19 +154,35 @@ router.get('/status', requireAuth, async (req: Request, res: Response, next: Nex
             return res.status(404).json({ error: 'User not found' });
         }
 
+        const planId = user.subscription?.planId;
+        const planInfo = planId ? PRICE_ID_MAP[planId] : undefined;
+        
+        let cardLast4: string | undefined;
+        let subscriptionStartDate: string | undefined;
+
+        if (user.subscription?.stripeSubscriptionId && user.subscription?.status === 'active') {
+            const details = await getSubscriptionDetails(user.subscription.stripeSubscriptionId);
+            cardLast4 = details.cardLast4;
+            subscriptionStartDate = details.subscriptionStartDate;
+        }
+
         res.status(200).json({
             status: user.subscription?.status || 'none',
-            planId: user.subscription?.planId,
+            planId: planId,
             currentPeriodEnd: user.subscription?.currentPeriodEnd,
             cancelAtPeriodEnd: user.subscription?.cancelAtPeriodEnd || false,
-            subscriptionTier: user.subscriptionTier,
+            subscriptionTier: user.subscription?.subscriptionTier,
+            cardLast4: cardLast4,
+            subscriptionStartDate: subscriptionStartDate,
+            planName: planInfo?.name,
+            planPrice: planInfo?.price,
         });
     } catch (error) {
         next(error);
     }
 });
 
-router.post('/portal', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/portal', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;

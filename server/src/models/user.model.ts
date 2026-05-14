@@ -7,6 +7,8 @@ export interface IUser extends Document {
   email: string;
   passwordHash?: string;
   googleId?: string;
+  googleRefreshToken?: string;
+  googleTokenExpiry?: Date;
   appleId?: string;
   name: string;
   avatarUrl?: string;
@@ -20,18 +22,19 @@ export interface IUser extends Document {
   goal?: Goal;
   targetWeight?: number;
   activityLevel?: ActivityLevel;
-  fitnessGoals: string[];
+  fitnessGoals: string;
   dietaryRestrictions: string[];
-  equipment: string[];
-  subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
+  equipment?: string[];
+  allergies?: string[];
   familyMembers: Types.ObjectId[];
-  subscription?: {
-    planId: string;
+  subscription: {
+    planId?: string;
     status: 'active' | 'canceled' | 'expired' | 'past_due';
-    stripeCustomerId?: string;
+    stripeCustomerId: string;
     stripeSubscriptionId?: string;
     currentPeriodEnd?: Date;
     cancelAtPeriodEnd?: boolean;
+    subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
   };
   currentStreak: number;
   longestStreak: number;
@@ -43,6 +46,7 @@ export interface IUser extends Document {
   estimatedSleepHours: number;
   estimatedWaterOz: number;
   onboardingCompleted: boolean;
+  lastStatsUpdate?: Date;
   preferences: {
     notifications: boolean;
     weeklySummary: boolean;
@@ -53,13 +57,14 @@ export interface IUser extends Document {
     reminderTypes?: string[];
   };
   medicalCondition?: string;
-  allergies?: string[];
 }
 
 const UserSchema = new Schema<IUser>({
   email: { type: String, required: true, lowercase: true, unique: true },
   passwordHash: { type: String },
   googleId: { type: String, sparse: true, unique: true },
+  googleRefreshToken: { type: String, select: false },
+  googleTokenExpiry: { type: Date },
   appleId: { type: String, sparse: true, unique: true },
   name: { type: String, required: true },
   avatarUrl: { type: String },
@@ -69,11 +74,11 @@ const UserSchema = new Schema<IUser>({
   gender: { type: String, enum: ['male', 'female'] },
   weightUnit: { type: String, enum: ['kg', 'lb'], default: 'kg' },
   heightUnit: { type: String, enum: ['cm', 'in'], default: 'cm' },
-  religion: { type: String, enum: ['muslim', 'christian'] },
+  religion: { type: String, enum: ['muslim', 'christian'], default: 'muslim' },
   goal: {
     type: String,
     enum: ['lose_weight', 'gain_weight', 'maintain_weight'],
-    default: 'maintain_weight'
+    default: 'lose_weight'
   },
   targetWeight: { type: Number },
   activityLevel: {
@@ -81,14 +86,10 @@ const UserSchema = new Schema<IUser>({
     enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'],
     default: 'moderate'
   },
-  fitnessGoals: [{ type: String }],
+  fitnessGoals: { type: String },
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
-  subscriptionTier: {
-    type: String,
-    enum: ['BASIC', 'PRO', 'FAMILY'],
-    default: 'BASIC'
-  },
+
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {
     planId: { type: String },
@@ -97,6 +98,11 @@ const UserSchema = new Schema<IUser>({
     stripeSubscriptionId: { type: String },
     currentPeriodEnd: { type: Date },
     paidPriceId: { type: String },
+    subscriptionTier: {
+      type: String,
+      enum: ['BASIC', 'PRO', 'FAMILY'],
+      default: 'BASIC'
+    },
   },
   onboardingCompleted: { type: Boolean, default: false },
   currentStreak: { type: Number, default: 0 },
@@ -108,12 +114,13 @@ const UserSchema = new Schema<IUser>({
   estimatedSteps: { type: Number, default: 5000 },
   estimatedSleepHours: { type: Number, default: 7.5 },
   estimatedWaterOz: { type: Number, default: 64 },
+  lastStatsUpdate: { type: Date },
   preferences: {
     notifications: { type: Boolean, default: true },
     weeklySummary: { type: Boolean, default: true },
     mealReminders: { type: Boolean, default: true },
     autoGenerateMeals: { type: Boolean, default: false },
-    fasting: { type: Boolean, default: false },
+    isFasting: { type: Boolean, default: false },
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],
   },
