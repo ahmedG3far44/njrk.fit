@@ -1,5 +1,5 @@
 import { Auth } from '../components/Auth';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
 
 export const RegisterPage = () => {
@@ -7,13 +7,11 @@ export const RegisterPage = () => {
   const { user } = useAuth();
 
   if (user?.onboardingCompleted) {
-    navigate('/dashboard', { replace: true });
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (user && !user.onboardingCompleted) {
-    navigate('/onboarding', { replace: true });
-    return null;
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (

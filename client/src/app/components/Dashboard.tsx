@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight, Flame, Trophy, ScanLine, Camera, Zap,
   Utensils, Dumbbell, Brain, Clock, ChevronRight, TrendingUp,
-  Droplets, Moon, Activity, Sparkles, X, Loader2
+  Droplets, Moon, Activity, Sparkles, X
 } from 'lucide-react';
 import { nutritionService } from '../services/nutritionService';
 import { fitnessService } from '../services/fitnessService';
-import { gamificationService, InsightsData } from '../services/gamificationService';
-import { toast } from 'sonner';
+import { gamificationService } from '../services/gamificationService';
+
 
 interface DashboardProps {
   user: any;

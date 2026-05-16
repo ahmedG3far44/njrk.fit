@@ -29,7 +29,7 @@ export interface IUser extends Document {
   familyMembers: Types.ObjectId[];
   subscription: {
     planId?: string;
-    status: 'active' | 'canceled' | 'expired' | 'past_due';
+    status: 'active' | 'trialing' | 'canceled' | 'expired' | 'past_due';
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
     currentPeriodEnd?: Date;
@@ -98,7 +98,7 @@ const UserSchema = new Schema<IUser>({
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {
     planId: { type: String },
-    status: { type: String, enum: ['active', 'canceled', 'expired', 'past_due'] },
+    status: { type: String, enum: ['active', 'trialing', 'canceled', 'expired', 'past_due'] },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
     currentPeriodEnd: { type: Date },

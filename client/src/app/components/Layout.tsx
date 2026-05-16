@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import NjerkaLogo from './NjerkaLogo';
 import { useAuth } from '../context/AuthProvider';
+import { Navigate } from 'react-router-dom';
 
 
 interface LayoutProps {
@@ -60,6 +61,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     setShowLogoutConfirm(false);
     onLogout();
   };
+
+  if (!user) { 
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!user.onboardingCompleted) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
