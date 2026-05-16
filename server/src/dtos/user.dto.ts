@@ -13,6 +13,10 @@ export const updateProfileSchema = z.object({
         notifications: z.boolean().optional(),
         weeklySummary: z.boolean().optional(),
         mealReminders: z.boolean().optional(),
+        autoGenerateMeals: z.boolean().optional(),
+        isFasting: z.boolean().optional(),
+        familyPlan: z.boolean().optional(),
+        manualPrompt: z.string().optional(),
     }).optional(),
 });
 

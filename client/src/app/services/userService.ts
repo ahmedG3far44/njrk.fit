@@ -14,6 +14,10 @@ export interface UpdateProfileData {
     notifications?: boolean;
     weeklySummary?: boolean;
     mealReminders?: boolean;
+    familyPlan?: boolean;
+    autoGenerateMeals?: boolean;
+    isFasting?: boolean;
+    manualPrompt?: string;
   };
 }
 

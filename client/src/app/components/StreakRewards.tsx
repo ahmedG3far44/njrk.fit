@@ -220,9 +220,10 @@ export const StreakRewards: React.FC = () => {
         {activeTab === 'status' ? (
           <motion.div 
             key="status"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             {/* Calendar */}
@@ -310,9 +311,10 @@ export const StreakRewards: React.FC = () => {
         ) : (
           <motion.div 
             key="rewards"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="space-y-4"
           >
             {milestones.length > 0 ? milestones.map((milestone, i) => (

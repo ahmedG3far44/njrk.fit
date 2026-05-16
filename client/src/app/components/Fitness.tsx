@@ -55,21 +55,18 @@ export const Fitness: React.FC = () => {
   const [planEndDate, setPlanEndDate] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
 
-  // Generate form state
   const [trainingDays, setTrainingDays] = useState(3);
   const [duration, setDuration] = useState(60);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Workout data
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
   const [todayWorkout, setTodayWorkout] = useState<Workout | null>(null);
   const [weeklySessions, setWeeklySessions] = useState<WeeklySession[]>([]);
-  const [hasGenerated, setHasGenerated] = useState(false); // Used after generation
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   const activeFilter = 'All';
 
-  // Load saved preferences
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -144,10 +141,9 @@ export const Fitness: React.FC = () => {
         setHasGenerated(false);
       }
     } catch (error) {
-      console.error('Failed to fetch workout plan:', error);
+      console.error('Failed to fetch workout plan:', (error as Error)?.message);
       setHasPlan(false);
       setPlanEndDate(null);
-      // toast.error('Failed to load workout plan');
     } finally {
       setLoading(false);
     }
@@ -174,7 +170,7 @@ export const Fitness: React.FC = () => {
       toast.error('Please select at least one equipment');
       return;
     }
-
+    setShowStyleModal(false);
     setIsGenerating(true);
     try {
       // Save preferences
@@ -190,7 +186,6 @@ export const Fitness: React.FC = () => {
       setWorkoutPlan(response.workoutPlan);
       setHasPlan(true);
       setHasGenerated(true);
-      setShowStyleModal(false);
 
       // Fetch the plan
       await fetchWorkoutPlan(planView);
@@ -331,9 +326,6 @@ export const Fitness: React.FC = () => {
     : weeklySessions.filter(s => s.session && s.type === activeFilter);
 
 
-  if (isGenerating) return <div className="w-full bg-black/80 backdrop-blur-md z-50 fixed left-0 top-0 min-h-screen flex items-center justify-center">
-    <FitnessPlanLoader />
-  </div>
   return (
     <div className="space-y-7 relative">
       {/* Generate Plan Modal */}
@@ -346,9 +338,9 @@ export const Fitness: React.FC = () => {
             className="fixed w-full min-h-screen top-0 left-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
               className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="bg-gradient-to-br from-green-900 to-green-700 p-6 text-white text-center relative overflow-hidden sticky top-0 z-10">
@@ -375,122 +367,105 @@ export const Fitness: React.FC = () => {
               </div>
 
               <div className="p-6 space-y-5">
-                {isGenerating ? (
-                  <div className="text-center py-8">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                      className="w-14 h-14 border-4 border-green-100 border-t-green-700 rounded-full mx-auto mb-5"
+
+
+
+                {/* Training Days */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    Training Days per Week
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min="1"
+                      max="7"
+                      value={trainingDays}
+                      onChange={(e) => setTrainingDays(Number(e.target.value))}
+                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
                     />
-                    <motion.div
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                    >
-                      <Sparkles className="w-6 h-6 text-green-400 mx-auto mb-3" />
-                    </motion.div>
-                    <p className="font-bold text-slate-900 text-lg">Building your plan...</p>
-                    <p className="text-slate-400 text-sm mt-1">AI is crafting your personalized program</p>
+                    <span className="text-lg font-bold text-green-700 w-8 text-center">{trainingDays}</span>
                   </div>
-                ) : (
-                  <>
-                    {/* Training Days */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Training Days per Week
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="range"
-                          min="1"
-                          max="7"
-                          value={trainingDays}
-                          onChange={(e) => setTrainingDays(Number(e.target.value))}
-                          className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                        />
-                        <span className="text-lg font-bold text-green-700 w-8 text-center">{trainingDays}</span>
-                      </div>
-                    </div>
+                </div>
 
-                    {/* Duration */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Session Duration (minutes)
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="range"
-                          min="15"
-                          max="120"
-                          step="5"
-                          value={duration}
-                          onChange={(e) => setDuration(Number(e.target.value))}
-                          className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                        />
-                        <span className="text-lg font-bold text-green-700 w-12 text-center">{duration}</span>
-                      </div>
-                    </div>
+                {/* Duration */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    Session Duration (minutes)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min="15"
+                      max="120"
+                      step="5"
+                      value={duration}
+                      onChange={(e) => setDuration(Number(e.target.value))}
+                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                    />
+                    <span className="text-lg font-bold text-green-700 w-12 text-center">{duration}</span>
+                  </div>
+                </div>
 
-                    {/* Equipment */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Available Equipment
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {EQUIPMENT_OPTIONS.map(equip => (
-                          <button
-                            key={equip}
-                            onClick={() => toggleEquipment(equip)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${selectedEquipment.includes(equip)
-                              ? 'bg-green-50 border-green-500 text-green-700'
-                              : 'bg-white border-slate-200 text-slate-600 hover:border-green-300'
-                              }`}
-                          >
-                            {selectedEquipment.includes(equip) && (
-                              <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                            )}
-                            {equip}
-                          </button>
-                        ))}
-                      </div>
-                      {selectedEquipment.length === 0 && (
-                        <p className="text-xs text-red-500 mt-1">Please select at least one equipment</p>
-                      )}
-                    </div>
-
-                    {/* Start Date */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Start Date (optional)
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm"
-                      />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
+                {/* Equipment */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    Available Equipment
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EQUIPMENT_OPTIONS.map(equip => (
                       <button
-                        onClick={() => setShowStyleModal(false)}
-                        className="flex-1 py-3 border border-slate-200 rounded-xl font-semibold text-slate-500 hover:bg-slate-50 transition-colors text-sm"
+                        key={equip}
+                        onClick={() => toggleEquipment(equip)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${selectedEquipment.includes(equip)
+                          ? 'bg-green-50 border-green-500 text-green-700'
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-green-300'
+                          }`}
                       >
-                        Cancel
+                        {selectedEquipment.includes(equip) && (
+                          <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                        )}
+                        {equip}
                       </button>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleGeneratePlan}
-                        disabled={selectedEquipment.length === 0 || isGenerating}
-                        className="flex-1 py-3 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-200"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Generate Plan
-                        <ArrowRight className="w-4 h-4" />
-                      </motion.button>
-                    </div>
-                  </>
-                )}
+                    ))}
+                  </div>
+                  {selectedEquipment.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">Please select at least one equipment</p>
+                  )}
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                    Start Date (optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowStyleModal(false)}
+                    className="flex-1 py-3 border border-slate-200 rounded-xl font-semibold text-slate-500 hover:bg-slate-50 transition-colors text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleGeneratePlan}
+                    disabled={selectedEquipment.length === 0 || isGenerating}
+                    className="flex-1 py-3 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-200"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Generate Plan
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -507,9 +482,9 @@ export const Fitness: React.FC = () => {
             className="fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
               className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl max-h-[88vh] flex flex-col"
             >
               <div className="relative h-48 bg-slate-900 flex-shrink-0">
@@ -565,8 +540,8 @@ export const Fitness: React.FC = () => {
                         key={i}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-colors cursor-pointer ${isCompleted
+                        transition={{ delay: i * 0.04, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                        className={`flex items-center justify-between p-4 rounded-xl border transition-colors duration-150 cursor-pointer ${isCompleted
                           ? 'bg-green-50 border-green-200'
                           : 'bg-slate-50 border-slate-100 hover:border-green-100 hover:bg-green-50/30'
                           }`}
@@ -679,39 +654,45 @@ export const Fitness: React.FC = () => {
 
         {
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-              <button
-                onClick={() => setPlanView('daily')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'daily' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                Daily
-              </button>
-              <button
-                onClick={() => setPlanView('weekly')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'weekly' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                Weekly
-              </button>
-            </div>
+            {
+              !isGenerating && (
+                <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                  <button
+                    onClick={() => setPlanView('daily')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'daily' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
+                  >
+                    Daily
+                  </button>
+                  <button
+                    onClick={() => setPlanView('weekly')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${planView === 'weekly' ? 'bg-green-700 text-white shadow' : 'text-slate-500 hover:text-slate-900'}`}
+                  >
+                    Weekly
+                  </button>
+                </div>
+              )
+            }
 
-            {generationLock.canGenerate ? (
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setShowStyleModal(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <Sparkles className="w-4 h-4" />
-                {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
-              </motion.button>
+            {!generationLock.canGenerate ? (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(99,102,241,0.45)' }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setShowStyleModal(true)}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200/60 relative overflow-hidden group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                  <Sparkles className="w-4 h-4" />
+                  {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
+                </motion.button></>
             ) : (
               <div className="relative group">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  disabled
-                  className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
+                  disabled={isGenerating}
+                  className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Lock className="w-4 h-4" />
                   {hasPlan ? 'Regenerate Plan' : 'Generate AI Plan'}
@@ -727,357 +708,368 @@ export const Fitness: React.FC = () => {
               </div>
             )}
 
-            <button
-              onClick={() => window.open(`${API_URL}/fitness/export/pdf`, '_blank')}
-              disabled={!hasPlan}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Export PDF"
-            >
-              <FileDown className="w-4 h-4" />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
+            {
+              !isGenerating && <button
+                onClick={() => window.open(`${API_URL}/fitness/export/pdf`, '_blank')}
+                disabled={!hasPlan}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Export PDF"
+              >
+                <FileDown className="w-4 h-4" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+            }
           </div>
         }
       </div>
+      {
+        isGenerating ? <FitnessPlanLoader /> : (
+          <>
+            {/* Weekly Stats Strip */}
+            {hasPlan && !loading && (
+              <div className="grid grid-cols-3 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  className="bg-white rounded-2xl p-4 border border-green-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
+                >
+                  <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-green-700" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">{completedSessions} / {totalSessions}</div>
+                    <div className="text-xs text-slate-500">Sessions Done</div>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.06, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  className="bg-white rounded-2xl p-4 border border-orange-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
+                >
+                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">{totalCalories.toLocaleString()}</div>
+                    <div className="text-xs text-slate-500">Calories Burned</div>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  className="bg-white rounded-2xl p-4 border border-green-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
+                >
+                  <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-5 h-5 text-green-800" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">{totalMinutes} min</div>
+                    <div className="text-xs text-slate-500">Active Minutes</div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
 
-      {/* Weekly Stats Strip */}
-      {hasPlan && !loading && (
-        <div className="grid grid-cols-3 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-4 border border-green-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-green-700" />
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">{completedSessions} / {totalSessions}</div>
-              <div className="text-xs text-slate-500">Sessions Done</div>
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="bg-white rounded-2xl p-4 border border-orange-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Flame className="w-5 h-5 text-orange-500" />
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">{totalCalories.toLocaleString()}</div>
-              <div className="text-xs text-slate-500">Calories Burned</div>
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
-            className="bg-white rounded-2xl p-4 border border-green-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow"
-          >
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-green-800" />
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">{totalMinutes} min</div>
-              <div className="text-xs text-slate-500">Active Minutes</div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Empty State or Content */}
-      {loading ? (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
-          <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
-          <p className="text-slate-500">Loading your workout plan...</p>
-        </div>
-      ) : !hasPlan ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-green-700 p-10 text-white text-center"
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
-
-          <div className="relative z-10">
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-              className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl"
-            >
-              <Target className="w-10 h-10 text-white" />
-            </motion.div>
-            <h2 className="text-3xl font-bold mb-3">No Fitness Plan Yet</h2>
-            <p className="text-green-200 mb-8 max-w-md mx-auto leading-relaxed">
-              Generate a personalized workout plan tailored to your schedule, equipment, and fitness goals.
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setShowStyleModal(true)}
-              className="bg-white text-green-800 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 mx-auto hover:bg-green-50 transition-colors shadow-xl"
-            >
-              <Sparkles className="w-5 h-5" />
-              Build My AI Plan
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          </div>
-        </motion.div>
-      ) : (
-        <div>
-          <AnimatePresence mode="wait">
-            {planView === 'daily' ? (
+            {/* Empty State or Content */}
+            {loading ? (
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
+                <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
+                <p className="text-slate-500">Loading your workout plan...</p>
+              </div>
+            ) : !hasPlan ? (
               <motion.div
-                key="daily"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
+                className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-green-700 p-10 text-white text-center mt-20"
               >
-                {/* Hero Today Workout Card */}
-                {todayWorkout ? (
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
+
+                <div className="relative z-10">
                   <motion.div
-                    onClick={() => { setSelectedWorkout(todayWorkout); setCompletedExercises(new Set()); }}
-                    whileHover={{ scale: 1.01 }}
-                    className="relative h-80 rounded-3xl overflow-hidden group cursor-pointer shadow-xl"
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                    className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-700">
-                      <img
-                        src={"/gym.jpg"}
-                        alt="Fitness"
-                        className="object-cover opacity-60"
-                      />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-
-                    <div className="absolute top-5 right-5">
-                      <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 text-orange-400" />
-                        <span className="text-white text-xs font-bold">Medium Intensity</span>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-0 left-0 right-0 p-8">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 text-white text-xs font-bold rounded-lg mb-4">
-                        {todayWorkout.isCompleted ? (
-                          <><CheckCircle2 className="w-3 h-3" /> COMPLETED</>
-                        ) : (
-                          <><motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="w-1.5 h-1.5 bg-white rounded-full" /> TODAY'S SESSION</>
-                        )}
-                      </div>
-                      <h2 className="text-4xl font-bold text-white mb-3">{todayWorkout.title}</h2>
-                      <div className="flex flex-wrap gap-4 text-white/90 mb-5">
-                        <div className="flex items-center gap-2"><Clock className="w-4 h-4 opacity-70" /> {todayWorkout.duration}</div>
-                        <div className="flex items-center gap-2"><Award className="w-4 h-4 text-yellow-400" /> {todayWorkout.calories} kcal</div>
-                        <div className="flex items-center gap-2"><Dumbbell className="w-4 h-4 opacity-70" /> {todayWorkout.exercises?.length || 0} exercises</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button className="bg-white text-slate-900 px-7 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors shadow-lg">
-                          <Play className="w-4 h-4 fill-current" /> View Routine
-                        </button>
-                        {!todayWorkout.isCompleted && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCompleteSession(todayWorkout._id, false);
-                            }}
-                            disabled={completingId === todayWorkout._id}
-                            className="text-white font-bold px-4 py-3 rounded-xl bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
-                          >
-                            {completingId === todayWorkout._id ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                              'Mark Complete'
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <Target className="w-10 h-10 text-white" />
                   </motion.div>
-                ) : (
-                  <div className="relative h-48 rounded-3xl overflow-hidden bg-slate-100 flex items-center justify-center">
-                    <div className="text-center text-slate-400">
-                      <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p className="font-medium">No workout scheduled for today</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Upcoming Sessions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-5">
-                      <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-green-700" /> This Week
-                      </h3>
-                    </div>
-
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-                      {['All', 'Strength', 'Cardio', 'Yoga', 'Recovery'].map(f => (
-                        <button
-                          key={f}
-                          onClick={() => { }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${activeFilter === f
-                            ? 'bg-green-700 text-white shadow-sm'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                            }`}
-                        >
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="space-y-2">
-                      {filteredUpcoming.slice(0, 5).map((session, i) => (
-                        <motion.div
-                          key={session.day}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => session.session && (setSelectedWorkout(session.session), setCompletedExercises(new Set()))}
-                          className={`flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 cursor-pointer group ${session.done ? 'opacity-60' : ''}`}
-                        >
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 ${session.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-700 transition-colors'}`}>
-                            {session.done ? <CheckCircle2 className="w-5 h-5" /> : session.day}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-slate-900 group-hover:text-green-700 transition-colors">{session.title}</h4>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeConfig[session.type]?.bg || 'bg-slate-100'} ${typeConfig[session.type]?.text || 'text-slate-500'}`}>
-                                {session.type}
-                              </span>
-                              <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {session.duration}</span>
-                            </div>
-                          </div>
-                          <button className="p-2 text-slate-300 group-hover:text-green-600 transition-colors">
-                            <ChevronRight className="w-5 h-5" />
-                          </button>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Weekly Goal Card */}
-                  <div className="bg-gradient-to-br from-green-800 to-green-700 p-6 rounded-3xl text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                    <div className="absolute bottom-0 left-0 w-20 h-20 bg-green-600/40 rounded-full blur-xl -ml-5 -mb-5" />
-
-                    <h3 className="font-bold mb-1 relative z-10">Weekly Goal</h3>
-                    <p className="text-green-200 text-xs mb-5 relative z-10">Keep the momentum going!</p>
-
-                    <div className="flex items-end gap-2 mb-3 relative z-10">
-                      <span className="text-5xl font-black">{completedSessions}</span>
-                      <span className="text-xl opacity-70 mb-1">/ {totalSessions} sessions</span>
-                    </div>
-
-                    <div className="h-2.5 bg-black/20 rounded-full overflow-hidden mb-2 relative z-10">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0}%` }}
-                        transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
-                        className="h-full bg-white rounded-full"
-                      />
-                    </div>
-                    <p className="text-xs text-green-100 relative z-10 mb-6">
-                      {totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0}% complete
-                    </p>
-
-                    <div className="space-y-2 relative z-10">
-                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => {
-                        const daySessions = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                        const isDone = weeklySessions[i]?.done;
-                        const hasSession = weeklySessions[i]?.session;
-                        return (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-white' : hasSession ? 'bg-white/30' : 'bg-transparent'}`}>
-                              {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-green-700" />}
-                            </div>
-                            <span className={`text-xs font-medium ${isDone ? 'text-white' : hasSession ? 'text-white/70' : 'text-white/30'}`}>{d}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <h2 className="text-3xl font-bold mb-3">No Fitness Plan Yet</h2>
+                  <p className="text-green-200 mb-8 max-w-md mx-auto leading-relaxed">
+                    Generate a personalized workout plan tailored to your schedule, equipment, and fitness goals.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setShowStyleModal(true)}
+                    className="cursor-pointer bg-white text-green-800 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 mx-auto hover:bg-green-50 transition-colors shadow-xl"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Build My AI Plan
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.button>
                 </div>
               </motion.div>
             ) : (
-              <motion.div
-                key="weekly"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
-              >
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-lg">Weekly Training Plan</h3>
-                    <p className="text-slate-500 text-sm">Your full 7-day schedule at a glance</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-xl">
-                    <BarChart3 className="w-4 h-4" /> {completedSessions} / {totalSessions} Done
-                  </div>
-                </div>
-                <div className="divide-y divide-slate-50">
-                  {weeklySessions.map((session, i) => (
+              <div>
+                <AnimatePresence mode="wait">
+                  {planView === 'daily' ? (
                     <motion.div
-                      key={session.day}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => session.session && (setSelectedWorkout(session.session), setCompletedExercises(new Set()))}
-                      className={`flex items-center gap-4 p-5 hover:bg-slate-50 transition-colors cursor-pointer group ${session.done ? 'opacity-70' : ''}`}
+                      key="daily"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                      className="space-y-6"
                     >
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors ${session.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-700'}`}>
-                        {session.done ? <CheckCircle2 className="w-5 h-5" /> : session.day}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-bold text-sm ${session.done ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-green-700'} transition-colors`}>
-                          {session.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeConfig[session.type]?.bg || 'bg-slate-100'} ${typeConfig[session.type]?.text || 'text-slate-500'}`}>
-                            {session.type}
-                          </span>
-                          <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {session.duration}</span>
+                      {/* Hero Today Workout Card */}
+                      {todayWorkout ? (
+                        <motion.div
+                          onClick={() => { setSelectedWorkout(todayWorkout); setCompletedExercises(new Set()); }}
+                          whileHover={{ scale: 1.01 }}
+                          className="relative h-80 rounded-3xl overflow-hidden group cursor-pointer shadow-xl"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-700">
+                            <img
+                              src={"/gym.jpg"}
+                              alt="Fitness"
+                              className="object-cover opacity-60"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+
+                          <div className="absolute top-5 right-5">
+                            <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5">
+                              <Zap className="w-3.5 h-3.5 text-orange-400" />
+                              <span className="text-white text-xs font-bold">Medium Intensity</span>
+                            </div>
+                          </div>
+
+                          <div className="absolute bottom-0 left-0 right-0 p-8">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 text-white text-xs font-bold rounded-lg mb-4">
+                              {todayWorkout.isCompleted ? (
+                                <><CheckCircle2 className="w-3 h-3" /> COMPLETED</>
+                              ) : (
+                                <><motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="w-1.5 h-1.5 bg-white rounded-full" /> TODAY'S SESSION</>
+                              )}
+                            </div>
+                            <h2 className="text-4xl font-bold text-white mb-3">{todayWorkout.title}</h2>
+                            <div className="flex flex-wrap gap-4 text-white/90 mb-5">
+                              <div className="flex items-center gap-2"><Clock className="w-4 h-4 opacity-70" /> {todayWorkout.duration}</div>
+                              <div className="flex items-center gap-2"><Award className="w-4 h-4 text-yellow-400" /> {todayWorkout.calories} kcal</div>
+                              <div className="flex items-center gap-2"><Dumbbell className="w-4 h-4 opacity-70" /> {todayWorkout.exercises?.length || 0} exercises</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button className="bg-white text-slate-900 px-7 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors shadow-lg">
+                                <Play className="w-4 h-4 fill-current" /> View Routine
+                              </button>
+                              {!todayWorkout.isCompleted && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCompleteSession(todayWorkout._id, false);
+                                  }}
+                                  disabled={completingId === todayWorkout._id}
+                                  className="text-white font-bold px-4 py-3 rounded-xl bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
+                                >
+                                  {completingId === todayWorkout._id ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                  ) : (
+                                    'Mark Complete'
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <div className="relative h-48 rounded-3xl overflow-hidden bg-slate-100 flex items-center justify-center">
+                          <div className="text-center text-slate-400">
+                            <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                            <p className="font-medium">No workout scheduled for today</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Upcoming Sessions */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                          <div className="flex items-center justify-between mb-5">
+                            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                              <Calendar className="w-5 h-5 text-green-700" /> This Week
+                            </h3>
+                          </div>
+
+                          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+                            {['All', 'Strength', 'Cardio', 'Yoga', 'Recovery'].map(f => (
+                              <button
+                                key={f}
+                                onClick={() => { }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${activeFilter === f
+                                  ? 'bg-green-700 text-white shadow-sm'
+                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                  }`}
+                              >
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="space-y-2">
+                            {filteredUpcoming.slice(0, 5).map((session, i) => (
+                              <motion.div
+                                key={session.day}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.04, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                onClick={() => session.session && (setSelectedWorkout(session.session), setCompletedExercises(new Set()))}
+                                className={`flex items-center gap-4 p-3.5 rounded-xl hover:bg-slate-50 transition-colors duration-150 border border-transparent hover:border-slate-100 cursor-pointer group ${session.done ? 'opacity-60' : ''}`}
+                              >
+                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 ${session.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-700 transition-colors duration-150'}`}>
+                                  {session.done ? <CheckCircle2 className="w-5 h-5" /> : session.day}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-bold text-sm text-slate-900 group-hover:text-green-700 transition-colors">{session.title}</h4>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeConfig[session.type]?.bg || 'bg-slate-100'} ${typeConfig[session.type]?.text || 'text-slate-500'}`}>
+                                      {session.type}
+                                    </span>
+                                    <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {session.duration}</span>
+                                  </div>
+                                </div>
+                                <button className="p-2 text-slate-300 group-hover:text-green-600 transition-colors">
+                                  <ChevronRight className="w-5 h-5" />
+                                </button>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Weekly Goal Card */}
+                        <div className="bg-gradient-to-br from-green-800 to-green-700 p-6 rounded-3xl text-white relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                          <div className="absolute bottom-0 left-0 w-20 h-20 bg-green-600/40 rounded-full blur-xl -ml-5 -mb-5" />
+
+                          <h3 className="font-bold mb-1 relative z-10">Weekly Goal</h3>
+                          <p className="text-green-200 text-xs mb-5 relative z-10">Keep the momentum going!</p>
+
+                          <div className="flex items-end gap-2 mb-3 relative z-10">
+                            <span className="text-5xl font-black">{completedSessions}</span>
+                            <span className="text-xl opacity-70 mb-1">/ {totalSessions} sessions</span>
+                          </div>
+
+                          <div className="h-2.5 bg-black/20 rounded-full overflow-hidden mb-2 relative z-10">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0}%` }}
+                              transition={{ delay: 0.3, duration: 0.8, ease: 'easeOut' }}
+                              className="h-full bg-white rounded-full"
+                            />
+                          </div>
+                          <p className="text-xs text-green-100 relative z-10 mb-6">
+                            {totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0}% complete
+                          </p>
+
+                          <div className="space-y-2 relative z-10">
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => {
+                              const daySessions = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                              const isDone = weeklySessions[i]?.done;
+                              const hasSession = weeklySessions[i]?.session;
+                              return (
+                                <div key={i} className="flex items-center gap-2">
+                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-white' : hasSession ? 'bg-white/30' : 'bg-transparent'}`}>
+                                    {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-green-700" />}
+                                  </div>
+                                  <span className={`text-xs font-medium ${isDone ? 'text-white' : hasSession ? 'text-white/70' : 'text-white/30'}`}>{d}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                      {!session.done && session.session && (() => {
-                        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-                        const isToday = session.session.dayOfWeek === today;
-                        return (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCompleteSession(session.session!._id, false);
-                            }}
-                            disabled={!isToday || completingId === session.session._id}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isToday
-                              ? 'text-green-700 bg-green-50 hover:bg-green-100'
-                              : 'text-slate-400 bg-slate-100 cursor-not-allowed'
-                              } disabled:opacity-50`}
-                          >
-                            {completingId === session.session._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              isToday ? 'Mark Done' : 'Not Today'
-                            )}
-                          </button>
-                        );
-                      })()}
-                      <button className="p-2 text-slate-300 group-hover:text-green-500 transition-colors">
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
                     </motion.div>
-                  ))}
-                </div>
-              </motion.div>
+                  ) : (
+                    <motion.div
+                      key="weekly"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                      className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
+                    >
+                      <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-slate-900 text-lg">Weekly Training Plan</h3>
+                          <p className="text-slate-500 text-sm">Your full 7-day schedule at a glance</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-xl">
+                          <BarChart3 className="w-4 h-4" /> {completedSessions} / {totalSessions} Done
+                        </div>
+                      </div>
+                      <div className="divide-y divide-slate-50">
+                        {weeklySessions.map((session, i) => (
+                          <motion.div
+                            key={session.day}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                            onClick={() => session.session && (setSelectedWorkout(session.session), setCompletedExercises(new Set()))}
+                            className={`flex items-center gap-4 p-5 hover:bg-slate-50 transition-colors duration-150 cursor-pointer group ${session.done ? 'opacity-70' : ''}`}
+                          >
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors ${session.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600 group-hover:bg-green-100 group-hover:text-green-700'}`}>
+                              {session.done ? <CheckCircle2 className="w-5 h-5" /> : session.day}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`font-bold text-sm ${session.done ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-green-700'} transition-colors`}>
+                                {session.title}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeConfig[session.type]?.bg || 'bg-slate-100'} ${typeConfig[session.type]?.text || 'text-slate-500'}`}>
+                                  {session.type}
+                                </span>
+                                <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {session.duration}</span>
+                              </div>
+                            </div>
+                            {!session.done && session.session && (() => {
+                              const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+                              const isToday = session.session.dayOfWeek === today;
+                              return (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCompleteSession(session.session!._id, false);
+                                  }}
+                                  disabled={!isToday || completingId === session.session._id}
+                                  className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isToday
+                                    ? 'text-green-700 bg-green-50 hover:bg-green-100'
+                                    : 'text-slate-400 bg-slate-100 cursor-not-allowed'
+                                    } disabled:opacity-50`}
+                                >
+                                  {completingId === session.session._id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    isToday ? 'Mark Done' : 'Not Today'
+                                  )}
+                                </button>
+                              );
+                            })()}
+                            <button className="p-2 text-slate-300 group-hover:text-green-500 transition-colors">
+                              <ChevronRight className="w-5 h-5" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
-      )}
+          </>
+        )
+      }
+
     </div>
   );
 };

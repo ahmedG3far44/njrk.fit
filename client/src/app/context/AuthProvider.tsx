@@ -13,6 +13,31 @@ export interface AuthUser {
   subscriptionTier?: string;
   googleId?: string;
   estimatedSteps?: number;
+  preferences?: {
+    notifications?: boolean;
+    weeklySummary?: boolean;
+    mealReminders?: boolean;
+    autoGenerateMeals?: boolean;
+    isFasting?: boolean;
+    familyPlan?: boolean;
+    manualPrompt?: string;
+  }
+  familyMembers?: number, 
+  createdAt?: string,
+  updatedAt?: string,
+  subscription?: {
+    status: string,
+    planId: string,
+    currentPeriodEnd: string,
+    cancelAtPeriodEnd: boolean,
+    subscriptionTier: string,
+    cardLast4: string,
+    subscriptionStartDate: string,
+    planName: string,
+    planPrice: number,
+  }
+  dietaryRestrictions?: string[];
+  allergies?: string[];
   [key: string]: unknown;
 }
 

@@ -21,7 +21,7 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const { user, logout, refreshUser } = useAuth();
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false)
 
   const [subscriptionInfo, setSubscriptionInfo] = useState<{
     status: string;
@@ -36,13 +36,16 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     weight: (user?.weight as number) || 0,
     goal: (user?.goal as "lose_weight" | "gain_weight" | "maintain_weight") || 'maintain_weight',
     religion: (user?.religion as string) || '',
-    notifications: true,
-    familyPlan: false,
-    autoGenerateMeals: true,
-    manualPrompt: '',
-    fasting: false,
-    foodPreferences: [] as string[],
-    allergies: [] as string[],
+    notifications: user?.preferences?.notifications ?? true,
+    familyPlan: user?.preferences?.familyPlan ?? (user?.subscriptionTier === 'FAMILY' || user?.subscriptionTier === 'PRO'),
+    autoGenerateMeals: user?.preferences?.autoGenerateMeals ?? true,
+    manualPrompt: user?.preferences?.manualPrompt ?? '',
+    weeklySummary: user?.preferences?.weeklySummary ?? true,
+    mealReminders: user?.preferences?.mealReminders ?? true,
+    isFasting: user?.preferences?.isFasting ?? false,
+    foodPreferences: user?.dietaryRestrictions || [] as string[],
+    allergies: user?.allergies || [] as string[],
+
   });
 
   useEffect(() => {
@@ -54,9 +57,17 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         height: (user.height as number) || 0,
         weight: (user.weight as number) || 0,
         goal: (user.goal as "lose_weight" | "gain_weight" | "maintain_weight") || '',
+
         religion: (user?.religion as string) || '',
-        foodPreferences: (user?.dietaryRestrictions as string[]) || [],
-        allergies: (user?.allergies as string[]) || [],
+        foodPreferences: user?.dietaryRestrictions || [],
+        allergies: user?.allergies || [],
+        notifications: user?.preferences?.notifications ?? true,
+        weeklySummary: user?.preferences?.weeklySummary ?? true,
+        mealReminders: user?.preferences?.mealReminders ?? true,
+        autoGenerateMeals: user?.preferences?.autoGenerateMeals ?? true,
+        isFasting: user?.preferences?.isFasting ?? false,
+        familyPlan: user?.preferences?.familyPlan ?? (user?.subscriptionTier === 'FAMILY' || user?.subscriptionTier === 'PRO'),
+        manualPrompt: user?.preferences?.manualPrompt ?? '',
       }));
     }
   }, [user]);
@@ -78,7 +89,6 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     fetchSubscription();
   }, []);
 
-  const [saved, setSaved] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingInvitations, setLoadingInvitations] = useState(false);
@@ -116,9 +126,8 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     }
   }, [showNotifications]);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSaveAll = async () => {
+    await handleSaveProfile();
   };
 
   const handleSaveProfile = async () => {
@@ -130,11 +139,16 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         weight: formData.weight,
         preferences: {
           notifications: formData.notifications,
-          weeklySummary: true,
-          mealReminders: true,
+          weeklySummary: formData.weeklySummary,
+          mealReminders: formData.mealReminders,
+          familyPlan: formData.familyPlan,
+          autoGenerateMeals: formData.autoGenerateMeals,
+          isFasting: formData.isFasting,
+          manualPrompt: formData.manualPrompt,
         },
       });
 
+      await refreshUser();
       toast.success('Profile updated successfully!');
       setIsEditMode(false);
     } catch (error) {
@@ -223,9 +237,9 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             onClick={() => setShowLogoutConfirm(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 16 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
               onClick={e => e.stopPropagation()}
               className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
             >
@@ -267,10 +281,10 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               onClick={() => setShowNotifications(false)}
             />
             <motion.div
-              initial={{ opacity: 0, x: 400 }}
+              initial={{ opacity: 0, x: 320 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 400 }}
-              transition={{ type: 'spring', damping: 25 }}
+              exit={{ opacity: 0, x: 320 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
@@ -542,7 +556,7 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between items-center mb-2">
               <span className="font-semibold text-slate-700 text-sm">Active Conditions</span>
-              <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button>
+
             </div>
             <div className="flex gap-2">
               <span className="bg-white border border-slate-200 px-3 py-1 rounded-lg text-sm text-slate-600">None</span>
@@ -551,7 +565,6 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between items-center mb-2">
               <span className="font-semibold text-slate-700 text-sm">Allergies</span>
-              <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button>
             </div>
             <div className="flex gap-2 flex-wrap">
               {formData.allergies && formData.allergies.length > 0 ? (
@@ -567,7 +580,7 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div className="flex justify-between items-center mb-2">
               <span className="font-semibold text-slate-700 text-sm">Food Preferences</span>
-              <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button>
+              {/* <button className="text-xs font-bold text-green-700 uppercase hover:underline">Update</button> */}
             </div>
             <div className="flex gap-2 flex-wrap">
               {formData.foodPreferences && formData.foodPreferences.length > 0 ? (
@@ -684,8 +697,8 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={formData.fasting}
-                onChange={e => setFormData({ ...formData, fasting: e.target.checked })}
+                checked={formData.isFasting}
+                onChange={e => setFormData({ ...formData, isFasting: e.target.checked })}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-700"></div>
@@ -706,8 +719,8 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           </div>
           <div className="flex items-center gap-2">
             <span className={`px-3 py-1 rounded-full text-xs font-bold ${subscriptionInfo?.subscriptionTier === 'pro' ? 'bg-amber-100 text-amber-700' :
-                subscriptionInfo?.subscriptionTier === 'family' ? 'bg-blue-100 text-blue-700' :
-                  'bg-slate-100 text-slate-600'
+              subscriptionInfo?.subscriptionTier === 'family' ? 'bg-blue-100 text-blue-700' :
+                'bg-slate-100 text-slate-600'
               }`}>
               {subscriptionInfo?.subscriptionTier === 'pro' && 'Pro'}
               {subscriptionInfo?.subscriptionTier === 'family' && 'Family'}
@@ -750,19 +763,17 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       </div>
 
       <div className="flex justify-end">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSave}
-          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-white transition-all shadow-lg ${saved ? 'bg-green-500 shadow-green-200' : 'bg-gradient-to-r from-green-800 to-green-700 shadow-green-200'
-            }`}
+        <button
+          onClick={handleSaveAll}
+          disabled={isSaving}
+          className="inline-flex items-center gap-2 bg-green-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-800 transition-colors disabled:opacity-50"
         >
-          {saved ? (
-            <><Check className="w-5 h-5" /> Saved Successfully!</>
+          {isSaving ? (
+            <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
           ) : (
             <><Save className="w-5 h-5" /> Save Changes</>
           )}
-        </motion.button>
+        </button>
       </div>
 
       {/* Log Out Section */}

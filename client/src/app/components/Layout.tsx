@@ -18,6 +18,7 @@ import {
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import NjerkaLogo from './NjerkaLogo';
+import { useAuth } from '../context/AuthProvider';
 
 
 interface LayoutProps {
@@ -30,7 +31,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
+  const { user } = useAuth();
   const navItems = [
     { id: 'insights', label: 'Dashboard', icon: LayoutDashboard, color: 'text-green-700' },
     { id: 'streaks', label: 'Streaks & Rewards', icon: Flame, color: 'text-orange-500' },
@@ -74,9 +75,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
             onClick={() => setShowLogoutConfirm(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 16 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
               onClick={e => e.stopPropagation()}
               className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
             >
@@ -110,7 +111,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 h-full relative">
         {/* Logo */}
         <div className="p-5 pb-3 flex items-start justify-start border-b border-slate-100">
-        <NjerkaLogo size='small' text={true}/>
+          <NjerkaLogo size='small' text={true} />
         </div>
 
         {/* Nav */}
@@ -121,9 +122,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               <button
                 key={item.id}
                 onClick={() => onChangeView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-300 relative group ${isActive
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors relative group ${isActive
                   ? 'bg-green-50 text-green-800'
-                  : 'text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900'
+                  : 'text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900 active:scale-[0.98]'
                   }`}
               >
                 {isActive && (
@@ -165,9 +166,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           >
             <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
             <div className="flex items-center gap-2 mb-1.5 font-bold text-sm relative z-10">
-              <Users className="w-4 h-4" /> Family Plan
+              <Users className="w-4 h-4" /> {user?.subscription?.subscriptionTier === "BASIC" ? "Free" : user?.subscription?.subscriptionTier === "PRO" ? "Pro" : "Family"} Plan
             </div>
-            <p className="text-xs text-green-200 mb-3 relative z-10 leading-relaxed">Share nutrition with your whole family.</p>
+            <p className="text-xs text-green-200 mb-3 relative z-10 leading-relaxed">
+              {user?.subscription?.subscriptionTier === "BASIC" ? "Upgrade to unlock more features" : user?.subscription?.subscriptionTier === "PRO" ? "Upgrade to Family Plan to add more members." : "Manage your family's nutrition."}
+            </p>
             <div className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-xs font-bold py-2 px-3 rounded-xl transition-colors w-fit relative z-10">
               Manage Profiles <ChevronRight className="w-3 h-3" />
             </div>
@@ -199,9 +202,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
               className="absolute top-[61px] left-0 right-0 bottom-0 bg-white/95 backdrop-blur-xl z-20 lg:hidden overflow-y-auto"
             >
               <nav className="p-4 space-y-1 pb-28">
@@ -210,9 +214,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                   return (
                     <motion.button
                       key={item.id}
-                      initial={{ opacity: 0, x: -10 }}
+                      initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
+                      transition={{ delay: i * 0.03, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                       onClick={() => {
                         onChangeView(item.id);
                         setIsMobileMenuOpen(false);
@@ -231,9 +235,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
 
                 {/* Mobile Logout */}
                 <motion.button
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: navItems.length * 0.04 }}
+                  transition={{ delay: navItems.length * 0.03, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleLogoutClick();
@@ -254,9 +258,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
         <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10 scroll-smooth pb-24 lg:pb-10">
           <motion.div
             key={currentView}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             className="max-w-7xl mx-auto"
           >
             {children}

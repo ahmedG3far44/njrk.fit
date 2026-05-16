@@ -29,7 +29,7 @@ app.use(requestLogger);
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-app.use("/api/webhook", webhooksRoutes);
+app.use("/webhook", webhooksRoutes);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 

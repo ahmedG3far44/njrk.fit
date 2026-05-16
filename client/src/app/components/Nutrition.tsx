@@ -42,9 +42,9 @@ const MealCard: React.FC<MealCardProps> = ({
   swappingMeal
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.08 }}
+    transition={{ delay: index * 0.06, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
     className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden mb-4"
   >
     <div className="p-5 flex flex-col justify-between">
@@ -387,9 +387,7 @@ export const Nutrition: React.FC = () => {
     };
 
 
-  if (isGenerating) return <div className="w-full bg-black/80 backdrop-blur-md z-50 fixed left-0 top-0 min-h-screen flex items-center justify-center">
-    <MealPlanLoader />
-  </div>
+
 
   return (
     <div className="space-y-6 relative">
@@ -423,8 +421,9 @@ export const Nutrition: React.FC = () => {
           onClick={e => e.target === e.currentTarget && setShowInviteModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
           >
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
@@ -509,9 +508,9 @@ export const Nutrition: React.FC = () => {
           onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
             className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
           >
             <div className="bg-gradient-to-r from-slate-900 to-green-900 p-6">
@@ -615,30 +614,33 @@ export const Nutrition: React.FC = () => {
 
           {
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <button
-                onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
-              >
-                {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
-              </button>
+              {
+                !isGenerating && <>
+                  <button
+                    onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
+                  >
+                    {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                    <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
+                  </button>
 
 
-              <div className="flex bg-slate-100 p-1 rounded-xl">
-                <button
-                  onClick={() => handleViewModeChange('today')}
-                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                >
-                  <Clock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Today</span>
-                </button>
-                <button
-                  onClick={() => handleViewModeChange('week')}
-                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                >
-                  <CalendarDays className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Full Week</span>
-                </button>
-              </div>
-
+                  <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button
+                      onClick={() => handleViewModeChange('today')}
+                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'today' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      <Clock className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Today</span>
+                    </button>
+                    <button
+                      onClick={() => handleViewModeChange('week')}
+                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      <CalendarDays className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Full Week</span>
+                    </button>
+                  </div>
+                </>
+              }
               {generationLock.canGenerate ? (
                 <motion.button
                   whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
@@ -682,295 +684,308 @@ export const Nutrition: React.FC = () => {
                 </div>
               )}
 
-              <button
-                onClick={() => window.open(`${API_URL}/nutrition/export/pdf`, '_blank')}
-                disabled={generationLock.canGenerate}
-                className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
-                title="Export PDF"
-              >
-                <FileDown className="w-4 h-4" />
-                <span className="hidden sm:inline">PDF</span>
-              </button>
+              {
+                !isGenerating && <button
+                  onClick={() => window.open(`${API_URL}/nutrition/export/pdf`, '_blank')}
+                  disabled={generationLock.canGenerate}
+                  className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
+                  title="Export PDF"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
+              }
             </div>
           }
         </div>
 
-        <AnimatePresence>
-          {isFamilyMode && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
+        {
+          !isGenerating && <AnimatePresence>
+            {isFamilyMode && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                className="overflow-hidden"
+              >
 
-              <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 sm:gap-3 p-1 overflow-x-auto sm:overflow-x-visible pb-2 scrollbar-hide w-full -mx-2 sm:mx-0 px-2 sm:px-1">
+                <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 sm:gap-3 p-1 overflow-x-auto sm:overflow-x-visible pb-2 scrollbar-hide w-full -mx-2 sm:mx-0 px-2 sm:px-1">
 
-                {/* "You" Profile Button */}
-                <button
-                  onClick={() => handleProfileChange('me')}
-                  className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${activeProfileId === 'me'
-                    ? 'border-green-600 bg-green-50 ring-2 ring-green-200'
-                    : 'border-slate-200 hover:bg-slate-50 bg-white'
-                    }`}
-                >
-                  <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-100 flex items-center justify-center">
-                    <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-700" />
-                  </div>
-                  <div className="text-left">
-                    <div className={`font-bold text-xs sm:text-sm ${activeProfileId === 'me' ? 'text-slate-900' : 'text-slate-600'}`}>
-                      You
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
-                      {totals.calories} kcal
-                    </div>
-                  </div>
-                </button>
-
-                {/* Family Members Profile Buttons */}
-                {familyMembers.map((member) => (
+                  {/* "You" Profile Button */}
                   <button
-                    key={member.id}
-                    onClick={() => handleProfileChange(member.id, member)}
-                    className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${activeProfileId === member.id ? 'border-green-600 bg-green-50 ring-2 ring-green-200' : 'border-slate-200 hover:bg-slate-50 bg-white'
+                    onClick={() => handleProfileChange('me')}
+                    className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${activeProfileId === 'me'
+                      ? 'border-green-600 bg-green-50 ring-2 ring-green-200'
+                      : 'border-slate-200 hover:bg-slate-50 bg-white'
                       }`}
                   >
-                    {member.avatarUrl ? (
-                      <img
-                        src={member.avatarUrl}
-                        alt={member.name}
-                        className="w-7 sm:w-9 h-7 sm:h-9 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-slate-200 flex items-center justify-center">
-                        <User className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
-                      </div>
-                    )}
+                    <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-100 flex items-center justify-center">
+                      <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-700" />
+                    </div>
                     <div className="text-left">
-                      <div className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? 'text-slate-900' : 'text-slate-600'}`}>
-                        {member.name}
+                      <div className={`font-bold text-xs sm:text-sm ${activeProfileId === 'me' ? 'text-slate-900' : 'text-slate-600'}`}>
+                        You
                       </div>
                       <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
-                        {member.calories} kcal
+                        {totals.calories} kcal
                       </div>
                     </div>
                   </button>
-                ))}
 
-                {isFamilyMode && (
-                  <div className="shrink-0 w-10 sm:w-14 h-10 sm:h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-white hover:bg-green-100 cursor-pointer">
+                  {/* Family Members Profile Buttons */}
+                  {familyMembers.map((member) => (
                     <button
-                      onClick={() => setShowInviteModal(true)}
-                      className="flex items-center gap-2 p-2 text-sm font-semibold text-green-500 rounded-full transition-color cursor-pointer"
+                      key={member.id}
+                      onClick={() => handleProfileChange(member.id, member)}
+                      className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${activeProfileId === member.id ? 'border-green-600 bg-green-50 ring-2 ring-green-200' : 'border-slate-200 hover:bg-slate-50 bg-white'
+                        }`}
                     >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-
-
-      {
-        currentMeals && <motion.div
-          key={activeProfileId}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
-        >
-          {[
-            { label: 'Calories', current: totals.calories, target: targetMacros.calories, unit: 'kcal', color: 'bg-orange-500' },
-            { label: 'Protein', current: totals.protein, target: targetMacros.protein, unit: 'g', color: 'bg-blue-500' },
-            { label: 'Carbs', current: totals.carbs, target: targetMacros.carbs, unit: 'g', color: 'bg-green-600' },
-            { label: 'Fats', current: totals.fats, target: targetMacros.fats, unit: 'g', color: 'bg-yellow-500' },
-          ].map((macro) => {
-            return (
-              <div key={macro.label} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-slate-500 text-sm font-medium">{macro.label}</span>
-                  <Info className="w-4 h-4 text-slate-300" />
-                </div>
-                <div className="text-2xl font-bold text-slate-900 mb-2">
-                  {macro.current}<span className="text-sm font-normal text-slate-400"> / {macro.unit}</span>
-                </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${macro.color}`}
-                  />
-                </div>
-                <div className="text-xs text-slate-500 mt-1">{getCalories(macro.label.toLowerCase(), macro.current)} kcal</div>
-              </div>
-            );
-          })}
-        </motion.div>
-      }
-
-      <div className="space-y-4">
-        {isLoadingMeals ? (
-          <div className="text-center py-12 text-slate-400">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3" />
-            <p className="font-medium">Loading meals...</p>
-          </div>
-        ) : currentMeals.length > 0 ? (
-          <>
-            {viewMode === 'week' && (
-              <>
-                {(() => {
-                  const mealsWithDay = currentMeals.filter(m => m.day);
-                  const mealsWithoutDay = currentMeals.filter(m => !m.day);
-
-                  return (
-                    <>
-                      {mealsWithDay.length > 0 && (
-                        <div>
-                          {mealsWithDay.reduce((acc, meal, index) => {
-                            const currentDay = meal.day;
-                            const lastDay = acc.length > 0 ? acc[acc.length - 1].day : null;
-
-                            if (currentDay !== lastDay) {
-                              acc.push({ day: currentDay, meals: [meal], startIndex: index });
-                            } else if (acc.length > 0) {
-                              acc[acc.length - 1].meals.push(meal);
-                            }
-                            return acc;
-                          }, [] as { day: string | undefined; meals: Meal[]; startIndex: number }[]).map((dayGroup, dayIndex) => (
-                            <div key={dayGroup.day || dayIndex}>
-                              <div className="flex items-center gap-3 my-4">
-                                <div className="h-px flex-1 bg-slate-200" />
-                                <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-                                  {(() => {
-                                    const dayNum = parseInt((dayGroup.day || '').split(' ')[1]);
-                                    if (dayNum >= 1 && dayNum <= 7) {
-                                      const today = new Date();
-                                      const startOfWeek = new Date(today);
-                                      startOfWeek.setDate(today.getDate() - today.getDay());
-                                      const dayDate = new Date(startOfWeek);
-                                      dayDate.setDate(startOfWeek.getDate() + dayNum - 1);
-                                      const weekday = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
-                                      const monthDay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                                      return `${weekday}: ${monthDay}`;
-                                    }
-                                    return dayGroup.day || `Day ${dayIndex + 1}`;
-                                  })()}
-                                </span>
-                                <div className="h-px flex-1 bg-slate-200" />
-                              </div>
-                              {dayGroup.meals.map((meal, mealIndex) => (
-                                <MealCard
-                                  key={meal._id}
-                                  meal={meal}
-                                  index={dayGroup.startIndex + mealIndex}
-                                  targetMacros={targetMacros}
-                                  isFamilyMode={isFamilyMode}
-                                  activeUser={activeUser}
-                                  activeProfileId={activeProfileId}
-                                  canInteract={isOwnProfile}
-                                  onViewRecipe={() => setSelectedMeal(meal)}
-                                  onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
-                                  swappingMeal={swappingMeal}
-                                />
-                              ))}
-                            </div>
-                          ))}
+                      {member.avatarUrl ? (
+                        <img
+                          src={member.avatarUrl}
+                          alt={member.name}
+                          className="w-7 sm:w-9 h-7 sm:h-9 rounded-full object-cover border-2 border-white shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-slate-200 flex items-center justify-center">
+                          <User className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
                         </div>
                       )}
-                      {mealsWithoutDay.length > 0 && (
+                      <div className="text-left">
+                        <div className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? 'text-slate-900' : 'text-slate-600'}`}>
+                          {member.name}
+                        </div>
+                        <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                          {member.calories} kcal
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+
+                  {isFamilyMode && (
+                    <div className="shrink-0 w-10 sm:w-14 h-10 sm:h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-white hover:bg-green-100 cursor-pointer">
+                      <button
+                        onClick={() => setShowInviteModal(true)}
+                        className="flex items-center gap-2 p-2 text-sm font-semibold text-green-500 rounded-full transition-color cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        }
+      </div>
+      <>
+        {
+          isGenerating ? (
+            <MealPlanLoader />
+          ) : (
+            <>
+
+              {
+                nutritionPlan?.targetMacros.calories !== 0 && <motion.div
+                  key={activeProfileId}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                >
+                  {[
+                    { label: 'Calories', current: totals.calories, target: targetMacros.calories, unit: 'kcal', color: 'bg-orange-500' },
+                    { label: 'Protein', current: totals.protein, target: targetMacros.protein, unit: 'g', color: 'bg-blue-500' },
+                    { label: 'Carbs', current: totals.carbs, target: targetMacros.carbs, unit: 'g', color: 'bg-green-600' },
+                    { label: 'Fats', current: totals.fats, target: targetMacros.fats, unit: 'g', color: 'bg-yellow-500' },
+                  ].map((macro) => {
+                    return (
+                      <div key={macro.label} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-slate-500 text-sm font-medium">{macro.label}</span>
+                          <Info className="w-4 h-4 text-slate-300" />
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 mb-2">
+                          {macro.current}<span className="text-sm font-normal text-slate-400"> / {macro.unit}</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${macro.color}`}
+                          />
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">{getCalories(macro.label.toLowerCase(), macro.current)} kcal</div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              }
+
+              <div className="space-y-4">
+                {isLoadingMeals ? (
+                  <div className="text-center py-12 text-slate-400">
+                    <div className="w-8 h-8 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3" />
+                    <p className="font-medium">Loading meals...</p>
+                  </div>
+                ) : currentMeals.length > 0 ? (
+                  <>
+                    {viewMode === 'week' && (
+                      <>
+                        {(() => {
+                          const mealsWithDay = currentMeals.filter(m => m.day);
+                          const mealsWithoutDay = currentMeals.filter(m => !m.day);
+
+                          return (
+                            <>
+                              {mealsWithDay.length > 0 && (
+                                <div>
+                                  {mealsWithDay.reduce((acc, meal, index) => {
+                                    const currentDay = meal.day;
+                                    const lastDay = acc.length > 0 ? acc[acc.length - 1].day : null;
+
+                                    if (currentDay !== lastDay) {
+                                      acc.push({ day: currentDay, meals: [meal], startIndex: index });
+                                    } else if (acc.length > 0) {
+                                      acc[acc.length - 1].meals.push(meal);
+                                    }
+                                    return acc;
+                                  }, [] as { day: string | undefined; meals: Meal[]; startIndex: number }[]).map((dayGroup, dayIndex) => (
+                                    <div key={dayGroup.day || dayIndex}>
+                                      <div className="flex items-center gap-3 my-4">
+                                        <div className="h-px flex-1 bg-slate-200" />
+                                        <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                                          {(() => {
+                                            const dayNum = parseInt((dayGroup.day || '').split(' ')[1]);
+                                            if (dayNum >= 1 && dayNum <= 7) {
+                                              const today = new Date();
+                                              const startOfWeek = new Date(today);
+                                              startOfWeek.setDate(today.getDate() - today.getDay());
+                                              const dayDate = new Date(startOfWeek);
+                                              dayDate.setDate(startOfWeek.getDate() + dayNum - 1);
+                                              const weekday = dayDate.toLocaleDateString('en-US', { weekday: 'long' });
+                                              const monthDay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                              return `${weekday}: ${monthDay}`;
+                                            }
+                                            return dayGroup.day || `Day ${dayIndex + 1}`;
+                                          })()}
+                                        </span>
+                                        <div className="h-px flex-1 bg-slate-200" />
+                                      </div>
+                                      {dayGroup.meals.map((meal, mealIndex) => (
+                                        <MealCard
+                                          key={meal._id}
+                                          meal={meal}
+                                          index={dayGroup.startIndex + mealIndex}
+                                          targetMacros={targetMacros}
+                                          isFamilyMode={isFamilyMode}
+                                          activeUser={activeUser}
+                                          activeProfileId={activeProfileId}
+                                          canInteract={isOwnProfile}
+                                          onViewRecipe={() => setSelectedMeal(meal)}
+                                          onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
+                                          swappingMeal={swappingMeal}
+                                        />
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {mealsWithoutDay.length > 0 && (
+                                <>
+                                  {mealsWithDay.length > 0 && (
+                                    <div className="flex items-center gap-3 my-4">
+                                      <div className="h-px flex-1 bg-slate-200" />
+                                      <span className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full">
+                                        Other Meals
+                                      </span>
+                                      <div className="h-px flex-1 bg-slate-200" />
+                                    </div>
+                                  )}
+                                  {mealsWithoutDay.map((meal, index) => (
+                                    <MealCard
+                                      key={meal._id}
+                                      meal={meal}
+                                      index={mealsWithDay.length + index}
+                                      targetMacros={targetMacros}
+                                      isFamilyMode={isFamilyMode}
+                                      activeUser={activeUser}
+                                      activeProfileId={activeProfileId}
+                                      canInteract={isOwnProfile}
+                                      onViewRecipe={() => setSelectedMeal(meal)}
+                                      onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
+                                      swappingMeal={swappingMeal}
+                                    />
+                                  ))}
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
+                    {viewMode === 'today' && currentMeals.map((meal, index) => (
+                      <MealCard
+                        key={meal._id}
+                        meal={meal}
+                        index={index}
+                        targetMacros={targetMacros}
+                        isFamilyMode={isFamilyMode}
+                        activeUser={activeUser}
+                        activeProfileId={activeProfileId}
+                        canInteract={isOwnProfile}
+                        onViewRecipe={() => setSelectedMeal(meal)}
+                        onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
+                        swappingMeal={swappingMeal}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <div className="w-full min-h-96 text-center  flex items-center flex-col justify-center gap-3 p-3 rounded-2xl  mb-3 text-white"
+                    style={{ background: 'linear-gradient(135deg, #1a6b3a 0%, #145c30 100%)' }}
+                  >
+                    {/* Icon in rounded square */}
+                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-1"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
+                    >
+                      <Utensils className="w-7 h-7 text-white opacity-80" />
+                    </div>
+
+                    <p className="font-bold text-2xl text-white">No meal plan yet</p>
+
+                    <p className="text-sm text-white/70 max-w-xs leading-relaxed">
+                      Get a personalized meal plan tailored to your goals, schedule, and dietary preferences.
+                    </p>
+
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setShowGenerateModal(true)}
+                      disabled={isGenerating}
+                      className="flex cursor-pointer items-center gap-2 bg-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 relative overflow-hidden group mt-2"
+                      style={{ color: '#145c30' }}
+                    >
+                      {isGenerating ? (
                         <>
-                          {mealsWithDay.length > 0 && (
-                            <div className="flex items-center gap-3 my-4">
-                              <div className="h-px flex-1 bg-slate-200" />
-                              <span className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full">
-                                Other Meals
-                              </span>
-                              <div className="h-px flex-1 bg-slate-200" />
-                            </div>
-                          )}
-                          {mealsWithoutDay.map((meal, index) => (
-                            <MealCard
-                              key={meal._id}
-                              meal={meal}
-                              index={mealsWithDay.length + index}
-                              targetMacros={targetMacros}
-                              isFamilyMode={isFamilyMode}
-                              activeUser={activeUser}
-                              activeProfileId={activeProfileId}
-                              canInteract={isOwnProfile}
-                              onViewRecipe={() => setSelectedMeal(meal)}
-                              onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
-                              swappingMeal={swappingMeal}
-                            />
-                          ))}
+
+                          Generating...
+
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Build My AI Plan</span>
+                          <span>→</span>
                         </>
                       )}
-                    </>
-                  );
-                })()}
-              </>
-            )}
-            {viewMode === 'today' && currentMeals.map((meal, index) => (
-              <MealCard
-                key={meal._id}
-                meal={meal}
-                index={index}
-                targetMacros={targetMacros}
-                isFamilyMode={isFamilyMode}
-                activeUser={activeUser}
-                activeProfileId={activeProfileId}
-                canInteract={isOwnProfile}
-                onViewRecipe={() => setSelectedMeal(meal)}
-                onSwap={() => { setSwappingMeal(meal._id); setTimeout(() => setSwappingMeal(null), 1500); }}
-                swappingMeal={swappingMeal}
-              />
-            ))}
-          </>
-        ) : (
-          <div className="w-full min-h-96 text-center  flex items-center flex-col justify-center gap-3 p-3 rounded-2xl  mb-3 text-white"
-            style={{ background: 'linear-gradient(135deg, #1a6b3a 0%, #145c30 100%)' }}
-          >
-            {/* Icon in rounded square */}
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl mb-1"
-              style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
-            >
-              <Utensils className="w-7 h-7 text-white opacity-80" />
-            </div>
-
-            <p className="font-bold text-2xl text-white">No meal plan yet</p>
-
-            <p className="text-sm text-white/70 max-w-xs leading-relaxed">
-              Get a personalized meal plan tailored to your goals, schedule, and dietary preferences.
-            </p>
-
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setShowGenerateModal(true)}
-              disabled={isGenerating}
-              className="flex cursor-pointer items-center gap-2 bg-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 relative overflow-hidden group mt-2"
-              style={{ color: '#145c30' }}
-            >
-              {isGenerating ? (
-                <>
-
-                  Generating...
-
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Build My AI Plan</span>
-                  <span>→</span>
-                </>
-              )}
-            </motion.button>
-          </div>
-        )}
-      </div>
-
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+            </>
+          )
+        }
+      </>
     </div>
   );
 };

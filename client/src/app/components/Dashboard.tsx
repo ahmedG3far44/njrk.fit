@@ -211,8 +211,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
     <div className="space-y-6 pb-8">
       {/* ── Hero Greeting ── */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
         className="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div>
@@ -257,10 +258,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       {/* ── Streak Banner ── */}
       <motion.div
         onClick={() => onChangeView('streaks')}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        whileHover={{ scale: 1.01 }}
+        transition={{ delay: 0.05, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+        whileHover={{ scale: 1.005 }}
         className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 rounded-3xl p-[2px] shadow-xl shadow-orange-200/50 cursor-pointer"
       >
         <div className="bg-white rounded-[22px] p-5 flex items-center justify-between relative overflow-hidden">
@@ -268,8 +269,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
           <div className="relative z-10 flex items-center gap-4">
             <motion.div
-              animate={{ scale: [1, 1.18, 1] }}
-              transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+              animate={{ scale: [1, 1.12, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
               className="w-14 h-14 flex items-center justify-center"
             >
               <span className="text-4xl">🔥</span>
@@ -293,17 +294,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
       {/* ── Vitals Strip ── */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.1, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         className="grid grid-cols-3 gap-4"
       >
         {vitals.map((v, i) => (
           <motion.div
             key={v.label}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.07 }}
+            transition={{ delay: 0.1 + i * 0.06, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-2">
@@ -318,7 +319,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${v.progress}%` }}
-                transition={{ delay: 0.3 + i * 0.1, duration: 0.8, ease: 'easeOut' }}
+                transition={{ delay: 0.3 + i * 0.08, duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
                 className={`h-full ${v.progressColor} rounded-full`}
               />
             </div>
@@ -328,11 +329,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
       {/* ── Nutrition Snapshot ── */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.15, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         onClick={() => onChangeView('nutrition')}
-        className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-all group"
+        className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
@@ -366,7 +367,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min((n.current / n.target) * 100, 100)}%` }}
-                  transition={{ delay: 0.3 + i * 0.1, duration: 0.8, ease: 'easeOut' }}
+                  transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                   className={`h-full ${n.color} rounded-full`}
                 />
               </div>
@@ -379,9 +380,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Upcoming Meal */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.22, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('nutrition')}
           className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
         >
@@ -427,9 +428,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
         {/* Next Workout */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.28, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('fitness')}
           className="bg-gradient-to-br from-green-800 to-green-700 rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
         >
@@ -475,7 +476,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-white font-bold group-hover:gap-3 transition-all">
+            <div className="flex items-center gap-2 text-white font-bold group-hover:gap-3 transition-[gap] duration-200">
               <span>View Routine</span>
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -487,9 +488,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Community Challenge */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.35, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('community')}
           className="group relative h-44 rounded-3xl overflow-hidden cursor-pointer"
         >
@@ -512,9 +513,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
         {/* Grocery */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
+          transition={{ delay: 0.38, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('grocery')}
           className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
         >
@@ -535,7 +536,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${groceryProgress.total > 0 ? (groceryProgress.checked / groceryProgress.total) * 100 : 0}%` }}
-              transition={{ delay: 0.5, duration: 0.8, ease: 'easeOut' }}
+              transition={{ delay: 0.5, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
               className="h-full bg-emerald-500 rounded-full"
             />
           </div>
@@ -551,11 +552,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
 
         {/* Rewards */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.42, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('streaks')}
-          className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden group"
+          className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.015] transition-transform duration-200 relative overflow-hidden group"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-6 -mt-6" />
           <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-400/30 rounded-full blur-xl -ml-4 -mb-4" />
@@ -575,7 +576,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pointsData.nextReward > 0 ? (pointsData.current / pointsData.nextReward) * 100 : 0}%` }}
-                transition={{ delay: 0.6, duration: 0.8, ease: 'easeOut' }}
+                transition={{ delay: 0.6, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                 className="h-full bg-white rounded-full"
               />
             </div>
@@ -587,10 +588,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       <AnimatePresence>
         {aiTipVisible && aiTip.content && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            transition={{ delay: 0.55 }}
+            transition={{ delay: 0.45, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             className="bg-gradient-to-r from-slate-900 to-green-900 rounded-3xl p-6 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-green-600/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -604,8 +605,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-bold text-green-300 uppercase tracking-wider">AI Daily Insight</span>
                   <motion.span
-                    animate={{ opacity: [1, 0.3, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
+                    animate={{ opacity: [1, 0.35, 1] }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
                     className="w-1.5 h-1.5 bg-green-400 rounded-full"
                   />
                 </div>

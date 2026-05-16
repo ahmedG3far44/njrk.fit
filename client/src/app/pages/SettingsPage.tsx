@@ -9,7 +9,7 @@ export const SettingsPage = () => {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate('/login', { replace: true });
+      navigate('/login');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -25,5 +25,5 @@ export const SettingsPage = () => {
     return null;
   }
 
-  return <Settings onLogout={() => navigate('/login', { replace: true })} />;
+  return <Settings onLogout={() => navigate('/login')} />;
 };

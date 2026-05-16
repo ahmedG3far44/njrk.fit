@@ -30,7 +30,7 @@ export interface IUser extends Document {
   subscription: {
     planId?: string;
     status: 'active' | 'canceled' | 'expired' | 'past_due';
-    stripeCustomerId: string;
+    stripeCustomerId?: string;
     stripeSubscriptionId?: string;
     currentPeriodEnd?: Date;
     cancelAtPeriodEnd?: boolean;
@@ -53,6 +53,8 @@ export interface IUser extends Document {
     mealReminders: boolean;
     autoGenerateMeals: boolean;
     isFasting: boolean;
+    familyPlan: boolean;
+    manualPrompt?: string;
     reminderTime?: string;
     reminderTypes?: string[];
   };
@@ -93,7 +95,7 @@ const UserSchema = new Schema<IUser>({
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {
     planId: { type: String },
-    status: { type: String, enum: ['active', 'cancelled', 'expired'] },
+    status: { type: String, enum: ['active', 'canceled', 'expired', 'past_due'] },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
     currentPeriodEnd: { type: Date },
@@ -121,6 +123,8 @@ const UserSchema = new Schema<IUser>({
     mealReminders: { type: Boolean, default: true },
     autoGenerateMeals: { type: Boolean, default: false },
     isFasting: { type: Boolean, default: false },
+    familyPlan: { type: Boolean, default: false },
+    manualPrompt: { type: String },
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],
   },

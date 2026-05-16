@@ -200,9 +200,9 @@ export const Progress: React.FC = () => {
             onClick={e => e.target === e.currentTarget && setShowUpdateModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
               className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
             >
               {submitted ? (
@@ -403,7 +403,8 @@ export const Progress: React.FC = () => {
         ].filter(Boolean).map((stat: any) => (
           <motion.div
             key={stat.label}
-            whileHover={{ y: -4 }}
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.2 }}
             className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm cursor-default"
           >
             <div className="text-sm text-slate-500 font-medium mb-2">{stat.label}</div>

@@ -12,13 +12,13 @@ interface LandingPageProps {
 }
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
 const pricingPlans = [
@@ -74,18 +74,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
       {/* Hero */}
       <section className="pt-32 pb-24 px-6 overflow-hidden relative">
         <motion.div
-          animate={{ scale: [1, 1.05, 1], opacity: [0.4, 0.65, 0.4] }}
-          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.04, 1], opacity: [0.4, 0.6, 0.4] }}
+          transition={{ repeat: Infinity, duration: 10, ease: [0.77, 0, 0.175, 1] }}
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-green-100/70 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
         <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3] }}
-          transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut', delay: 2 }}
+          animate={{ scale: [1, 1.06, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ repeat: Infinity, duration: 12, ease: [0.77, 0, 0.175, 1], delay: 2 }}
           className="absolute top-20 right-0 w-[600px] h-[600px] bg-emerald-100/60 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
         <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ repeat: Infinity, duration: 7, ease: 'easeInOut', delay: 1 }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.45, 0.3] }}
+          transition={{ repeat: Infinity, duration: 8, ease: [0.77, 0, 0.175, 1], delay: 1 }}
           className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-100/50 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
 
@@ -155,9 +155,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
 
           {/* Hero Visual */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.85, rotate: 3 }}
+            initial={{ opacity: 0, scale: 0.95, rotate: 2 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 0.9, ease: 'easeOut' }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
             className="relative hidden lg:block"
           >
             <div className="relative z-10">
@@ -167,8 +167,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 className="rounded-3xl shadow-2xl border-8 border-white hover:scale-[1.02] transition-transform duration-500"
               />
               <motion.div
-                animate={{ y: [0, -14, 0] }}
-                transition={{ repeat: Infinity, duration: 5.5, ease: 'easeInOut' }}
+                animate={{ y: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 6, ease: [0.77, 0, 0.175, 1] }}
                 className="absolute -bottom-10 -left-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
               >
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-2xl shadow-sm flex-shrink-0">🔥</div>
@@ -183,8 +183,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 </div>
               </motion.div>
               <motion.div
-                animate={{ y: [0, 14, 0] }}
-                transition={{ repeat: Infinity, duration: 7, ease: 'easeInOut', delay: 1.5 }}
+                animate={{ y: [0, 10, 0] }}
+                transition={{ repeat: Infinity, duration: 7, ease: [0.77, 0, 0.175, 1], delay: 1.5 }}
                 className="absolute -top-10 -right-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
               >
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -273,9 +273,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl ${feature.glow} hover:-translate-y-1 transition-all duration-300 group`}
+                className={`bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl ${feature.glow} hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group`}
               >
-                <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                <div className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-200 ease-out`}>
                   {React.cloneElement(feature.icon as React.ReactElement<any>, { className: 'w-7 h-7' })}
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
@@ -296,7 +296,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 + 0.4 }}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group flex gap-4"
+                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group flex gap-4"
               >
                 <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                   {React.cloneElement(feature.icon as React.ReactElement<any>, { className: 'w-6 h-6' })}
