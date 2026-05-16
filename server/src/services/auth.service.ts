@@ -87,7 +87,13 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         name: name,
     });
 
-    let newUser;
+    let newUser: Record<string, unknown>;
+    const baseSubscription = {
+        stripeCustomerId: customer.id,
+        subscriptionTier: "BASIC" as const,
+        stripeSubscriptionId: undefined as string | undefined,
+    };
+
     switch (provider) {
         case 'google':
             newUser = {
@@ -96,14 +102,10 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 avatarUrl,
                 googleId,
                 subscription: {
-                    stripCustomerId: customer.id,
-                    subscriptionTier: "BASIC",
-                    subscriptionStatus: "trialing",
-                    subscriptionId: null,
-                    subscriptionStartDate: new Date(),
-                    subscriptionEndDate: null
-                }
-            }
+                    ...baseSubscription,
+                    status: "trialing",
+                },
+            };
             break;
         case 'email':
             newUser = {
@@ -112,14 +114,10 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 passwordHash: await hashPassword(password as string),
                 avatarUrl: placeholder,
                 subscription: {
-                    stripCustomerId: customer.id,
-                    subscriptionTier: "BASIC",
-                    subscriptionStatus: "trialing",
-                    subscriptionId: null,
-                    subscriptionStartDate: new Date(),
-                    subscriptionEndDate: null
-                }
-            }
+                    ...baseSubscription,
+                    status: "trialing",
+                },
+            };
             break;
         default:
             newUser = {
@@ -128,14 +126,10 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 passwordHash: await hashPassword(password as string),
                 avatarUrl: placeholder,
                 subscription: {
-                    stripCustomerId: customer.id,
-                    subscriptionTier: "BASIC",
-                    subscriptionStatus: "active",
-                    subscriptionId: null,
-                    subscriptionStartDate: new Date(),
-                    subscriptionEndDate: null
-                }
-            }
+                    ...baseSubscription,
+                    status: "active",
+                },
+            };
             break;
     }
 

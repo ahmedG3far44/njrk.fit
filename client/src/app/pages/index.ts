@@ -12,4 +12,4 @@ export { GroceryPage } from './GroceryPage';
 export { SubscriptionsPage } from './SubscriptionsPage';
 export { SettingsPage } from './SettingsPage';
 export { StreaksPage } from './StreaksPage';
-export { CommunityPage } from './CommunityPage'; 
+export { CommunityPage } from './CommunityPage';

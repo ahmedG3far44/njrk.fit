@@ -17,6 +17,7 @@ import nutritionRoutes from "./routes/nutrition.route";
 import gamificationRoutes from "./routes/gamification.route";
 import subscriptionsRoutes from "./routes/subscriptions.route";
 import leaderboardRoutes from "./routes/leaderboard.route";
+import adminRoutes from "./routes/admin.routes";
 
 import { corsOptions } from "./configs/env";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -55,6 +56,7 @@ app.use("/api/subscriptions", subscriptionsRoutes);
 app.use("/api/groceries", groceryRoutes);
 app.use("/api/family", familyRoutes);
 app.use("/api/google-fit", googleFitRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(errorHandler);
 

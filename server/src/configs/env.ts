@@ -31,6 +31,16 @@ const envSchema = z.object({
     JWT_EXPIRATION: z.string().default('1h'),
     JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
     JWT_REFRESH_EXPIRATION: z.string().default('7d'),
+
+    JWT_ADMIN_SECRET: z.string().default('admin-jwt-secret-k3y-must-be-at-least-32-characters-long'),
+    JWT_ADMIN_EXPIRATION: z.string().default('24h'),
+
+    ADMIN_EMAIL_1: z.string().email().default('admin@njerka.com'),
+    ADMIN_PASSWORD_1: z.string().min(8).default('Admin123!'),
+    ADMIN_NAME_1: z.string().default('Super Admin'),
+    ADMIN_EMAIL_2: z.string().email().default('ops@njerka.com'),
+    ADMIN_PASSWORD_2: z.string().min(8).default('Ops123!'),
+    ADMIN_NAME_2: z.string().default('Operations Admin'),
     
     GOOGLE_CLIENT_ID: z.string().default('691688385657-i821cud5r17h2dfv7kmnk161701jcr6h.apps.googleusercontent.com'),
     GOOGLE_CLIENT_SECRET: z.string().default('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'),

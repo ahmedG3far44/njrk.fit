@@ -2,6 +2,7 @@ import { env } from '../configs/env';
 import { Router, Request, Response, raw } from 'express';
 
 import User from '../models/user.model';
+import SubscriptionTransaction from '../models/subscriptionTransaction.model';
 import stripe from '../configs/stripe';
 
 
@@ -88,40 +89,102 @@ router.post('/', raw({ type: "application/json" }), async (req: Request, res: Re
         case 'checkout.session.completed': {
             const session = event.data.object as any;
             const userId = session.client_reference_id;
+            const subscriptionId = session.subscription as string;
 
             if (userId && session.customer) {
-                await User.findByIdAndUpdate(userId, {
-                    $set: {
-                        'subscription.stripeCustomerId': session.customer as string
+                const update: Record<string, unknown> = {
+                    'subscription.stripeCustomerId': session.customer as string,
+                };
+
+                if (subscriptionId) {
+                    try {
+                        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
+                        const priceId = sub.items?.data[0]?.price?.id;
+                        const subscriptionTier = getSubscriptionTier(priceId);
+
+                        update['subscription.stripeSubscriptionId'] = subscriptionId;
+                        update['subscription.status'] = sub.status === 'active' ? 'active' : 'past_due';
+                        update['subscription.subscriptionTier'] = subscriptionTier;
+                        update['subscription.planId'] = sub.metadata?.planId;
+                        update['subscription.currentPeriodEnd'] = sub.currentPeriodEnd
+                            ? new Date(sub.currentPeriodEnd.getTime())
+                            : undefined;
+                        update['subscription.cancelAtPeriodEnd'] = sub.cancelAtPeriodEnd || false;
+                        update['subscription.paidPriceId'] = priceId;
+
+                        const user = await User.findById(userId);
+                        if (user) {
+                            await SubscriptionTransaction.create({
+                                userId: user._id,
+                                email: user.email,
+                                amount: sub.items?.data[0]?.price?.unit_amount
+                                    ? sub.items.data[0].price.unit_amount / 100
+                                    : 0,
+                                currency: sub.currency?.toUpperCase() || 'USD',
+                                status: 'completed',
+                                planTier: subscriptionTier,
+                                stripeSubscriptionId: subscriptionId,
+                                description: `Checkout: ${subscriptionTier} plan`,
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to retrieve subscription for checkout session:', err);
                     }
-                });
+                }
+
+                await User.findByIdAndUpdate(userId, { $set: update });
+                console.log("checkout.session.completed: updated user subscription");
             }
             break;
         }
         case 'invoice.payment_succeeded': {
-            const session = event.data.object as any;
-            const subscriptionId = session.subscription as string;
+            const invoice = event.data.object as any;
+            const subscriptionId = invoice.subscription as string;
+            const invoiceStatus = invoice.status;
 
-            if (subscriptionId) {
-                const sub = await stripe.subscriptions.retrieve(subscriptionId);
-                const userId = sub.metadata?.userId;
+            if (subscriptionId && invoiceStatus === 'paid') {
+                try {
+                    const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
+                    const userId = sub.metadata?.userId;
 
-                if (userId) {
-                    const priceId = sub.items?.data[0]?.price?.id;
-                    const subscriptionTier = getSubscriptionTier(priceId);
+                    if (userId) {
+                        const priceId = sub.items?.data[0]?.price?.id;
+                        const subscriptionTier = getSubscriptionTier(priceId);
+                        const amount = (sub.items?.data[0]?.price?.unit_amount || 0) / 100;
 
-                    await User.findByIdAndUpdate(userId, {
-                        $set: {
-                            'subscription.planId': sub.metadata?.planId,
-                            'subscription.status': 'active',
-                            'subscription.stripeCustomerId': session.customer as string,
-                            'subscription.stripeSubscriptionId': subscriptionId,
-                            'subscription.cancelAtPeriodEnd': false,
-                            'subscription.subscriptionTier': subscriptionTier,
+                        await User.findByIdAndUpdate(userId, {
+                            $set: {
+                                'subscription.planId': sub.metadata?.planId,
+                                'subscription.status': 'active',
+                                'subscription.stripeCustomerId': invoice.customer as string,
+                                'subscription.stripeSubscriptionId': subscriptionId,
+                                'subscription.currentPeriodEnd': sub.currentPeriodEnd
+                                    ? new Date(sub.currentPeriodEnd.getTime())
+                                    : undefined,
+                                'subscription.cancelAtPeriodEnd': false,
+                                'subscription.subscriptionTier': subscriptionTier,
+                            }
+                        });
+
+                        const user = await User.findById(userId);
+                        if (user) {
+                            await SubscriptionTransaction.create({
+                                userId: user._id,
+                                email: user.email,
+                                amount,
+                                currency: (sub.currency || 'usd').toUpperCase(),
+                                status: 'completed',
+                                planTier: subscriptionTier,
+                                stripeSubscriptionId: subscriptionId,
+                                stripeEventId: event.id,
+                                description: `Invoice paid: ${subscriptionTier} plan`,
+                            });
                         }
-                    });
 
-                    console.log("updated user subscription to: ", subscriptionTier);
+                        console.log("invoice.payment_succeeded: updated user subscription to: ", subscriptionTier);
+                    }
+                } catch (err) {
+                    console.error('Failed to process invoice.payment_succeeded:', err);
                 }
             }
             break;

@@ -43,6 +43,8 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
             customer: stripeCustomerId,
             mode: 'subscription',
 
+            client_reference_id: user._id.toString(),
+
             payment_method_types: ['card'],
 
             line_items: [

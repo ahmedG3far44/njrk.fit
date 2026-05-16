@@ -59,6 +59,9 @@ export interface IUser extends Document {
     reminderTypes?: string[];
   };
   medicalCondition?: string;
+  isBlocked?: boolean;
+  blockedAt?: Date;
+  blockedReason?: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -130,6 +133,9 @@ const UserSchema = new Schema<IUser>({
   },
   medicalCondition: { type: String },
   allergies: [{ type: String }],
+  isBlocked: { type: Boolean, default: false },
+  blockedAt: { type: Date },
+  blockedReason: { type: String },
 }, { timestamps: true });
 
 // UserSchema.index({ email: 1 }, { unique: true });
