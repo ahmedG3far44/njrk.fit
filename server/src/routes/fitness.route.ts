@@ -9,6 +9,8 @@ import { generateWorkoutPlan } from '../services/llm.service';
 import { awardPoints } from '../services/gamification.service';
 import { UserContext } from '../types';
 import { generatePDF } from '../services/pdf.service';
+import { fetchExerciseDetails } from '../services/exercisedb.service';
+import { env } from '../configs/env';
 
 const router = Router();
 
@@ -52,6 +54,29 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       equipment || user.equipment || [],
       duration || 60
     );
+
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // =========================================================
+    // التعديل الجديد: نلف على التمارين ونجيب الصور مع تأخير بسيط
+    // =========================================================
+    for (const session of plan.sessions) {
+      if (!session.exercises || session.exercises.length === 0) continue;
+
+      for (const exercise of session.exercises) {
+        // نستدعي الـ API
+        const exerciseData = await fetchExerciseDetails(exercise.name);
+        console.log(`[DEBUG] Exercise: ${exercise.name} ->`, exerciseData);
+        if (exerciseData) {
+          // نربط البيانات
+          (exercise as any).exerciseId = exerciseData.exerciseId;
+          (exercise as any).gifUrl = exerciseData.gifUrl;
+        }
+
+        // 2. هذي الفرملة: ننتظر 400 جزء من الثانية قبل التمرين اللي بعده
+        await delay(400); 
+      }
+    }
 
     const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
     const endDate = new Date(startDate);
@@ -208,5 +233,42 @@ router.get(
     }
   },
 );
+
+router.get(
+  '/exercise-image/:exerciseId',
+  async (req: Request, res: Response) => {
+    try {
+      const { exerciseId } = req.params;
+      
+      const response = await fetch(
+        `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=360`,
+        {
+          method: 'GET',
+          headers: {
+            'x-rapidapi-key': env.RAPIDAPI_KEY,
+            'x-rapidapi-host': 'exercisedb.p.rapidapi.com',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+
+      const buffer = await response.arrayBuffer();
+      const contentType = response.headers.get('content-type') || 'image/gif';
+      res.setHeader('Content-Type', contentType);
+      // نحفظ الصورة في كاش المتصفح لمدة شهر عشان نوفر استهلاك الـ API
+      res.setHeader('Cache-Control', 'public, max-age=2592000'); 
+      
+      res.send(Buffer.from(buffer));
+    } catch (error) {
+      console.error('Error fetching exercise image:', error);
+      res.status(500).json({ message: 'Error fetching image' });
+    }
+  }
+);
+
+
 
 export default router;

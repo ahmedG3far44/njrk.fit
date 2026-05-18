@@ -55,6 +55,7 @@ const envSchema = z.object({
     CLOUDINARY_NAME: z.string().default('drjne80qo'),
     CLOUDINARY_API_KEY: z.string().default('915692518451686'),
     CLOUDINARY_API_SECRET: z.string().default('Jmf5qnqzDlPevD7NAYvUevLSNDg'),
+    RAPIDAPI_KEY: z.string().min(1, 'RAPIDAPI_KEY is required'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

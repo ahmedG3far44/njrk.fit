@@ -54,6 +54,11 @@ export const Fitness: React.FC = () => {
   const [hasPlan, setHasPlan] = useState(false);
   const [planEndDate, setPlanEndDate] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
+  const [showGifModal, setShowGifModal] = useState(false);
+  const [currentGifUrl, setCurrentGifUrl] = useState('');
+  const [currentExerciseName, setCurrentExerciseName] = useState('');
+  const [gifLoading, setGifLoading] = useState(false);
+  const [gifError, setGifError] = useState(false);
 
   const [trainingDays, setTrainingDays] = useState(3);
   const [duration, setDuration] = useState(60);
@@ -563,6 +568,22 @@ export const Fitness: React.FC = () => {
                           <div className={`font-bold text-sm ${isCompleted ? 'text-green-700 line-through' : 'text-slate-800'}`}>
                             {ex.name}
                           </div>
+                          {ex.gifUrl && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentGifUrl(ex.gifUrl!);
+                                setCurrentExerciseName(ex.name);
+                                setGifLoading(true);
+                                setGifError(false);
+                                setShowGifModal(true);
+                              }}
+                              className="ml-2 p-1.5 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+                              title="View exercise GIF"
+                            >
+                              <Play className="w-3.5 h-3.5 text-green-600" />
+                            </button>
+                          )}
                         </div>
                         <div className="flex gap-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
                           <div className="flex flex-col items-center">
@@ -639,6 +660,60 @@ export const Fitness: React.FC = () => {
                     </>
                   );
                 })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* GIF Modal */}
+      <AnimatePresence>
+        {showGifModal && currentGifUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed w-full min-h-screen top-0 left-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowGifModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-gradient-to-br from-green-900 to-green-700 p-4 text-white relative">
+                <h3 className="text-lg font-bold text-center">{currentExerciseName}</h3>
+                <button
+                  onClick={() => setShowGifModal(false)}
+                  className="absolute top-3 right-3 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+              <div className="p-4 flex items-center justify-center bg-slate-50 min-h-[200px]">
+                {gifLoading && (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+                    <span className="text-sm text-slate-400">Loading...</span>
+                  </div>
+                )}
+                {gifError && (
+                  <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <span className="text-sm">Image not available</span>
+                  </div>
+                )}
+                <img
+                  src={currentGifUrl}
+                  alt={currentExerciseName}
+                  className={`max-h-[60vh] rounded-xl shadow-lg ${gifLoading || gifError ? 'hidden' : ''}`}
+                  onLoad={() => setGifLoading(false)}
+                  onError={() => { setGifLoading(false); setGifError(true); }}
+                />
               </div>
             </motion.div>
           </motion.div>

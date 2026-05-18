@@ -176,6 +176,12 @@ CONSTRAINTS (STRICT — MUST FOLLOW):
 - Distribute training days logically across the week (no clustering all in a row unless necessary)
 - Include variety: Strength, Cardio, Mixed, Yoga (if appropriate)
 - Recovery days must NOT include exercises
+- EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING):
+  1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
+  2. AVOID overly complex names. Use "Dumbbell Row" instead of "Bent-Over Dumbbell Rows".
+  3. For Cardio, strictly use standard names like: "Treadmill", "Cycling", "Jump Rope", "Burpee".
+  4. For Yoga/Recovery, use basic poses: "Plank", "Crunch", "Sit up".
+
 
 OUTPUT REQUIREMENTS:
 - Always return exactly 7 sessions (one per day)

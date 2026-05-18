@@ -9,6 +9,8 @@ export interface Exercise {
   restSeconds?: number;
   equipment?: string;
   muscleGroup?: string;
+  gifUrl?: string;
+  exerciseId?: string;
 }
 
 export interface WorkoutSession {

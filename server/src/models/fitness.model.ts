@@ -6,11 +6,13 @@ interface IExercise {
   reps: string;
   durationMin?: number;
   isCompleted?: boolean;
+  exerciseId?: string; 
+  gifUrl?: string; // لازم يكون حرف الـ U كابيتال
 }
 
 interface IWorkoutSession {
-  _id?: Types.ObjectId; // explicitly defining to allow session matching
-  dayOfWeek: string; // "Mon", "Tue"
+  _id?: Types.ObjectId;
+  dayOfWeek: string;
   date: Date;
   type: 'Strength' | 'Cardio' | 'Yoga' | 'Mixed' | 'Recovery';
   name: string;
@@ -35,6 +37,8 @@ const ExerciseSchema = new Schema<IExercise>({
   reps: { type: String },
   durationMin: { type: Number },
   isCompleted: { type: Boolean, default: false },
+  exerciseId: { type: String }, 
+  gifUrl: { type: String }, // لازم يكون حرف الـ U كابيتال
 });
 
 const WorkoutSessionSchema = new Schema<IWorkoutSession>({
