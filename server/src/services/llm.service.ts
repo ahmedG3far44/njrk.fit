@@ -98,34 +98,23 @@ const MAX_RETRIES = 2;
 const callLLMWithRecovery = async <T>(
   prompt: string,
   schema: z.ZodSchema<T>,
+  contextValidator?: (data: T) => void,
 ): Promise<T> => {
   let lastError: any;
-
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const raw = await callOpenRouter(prompt);
       const parsed = extractJSON(raw!);
-
       const normalized = normalizeLLMOutput(parsed);
-
-      return schema.parse(normalized);
+      const data = schema.parse(normalized);
+      if (contextValidator) contextValidator(data);
+      return data;
     } catch (err: any) {
       lastError = err;
-
-      // retry with correction prompt
-      prompt = `
-The previous response was invalid JSON or didn't match schema.
-
-ERROR:
-${err.message}
-
-Fix it and return ONLY valid JSON matching this schema:
-
-${schema.toString()}
-`;
+      // On failure, retry with a correction prompt telling the LLM about the schema error
+      prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schema.toString()}`;
     }
   }
-
   throw lastError;
 };
 
@@ -236,6 +225,8 @@ const generateMealPlanPrompt = (
     ? `Dietary restrictions: ${user.dietaryRestrictions}`
     : "";
   const totalItemsPerDay = mealsCount + snacksCount;
+  const totalMeals = mealsCount * 7;
+  const totalSnacks = snacksCount * 7;
   const favFoods = favoriteFoods?.length
     ? `Favorite foods (incorporate these where possible): ${favoriteFoods.join(", ")}`
     : "";
@@ -258,27 +249,35 @@ USER DIETARY CONTEXT:
 - Christian fasting: ${user?.isFasting ?? false}
 ${favFoods ? `\n${favFoods}` : ""}
 
-STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
+STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
+
+⚠️ CRITICAL — ITEM COUNT (HIGHEST PRIORITY):
+   - Generate EXACTLY ${totalItemsPerDay} items per day × 7 days = ${totalItemsPerDay * 7} total items
+   - Each day MUST have exactly: ${mealsCount} meals + ${snacksCount} snacks
+   - Total: ${totalMeals} meals + ${totalSnacks} snacks over the entire week
+   - Set "mealType": "meal" for meals and "mealType": "snack" for snacks
+   - THIS RULE OVERRIDES ALL OTHERS. If you must choose between item count and any other rule, preserve the item count.
+
 1. CALORIES & MACROS:
    - Each day MUST total ~${calories} kcal (±50 kcal)
-   - Distribute calories across ${totalItemsPerDay} items: ${mealsCount} meals + ${snacksCount} snacks
+   - Distribute calories across ${totalItemsPerDay} items
    - Meals should be larger (approx 70-80% of daily calories), snacks lighter (20-30%)
    - Adjust macro distribution based on goal:
      - lose_weight → higher protein, moderate fats, lower carbs
      - gain_weight → higher carbs + protein
      - balance_weight → balanced macros
 
-2. ALLERGIES(CRITICAL):
+2. ALLERGIES (CRITICAL):
    - NEVER include any ingredient listed in allergies
    - If common protein sources are restricted, substitute with safe alternatives
-   - Adapt macro sources intelligently(e.g., legumes, plant protein, fish if allowed)
+   - Adapt macro sources intelligently (e.g., legumes, plant protein, fish if allowed)
 
-3. RELIGION RULES(CRITICAL):
+3. RELIGION RULES (CRITICAL):
    - If religion = "muslim":
      - STRICTLY FORBIDDEN: pork, alcohol, any non-halal ingredients
    - If religion = "christian" AND isFasting = true:
-     - STRICTLY FORBIDDEN: ALL animal products(meat, chicken, fish, eggs, dairy, cheese, milk, butter)
-     - Meals MUST be 100% plant-based(vegan)
+     - STRICTLY FORBIDDEN: ALL animal products (meat, chicken, fish, eggs, dairy, cheese, milk, butter)
+     - Meals MUST be 100% plant-based (vegan)
 
 4. FOOD QUALITY:
    - Use realistic, culturally neutral meals
@@ -286,14 +285,11 @@ STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
    - Avoid repeating the same meal more than twice in the week
 
 5. STRUCTURE:
-   - EXACTLY ${totalItemsPerDay} items per day × 7 days = ${totalItemsPerDay * 7} total items
-   - ${mealsCount} meals + ${snacksCount} snacks per day
    - Meal times (approximate):
      - Breakfast → "08:00 AM"
      - Lunch → "12:30 PM"
      - Dinner → "07:00 PM"
      ${snacksCount > 0 ? `- Snacks → "10:30 AM", "03:30 PM" (distribute snacks across day)` : ""}
-   - Each item MUST include: "mealType": "meal" for meals, "mealType": "snack" for snacks
 
 6. INGREDIENT EFFICIENCY (CRITICAL FOR PERFORMANCE):
    - ONLY include substantial ingredients with meaningful nutritional value
@@ -304,6 +300,10 @@ STRICT RULES(MUST FOLLOW — NO EXCEPTIONS):
 7. RECOVERY / DIGESTION BALANCE:
    - Distribute heavy vs light meals properly
    - Avoid overly heavy dinners for weight loss goal
+
+⚠️ REMINDER — COUNT YOUR OUTPUT:
+- You MUST output EXACTLY ${totalItemsPerDay * 7} total items (${totalMeals} meals + ${totalSnacks} snacks)
+- Verify your count before responding. Wrong count will be rejected.
 
 OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
 {
@@ -342,8 +342,21 @@ export const generateMealPlan = async (
   favoriteFoods: string[] = [],
 ): Promise<MealPlanResponse> => {
   const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods);
+  const totalMeals = mealsCount * 7;
+  const totalSnacks = snacksCount * 7;
 
-  return callLLMWithRecovery(prompt, mealPlanResponseSchema);
+  return callLLMWithRecovery(prompt, mealPlanResponseSchema, (data) => {
+    const mealCount = data.meals.filter((m) => m.mealType === "meal").length;
+    const snackCount = data.meals.filter((m) => m.mealType === "snack").length;
+    if (mealCount !== totalMeals || snackCount !== totalSnacks) {
+      throw new Error(
+        `Count mismatch: expected ${totalMeals} meals + ${totalSnacks} snacks ` +
+        `(= ${mealsCount} meals + ${snacksCount} snacks per day for 7 days) ` +
+        `but got ${mealCount} meals + ${snackCount} snacks. ` +
+        `Regenerate with EXACTLY ${mealsCount} meals and ${snacksCount} snacks per day.`,
+      );
+    }
+  });
 };
 
 export const generateWorkoutPlan = async (
@@ -455,6 +468,7 @@ const callOpenRouter = async (prompt: string) => {
 
   const completion = await openrouter.chat.completions.create({
     model: "qwen/qwen3-vl-32b-instruct",
+    max_tokens: 12000,
     temperature: 0.2, // reduce randomness
     messages: [
       {

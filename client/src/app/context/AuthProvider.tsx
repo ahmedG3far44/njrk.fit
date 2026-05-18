@@ -59,7 +59,7 @@ export interface OnboardingData {
   userGoal: 'lose_weight' | 'gain_weight' | 'maintain_weight';
   targetWeight: number;
   fitnessGoal: string;
-  medicalDocuments?: string[];
+  goalDate?: string;
 }
 
 interface AuthContextValue {
@@ -140,7 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Auto check-in on session load
       try {
-        await gamificationService.checkIn();
+        console.log("Auto check-in on session load");
+        const checkinResponse = await gamificationService.checkIn();
+        console.log("Auto check-in response:", checkinResponse);
       } catch (checkInError) {
         console.error('Auto check-in failed on session load:', checkInError);
       }

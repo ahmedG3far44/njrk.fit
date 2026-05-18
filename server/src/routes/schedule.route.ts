@@ -6,7 +6,7 @@ import WeeklyFitnessPlan from '../models/fitness.model';
 const router = Router();
 
 interface TimelineItem {
-    type: 'meal' | 'workout';
+    type: 'meal' | 'snack' | 'workout';
     id: string;
     name: string;
     time: string;
@@ -62,29 +62,6 @@ router.get('/', authMiddleware, async (req, res, next) => {
             userId
         });
 
-        const currentDayWorkout = workoutPlan?.sessions.find(
-            (session: any) => session.dayOfWeek === targetDayName
-        );
-
-
-        const dayIndex = (new Date().getDay() + 1).toString();
-
-        console.log("dayIndex", dayIndex);
-
-        const currentDayNutrition = nutritionPlan?.meals.filter(
-            (meal: any) => meal.day === "Day " + dayIndex
-        );
-        console.log("currentDayWorkout", currentDayWorkout);
-        console.log("currentDayNutrition", currentDayNutrition);
-
-        // res.json({
-        //     currentDayWorkout,
-        //     currentDayNutrition
-        // })
-
-
-
-
 
         const timeline: TimelineItem[] = [];
 
@@ -101,7 +78,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
 
             mealsForDay.forEach((meal: any) => {
                 timeline.push({
-                    type: 'meal',
+                    type: meal.mealType === 'snack' ? 'snack' : 'meal',
                     id: meal._id?.toString() || Math.random().toString(),
                     name: meal.name,
                     time: meal.time,
@@ -109,6 +86,8 @@ router.get('/', authMiddleware, async (req, res, next) => {
                         macros: meal.macros,
                         ingredients: meal.ingredients,
                         instructions: meal.instructions,
+                        mealType: meal.mealType,
+                        isCompleted: meal.isCompleted ?? false,
                     },
                 });
             });
@@ -150,7 +129,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
 
         res.json({
             date: date.toISOString().split('T')[0],
-            timeline: [...currentDayNutrition || [], currentDayWorkout || []]
+            timeline,
         });
 
     } catch (error) {
@@ -165,6 +144,7 @@ router.patch('/:itemId/complete', authMiddleware, async (req: Request, res: Resp
         const { itemId } = req.params;
         const { isCompleted } = req.body;
 
+        // Try workout session first
         const workoutPlan = await WeeklyFitnessPlan.findOne({ userId });
 
         if (workoutPlan) {
@@ -175,6 +155,20 @@ router.patch('/:itemId/complete', authMiddleware, async (req: Request, res: Resp
                     await workoutPlan.save();
                     return res.status(200).json({ success: true });
                 }
+            }
+        }
+
+        // Try meal/snack in nutrition plan
+        const nutritionPlan = await NutritionPlan.findOne({ userId });
+
+        if (nutritionPlan) {
+            const meal = (nutritionPlan.meals as any[]).find(
+                (m: any) => m._id?.toString() === itemId
+            );
+            if (meal) {
+                meal.isCompleted = isCompleted;
+                await nutritionPlan.save();
+                return res.status(200).json({ success: true });
             }
         }
 

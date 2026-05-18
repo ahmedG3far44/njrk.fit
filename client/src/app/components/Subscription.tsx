@@ -221,7 +221,7 @@ export const Subscription: React.FC = () => {
 
   const isPaidTier = ['PRO', 'FAMILY'].includes(currentTier ?? '');
   const showCancelButton = isPaidTier;
-  const isFamilyPlan = currentTier === 'PRO';
+  const isFamilyPlan = currentTier === 'FAMILY';
   const isCanceled = subscriptionStatus?.cancelAtPeriodEnd;
   const isPastDue = subscriptionStatus?.status === 'past_due';
 
@@ -456,20 +456,32 @@ export const Subscription: React.FC = () => {
       )}
 
       {/* Upgrade header */}
-      <div className="pt-4 text-center">
-        <h2 className="text-xl font-bold text-slate-900">
-          {isPaidTier ? 'Upgrade your plan' : 'Choose your plan'}
-        </h2>
+      {isFamilyPlan ? (
+        <div className="pt-4 text-center">
+          <h2 className="text-xl font-bold text-slate-900">
+            Manage Your Family Plan
+          </h2>
+          <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+            Manage your family members and their subscriptions.
+          </p>
+        </div>
+      ) : (
+        <div className="pt-4 text-center">
+          <h2 className="text-xl font-bold text-slate-900">
+            {isPaidTier ? 'Upgrade your plan' : 'Choose your plan'}
+          </h2>
         <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
           {isPaidTier
             ? `You are on the ${currentPlan.name} plan. Unlock more features with a higher tier.`
             : 'Unlock AI-powered meal plans, advanced analytics, and exclusive workouts.'}
         </p>
-      </div>
+      </div >
+      )
+     }
 
-      {/* Plan grid */}
-      <PricingSection availablePlans={availablePlans} isFamilyPlan={isFamilyPlan} subscribing={subscribing} handleSubscribe={handleSubscribe} />
-    </div>
+{/* Plan grid */ }
+<PricingSection availablePlans={availablePlans} isFamilyPlan={isFamilyPlan} subscribing={subscribing} handleSubscribe={handleSubscribe} />
+    </div >
   );
 };
 

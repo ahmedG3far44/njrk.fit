@@ -23,6 +23,7 @@ export interface IUser extends Document {
   targetWeight?: number;
   activityLevel?: ActivityLevel;
   fitnessGoals: string;
+  goalDate?: string;
   dietaryRestrictions: string[];
   equipment?: string[];
   allergies?: string[];
@@ -35,6 +36,7 @@ export interface IUser extends Document {
     currentPeriodEnd?: Date;
     cancelAtPeriodEnd?: boolean;
     subscriptionTier: 'BASIC' | 'PRO' | 'FAMILY';
+    paidPriceId?: string;
   };
   currentStreak: number;
   longestStreak: number;
@@ -92,6 +94,7 @@ const UserSchema = new Schema<IUser>({
     default: 'moderate'
   },
   fitnessGoals: { type: String },
+  goalDate: { type: String },
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
 

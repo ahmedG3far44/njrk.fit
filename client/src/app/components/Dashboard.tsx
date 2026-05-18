@@ -64,7 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
   });
 
   const [aiTip, setAiTip] = useState({
-    content: '',
+    content: 'Logging breakfast before 9am correlates with higher daily energy. Try it tomorrow.',
   });
 
   const [loading, setLoading] = useState({
@@ -109,8 +109,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           });
         }
       }
-    } catch (error) {
-      console.error('Failed to fetch nutrition data:', error);
+    } catch (_error) {
     } finally {
       setLoading(prev => ({ ...prev, nutrition: false }));
     }
@@ -133,8 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           });
         }
       }
-    } catch (error) {
-      console.error('Failed to fetch fitness data:', error);
+    } catch (_error) {
     } finally {
       setLoading(prev => ({ ...prev, fitness: false }));
     }
@@ -194,8 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           },
         ]);
       }
-    } catch (error) {
-      console.error('Failed to fetch gamification data:', error);
+    } catch (_error) {
     } finally {
       setLoading(prev => ({ ...prev, gamification: false }));
     }
@@ -218,8 +215,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       >
         <div>
 
-          <h1 className="text-3xl font-bold text-slate-900">
-            Good Morning, {user?.name || 'Friend'}! ☀️
+          <h1 className="text-3xl font-bold text-slate-900 leading-tight">
+            Good morning, {user?.name || 'friend'}.
           </h1>
           <p className="text-slate-500 mt-1">
             {streakData.currentStreak > 0 ? (
@@ -237,13 +234,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         </div>
 
         {/* Scan Meal CTA */}
-        <motion.button
+        <button
           onClick={onOpenCam}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          className="flex items-center gap-3 bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-3 rounded-2xl font-bold shadow-xl shadow-green-200/60 transition-all relative overflow-hidden group"
+          className="flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-xl font-bold transition-colors duration-200"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
             <Camera className="w-5 h-5" />
           </div>
@@ -252,7 +246,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
             <div className="text-sm font-bold">Scan Meal</div>
           </div>
           <ScanLine className="w-5 h-5 ml-1 opacity-70" />
-        </motion.button>
+        </button>
       </motion.div>
 
       {/* ── Streak Banner ── */}
@@ -268,13 +262,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           <div className="absolute right-0 top-0 bottom-0 w-2/5 bg-gradient-to-l from-orange-50/80 to-transparent pointer-events-none" />
 
           <div className="relative z-10 flex items-center gap-4">
-            <motion.div
-              animate={{ scale: [1, 1.12, 1] }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-              className="w-14 h-14 flex items-center justify-center"
-            >
+            <div className="w-14 h-14 flex items-center justify-center">
               <span className="text-4xl">🔥</span>
-            </motion.div>
+            </div>
             <div>
               <div className="flex items-baseline gap-2 mb-0.5">
                 <span className="text-4xl font-black text-slate-900">{streakData.currentStreak || '-'}</span>
@@ -304,7 +294,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
             key={v.label}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.06, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between mb-2">
@@ -319,7 +309,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${v.progress}%` }}
-                transition={{ delay: 0.3 + i * 0.08, duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+                transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
                 className={`h-full ${v.progressColor} rounded-full`}
               />
             </div>
@@ -331,7 +321,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         onClick={() => onChangeView('nutrition')}
         className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
       >
@@ -367,7 +357,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min((n.current / n.target) * 100, 100)}%` }}
-                  transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                  transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                   className={`h-full ${n.color} rounded-full`}
                 />
               </div>
@@ -375,30 +365,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           ))}
         </div>
       </motion.div>
-
-      {/* ── Upcoming Meal + Next Workout ── */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Upcoming Meal */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('nutrition')}
-          className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
+          className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 group relative"
         >
           <div className="relative h-36 bg-slate-100">
             {upcomingMeal.image ? (
               <img
                 src={upcomingMeal.image}
                 alt={upcomingMeal.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="absolute hover:scale-105 w-full h-full object-cover transition-transform duration-500"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+              <div className="absolute flex items-center justify-center bg-slate-100">
                 <Utensils className="w-12 h-12 text-slate-300" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
+            <div className="absolute bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
             {upcomingMeal.time && (
               <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-green-800 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                 <Clock className="w-3 h-3" /> {upcomingMeal.time}
@@ -430,7 +418,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('fitness')}
           className="bg-gradient-to-br from-green-800 to-green-700 rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
         >
@@ -445,11 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-green-200 uppercase tracking-wider">Next Workout</span>
-                <motion.span
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="w-1.5 h-1.5 bg-green-400 rounded-full"
-                />
+                <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
               </div>
             </div>
 
@@ -476,7 +460,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-white font-bold group-hover:gap-3 transition-[gap] duration-200">
+            <div className="flex items-center gap-2 text-white font-bold group-hover:translate-x-0.5 transition-transform duration-200">
               <span>View Routine</span>
               <ArrowRight className="w-4 h-4" />
             </div>
@@ -490,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('community')}
           className="group relative h-44 rounded-3xl overflow-hidden cursor-pointer"
         >
@@ -515,7 +499,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('grocery')}
           className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
         >
@@ -529,17 +513,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
             <ChevronRight className="w-4 h-4 text-slate-200 group-hover:text-green-600 transition-colors" />
           </div>
           <h3 className="font-bold text-slate-900 mb-1">Shopping List</h3>
-          <p className="text-slate-400 text-xs mb-3">
-            {groceryProgress.total - groceryProgress.checked} items remaining this week
-          </p>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${groceryProgress.total > 0 ? (groceryProgress.checked / groceryProgress.total) * 100 : 0}%` }}
-              transition={{ delay: 0.5, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-              className="h-full bg-emerald-500 rounded-full"
-            />
-          </div>
+          {groceryProgress.total > 0 ? (
+            <>
+              <p className="text-slate-400 text-xs mb-3">
+                {groceryProgress.total - groceryProgress.checked} items remaining this week
+              </p>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(groceryProgress.checked / groceryProgress.total) * 100}%` }}
+                  transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                  className="h-full bg-emerald-500 rounded-full"
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-400">
+                  {groceryProgress.checked} of {groceryProgress.total} checked
+                </p>
+                <p className="text-xs font-bold text-emerald-600">
+                  {Math.round((groceryProgress.checked / groceryProgress.total) * 100)}%
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="text-slate-400 text-xs">No items yet. Check your nutrition plan.</p>
+          )}
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-slate-400">
               {groceryProgress.checked} of {groceryProgress.total} checked
@@ -554,7 +552,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.42, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView('streaks')}
           className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.015] transition-transform duration-200 relative overflow-hidden group"
         >
@@ -576,7 +574,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pointsData.nextReward > 0 ? (pointsData.current / pointsData.nextReward) * 100 : 0}%` }}
-                transition={{ delay: 0.6, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                 className="h-full bg-white rounded-full"
               />
             </div>
@@ -591,7 +589,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            transition={{ delay: 0.45, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             className="bg-gradient-to-r from-slate-900 to-green-900 rounded-3xl p-6 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-green-600/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -604,11 +602,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-bold text-green-300 uppercase tracking-wider">AI Daily Insight</span>
-                  <motion.span
-                    animate={{ opacity: [1, 0.35, 1] }}
-                    transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-                    className="w-1.5 h-1.5 bg-green-400 rounded-full"
-                  />
+                  <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
                 </div>
                 <p className="text-white/90 text-sm leading-relaxed">
                   {aiTip.content}

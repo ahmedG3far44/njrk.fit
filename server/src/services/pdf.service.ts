@@ -65,6 +65,15 @@ export const generatePDF = (
     stream.on('error', reject);
     doc.pipe(stream);
 
+    // ── Auto-draw compact header on continuation pages ──────────────────────
+    let pageCount = 0;
+    doc.on('pageAdded', () => {
+      pageCount++;
+      if (pageCount > 1) {
+        drawPageHeader(doc, type);
+      }
+    });
+
     // ── Render body ─────────────────────────────────────────────────────────
     drawHeader(doc, user, type, logoPath);
     drawDivider(doc);
@@ -82,9 +91,6 @@ export const generatePDF = (
         break;
     }
 
-    // ── Footer pass ─────────────────────────────────────────────────────────
-    // FIX: Use doc.bufferedPageRange() BEFORE flushPages/end.
-    // Never call doc.addPage() after this point — only switchToPage + drawFooter.
     const range = doc.bufferedPageRange();
     const totalPages = range.count;
 
@@ -93,10 +99,6 @@ export const generatePDF = (
       drawFooter(doc, i + 1, totalPages);
     }
 
-    // FIX: flushPages() releases the buffered pages to the stream without
-    // adding a new blank page, which is what doc.end() alone would do after
-    // switchToPage() calls when bufferPages=true.
-    doc.flushPages();
     doc.end();
   });
 };
@@ -150,6 +152,28 @@ function drawBrandText(doc: PDFKit.PDFDocument, x: number, y: number) {
     .text('Njerka', x, y, { continued: true })
     .fillColor(BRAND.accent)
     .text('.fit');
+}
+
+function drawPageHeader(doc: PDFKit.PDFDocument, type: 'grocery' | 'workout' | 'meal') {
+  doc.save()
+    .rect(0, 0, PAGE.width, 28)
+    .fill(BRAND.primary)
+    .restore();
+
+  doc.font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor(BRAND.white)
+    .text('Njerka.fit', PAGE.margins.left, 6);
+
+  doc.font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor(BRAND.white)
+    .text(getPDFTitle(type), PAGE.margins.left, 6, {
+      width: CONTENT_WIDTH,
+      align: 'right',
+    });
+
+  doc.y = 38;
 }
 
 // ─── Footer ──────────────────────────────────────────────────────────────────
@@ -248,29 +272,33 @@ function drawTable(
   const tableWidth = columns.reduce((s, c) => s + c.width, 0);
   const startX = PAGE.margins.left;
 
-  // ── Header row ──
-  ensureSpace(doc, rowHeight + 6);
-  let x = startX;
-  const headerY = doc.y;
+  const drawHeaderRow = () => {
+    ensureSpace(doc, rowHeight + 6);
+    let x = startX;
+    const hdrY = doc.y;
 
-  doc.save()
-    .rect(startX, headerY, tableWidth, rowHeight)
-    .fill(BRAND.tableHeader)
-    .restore();
+    doc.save()
+      .rect(startX, hdrY, tableWidth, rowHeight)
+      .fill(BRAND.tableHeader)
+      .restore();
 
-  columns.forEach((col) => {
-    doc.font('Helvetica-Bold')
-      .fontSize(9)
-      .fillColor(BRAND.white)
-      .text(col.header, x + 5, headerY + 7, {
-        width: col.width - 10,
-        align: col.align ?? 'left',
-        lineBreak: false,
-      });
-    x += col.width;
-  });
+    columns.forEach((col) => {
+      doc.font('Helvetica-Bold')
+        .fontSize(9)
+        .fillColor(BRAND.white)
+        .text(col.header, x + 5, hdrY + 7, {
+          width: col.width - 10,
+          align: col.align ?? 'left',
+          lineBreak: false,
+        });
+      x += col.width;
+    });
 
-  doc.y = headerY + rowHeight;
+    doc.y = hdrY + rowHeight;
+  };
+
+  // ── Draw initial header row ──
+  drawHeaderRow();
 
   // ── Data rows ──
   rows.forEach((row, rowIdx) => {
@@ -290,7 +318,14 @@ function drawTable(
     });
     const cellHeight = Math.max(rowHeight, maxLines * 11 + 8);
 
+    const pageBefore = doc.bufferedPageRange().count;
     ensureSpace(doc, cellHeight);
+
+    // Redraw table header if a page break occurred
+    if (doc.bufferedPageRange().count > pageBefore) {
+      drawHeaderRow();
+    }
+
     const actualY = doc.y;
 
     doc.save()
@@ -306,7 +341,7 @@ function drawTable(
       .stroke()
       .restore();
 
-    x = startX;
+    let x = startX;
     row.forEach((cell, ci) => {
       const col = columns[ci];
       if (!col) return;
@@ -420,6 +455,7 @@ function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
           .text('Ingredients:', PAGE.margins.left + 10, doc.y + 2, { width: CONTENT_WIDTH - 10 });
 
         meal.ingredients.forEach((ing) => {
+          ensureSpace(doc, 12);
           const label = `  \u2022 ${ing.name}${ing.quantity ? ' - ' + ing.quantity : ''}${ing.unit ? ' ' + ing.unit : ''}`;
           doc.font('Helvetica')
             .fontSize(8.5)

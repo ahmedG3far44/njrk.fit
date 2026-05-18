@@ -389,6 +389,8 @@ export const Nutrition: React.FC = () => {
 
 
 
+  const isNoPlan = currentMeals.length === 0 && !isLoadingMeals && !isGenerating;
+
   return (
     <div className="space-y-6 relative">
       <AnimatePresence>
@@ -612,7 +614,7 @@ export const Nutrition: React.FC = () => {
             <p className="text-slate-500 text-sm">AI-optimized meal plans for your goals.</p>
           </div>
 
-          {
+          {!isNoPlan && (
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {
                 !isGenerating && <>
@@ -686,7 +688,7 @@ export const Nutrition: React.FC = () => {
 
               {
                 !isGenerating && <button
-                  onClick={() => window.open(`${API_URL}/nutrition/export/pdf`, '_blank')}
+                  onClick={() => window.open(`${API_URL}/export/nutrition/pdf`, '_blank')}
                   disabled={generationLock.canGenerate}
                   className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
                   title="Export PDF"
@@ -695,12 +697,11 @@ export const Nutrition: React.FC = () => {
                   <span className="hidden sm:inline">PDF</span>
                 </button>
               }
-            </div>
-          }
+              </div>
+          )}
         </div>
 
-        {
-          !isGenerating && <AnimatePresence>
+        {!isNoPlan && !isGenerating && <AnimatePresence>
             {isFamilyMode && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
@@ -788,7 +789,7 @@ export const Nutrition: React.FC = () => {
             <>
 
               {
-                nutritionPlan?.targetMacros.calories !== 0 && <motion.div
+                !isNoPlan && nutritionPlan?.targetMacros.calories !== 0 && <motion.div
                   key={activeProfileId}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}

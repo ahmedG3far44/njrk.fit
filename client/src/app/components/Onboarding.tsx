@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowRight, ArrowLeft, Check, Upload, Shield, Sparkles, User,
-  Calendar, Ruler, Scale, Heart, FileText, Target, ChefHat, Activity
+  ArrowRight, ArrowLeft, Check, Sparkles, User,
+  Calendar, Ruler, Scale, Heart, Target, ChefHat, Activity
 } from 'lucide-react';
 import { useAuth, OnboardingData } from '../context/AuthProvider';
 import { toast } from 'sonner';
@@ -11,8 +11,8 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-const STEP_ICONS = [User, Heart, Activity, FileText, Target];
-const STEP_LABELS = ['The Basics', 'Personalization', 'Medical & Activity', 'Medical Vault', 'Your Goal'];
+const STEP_ICONS = [User, Heart, Activity, Target];
+const STEP_LABELS = ['The Basics', 'Personalization', 'Health & Activity', 'Your Goal'];
 
 const FOOD_PREFERENCES = [
   { category: 'Proteins', items: ['Chicken', 'Beef', 'Fish', 'Eggs', 'Tofu', 'Lentils', 'Beans'] },
@@ -32,10 +32,10 @@ interface FormData {
   allergies: string[];
   customAllergy: string;
   activityLevel: string;
-  medicalFiles: string[];
   dreamGoal: string;
   targetWeight: number;
   goal: string;
+  goalDate: string;
 }
 
 interface FormErrors {
@@ -50,13 +50,13 @@ interface FormErrors {
   goal?: string;
   targetWeight?: string;
   dreamGoal?: string;
+  goalDate?: string;
 }
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const { completeOnboarding, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
@@ -70,10 +70,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     allergies: [],
     customAllergy: '',
     activityLevel: '',
-    medicalFiles: [],
     dreamGoal: '',
     targetWeight: 0,
     goal: '',
+    goalDate: '',
   });
 
   const update = (fields: Partial<FormData>) =>
@@ -116,7 +116,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       if (!formData.activityLevel) newErrors.activityLevel = 'Please select your activity level';
     }
 
-    if (currentStep === 4) {
+    if (currentStep === 3) {
       if (!formData.goal) newErrors.goal = 'Please select your main goal';
       if (!formData.targetWeight) newErrors.targetWeight = 'Please enter your target weight';
       if (formData.goal === 'lose_weight' && formData.targetWeight >= formData.weight) {
@@ -126,6 +126,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         newErrors.targetWeight = 'Target weight must be greater than current weight';
       }
       if (formData.dreamGoal.length < 10) newErrors.dreamGoal = 'Please describe your goal in at least 10 characters';
+      if (!formData.goalDate) newErrors.goalDate = 'Please set a target date for your goal';
     }
 
     setErrors(newErrors);
@@ -136,8 +137,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     if (step === 0) return formData.name && formData.age && formData.gender && formData.height && formData.weight;
     if (step === 1) return formData.religion;
     if (step === 2) return formData.activityLevel;
-    if (step === 3) return true;
-    if (step === 4) return formData.goal && formData.targetWeight && formData.dreamGoal.length >= 10;
+    if (step === 3) return formData.goal && formData.targetWeight && formData.dreamGoal.length >= 10 && formData.goalDate;
     return true;
   };
 
@@ -170,11 +170,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < 3) setStep(step + 1);
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(4)) return;
+    if (!validateStep(3)) return;
 
     setIsSubmitting(true);
 
@@ -194,6 +194,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       userGoal: mapGoal(formData.goal),
       targetWeight: formData.targetWeight,
       fitnessGoal: formData.dreamGoal,
+      goalDate: formData.goalDate,
     };
 
     console.log("onboarding data", onboardingData);
@@ -214,7 +215,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const handleNavigation = () => {
     if (!validateStep(step)) return;
 
-    if (step === 4) {
+    if (step === 3) {
       handleSubmit();
     } else {
       handleNext();
@@ -438,79 +439,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
       case 3:
         return (
-          <div className="space-y-5">
-            <div
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={e => {
-                e.preventDefault();
-                setDragOver(false);
-                const files = Array.from(e.dataTransfer.files).map(f => f.name);
-                update({ medicalFiles: [...formData.medicalFiles, ...files] });
-              }}
-              className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${dragOver ? 'border-green-600 bg-green-50' : 'border-slate-300 hover:border-green-500 hover:bg-slate-50'
-                }`}
-            >
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-transform group-hover:scale-110 ${dragOver ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
-                <Upload className="w-8 h-8" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">
-                {dragOver ? 'Drop your files here' : 'Drag & Drop Medical Files'}
-              </h3>
-              <p className="text-sm text-slate-400 mb-4">
-                Blood work, InBody scans, lab reports — PDFs or images up to 10MB
-              </p>
-              <label className="cursor-pointer">
-                <span className="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors inline-block">
-                  Browse Files
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.png,.jpg,.jpeg"
-                  className="hidden"
-                  onChange={e => {
-                    const files = Array.from(e.target.files || []).map(f => f.name);
-                    update({ medicalFiles: [...formData.medicalFiles, ...files] });
-                  }}
-                />
-              </label>
-            </div>
-
-            {formData.medicalFiles.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-slate-700">Uploaded Files:</p>
-                {formData.medicalFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
-                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-sm text-slate-700 font-medium">{f}</span>
-                    <div className="ml-auto text-xs text-green-600 font-bold">Ready</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="bg-blue-50 p-4 rounded-xl flex gap-3 items-start">
-              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-blue-800">
-                <strong>Your data is encrypted.</strong> Medical records are used solely for generating safe, personalized recommendations. We scan for iron, cholesterol, and vitamin levels.
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => update({ medicalFiles: ['skipped'] })}
-              className="w-full py-3 text-slate-400 font-medium hover:text-slate-600 text-sm transition-colors"
-            >
-              Skip for now — I'll upload later
-            </button>
-          </div>
-        );
-
-      case 4:
-        return (
           <div className="space-y-6">
             <div className='grid grid-cols-2 gap-3'>
               <div className="space-y-2">
@@ -558,6 +486,21 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               {errors.dreamGoal && <p className="text-red-500 text-xs">{errors.dreamGoal}</p>}
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-green-700" /> Target Date
+              </label>
+              <p className="text-xs text-slate-400">When do you want to achieve this goal?</p>
+              <input
+                type="date"
+                value={formData.goalDate}
+                onChange={(e) => { update({ goalDate: e.target.value }); clearError('goalDate'); }}
+                min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                className={`w-full px-4 py-4 rounded-xl border outline-none transition-all text-sm text-slate-700 ${errors.goalDate ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
+              />
+              {errors.goalDate && <p className="text-red-500 text-xs">{errors.goalDate}</p>}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               {[
                 'Lose weight without starving',
@@ -594,7 +537,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <motion.div
             className="h-full bg-gradient-to-r from-green-800 to-green-600"
             initial={{ width: 0 }}
-            animate={{ width: `${((step + 1) / 5) * 100}%` }}
+            animate={{ width: `${((step + 1) / 4) * 100}%` }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           />
         </div>
@@ -620,14 +563,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           {/* Header */}
           <div className="mb-7">
             <div className="text-sm font-bold text-green-700 uppercase tracking-wider mb-2">
-              Step {step + 1} of 5
+              Step {step + 1} of 4
             </div>
             <h1 className="text-2xl font-bold text-slate-900">
               {[
                 `Welcome! Let's get the basics.`,
                 'Personalize your experience.',
-                'Medical info & fitness level.',
-                'Medical Vault (Optional).',
+                'Allergies & fitness level.',
                 "What's your dream?"
               ][step]}
             </h1>
@@ -636,7 +578,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 'We need this to calculate your precise caloric and nutritional needs.',
                 'This helps our AI respect your lifestyle and cultural preferences.',
                 'Used to generate safe meal plans and accurate caloric targets.',
-                'Upload medical records for deeper AI health analysis.',
                 'Tell our AI about your ultimate health vision. Be as specific as possible.'
               ][step]}
             </p>
@@ -677,7 +618,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             >
               {isProcessing ? (
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-              ) : step === 4 ? (
+              ) : step === 3 ? (
                 <>Complete Onboarding <Sparkles className="w-5 h-5" /></>
               ) : (
                 <>Next <ArrowRight className="w-5 h-5" /></>

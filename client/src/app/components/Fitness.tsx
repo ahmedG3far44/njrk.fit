@@ -727,7 +727,7 @@ export const Fitness: React.FC = () => {
           <p className="text-slate-500">Your AI-personalized training schedule.</p>
         </div>
 
-        {
+        {hasPlan && (
           <div className="flex items-center gap-3 flex-wrap">
             {
               !isGenerating && (
@@ -785,7 +785,7 @@ export const Fitness: React.FC = () => {
 
             {
               !isGenerating && <button
-                onClick={() => window.open(`${API_URL}/fitness/export/pdf`, '_blank')}
+                onClick={() => window.open(`${API_URL}/export/fitness/pdf`, '_blank')}
                 disabled={!hasPlan}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Export PDF"
@@ -795,7 +795,7 @@ export const Fitness: React.FC = () => {
               </button>
             }
           </div>
-        }
+        )}
       </div>
       {
         isGenerating ? <FitnessPlanLoader /> : (

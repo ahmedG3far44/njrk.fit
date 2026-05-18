@@ -408,32 +408,6 @@ router.post(
   },
 );
 
-router.get(
-  "/export/pdf",
-  authMiddleware,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as AuthRequest).user?.userId;
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const [user, nutritionPlan] = await Promise.all([
-        User.findById(userId),
-        NutritionPlan.findOne({ userId }).sort({ createdAt: -1 }),
-      ]);
-
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if (!nutritionPlan)
-        return res.status(404).json({ message: "No nutrition plan found, create a meal plan first" });
-
-      const pdfBuffer = await generatePDF("meal", nutritionPlan, user);
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", 'attachment; filename="meal-plan.pdf"');
-      res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
 
 export default router;

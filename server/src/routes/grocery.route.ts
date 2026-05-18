@@ -312,11 +312,16 @@ function categorizeIngredient(name: string): GroceryCategory {
 
 function extractRawIngredients(
   plans: Awaited<ReturnType<typeof NutritionPlan.find>>,
+  daysAhead: number,
 ): NormalizedIngredient[] {
   const result: NormalizedIngredient[] = [];
 
   for (const plan of plans) {
     for (const meal of plan.meals || []) {
+      const dayMatch = (meal as any).day?.match(/^Day\s+(\d+)$/i);
+      const dayNum = dayMatch ? parseInt(dayMatch[1], 10) : Infinity;
+      if (dayNum > daysAhead) continue;
+
       for (const ingredient of meal.ingredients || []) {
         const ing = ingredient as any;
 
@@ -350,9 +355,7 @@ function extractRawIngredients(
 
 function aggregateIngredients(
   rawIngredients: NormalizedIngredient[],
-  daysAhead: number,
 ): AggregatedItem[] {
-  // Map key: "normalizedName|unit" ensures duplicates are merged correctly
   const map = new Map<string, AggregatedItem>();
 
   for (const ing of rawIngredients) {
@@ -370,7 +373,6 @@ function aggregateIngredients(
     const key = `${name.toLowerCase()}|${unit}`;
 
     if (map.has(key)) {
-      // Accumulate quantity for duplicate entries
       map.get(key)!.totalQuantity += quantity;
     } else {
       map.set(key, {
@@ -383,28 +385,23 @@ function aggregateIngredients(
     }
   }
 
-  // Apply daysAhead multiplier once, after all entries are merged
   return Array.from(map.values()).map((item) => ({
     ...item,
-    totalQuantity: parseFloat((item.totalQuantity * daysAhead).toFixed(2)),
+    totalQuantity: parseFloat(item.totalQuantity.toFixed(2)),
   }));
 }
 
-function toResponseItem(
-  item: {
-    name: string;
-    category: string;
-    totalQuantity: number;
-    unit: string;
-    isPurchased: boolean;
-  },
-  daysAhead: number,
-) {
-
+function toResponseItem(item: {
+  name: string;
+  category: string;
+  totalQuantity: number;
+  unit: string;
+  isPurchased: boolean;
+}) {
   return {
     name: item.name,
     category: item.category,
-    quantity: formatQuantity(item.totalQuantity * daysAhead, item.unit),
+    quantity: formatQuantity(item.totalQuantity, item.unit),
     checked: item.isPurchased,
     isPurchased: item.isPurchased,
   };
@@ -418,32 +415,20 @@ router.get(
       const authReq = req as AuthRequest;
       const userId = authReq.user?.userId;
 
-      // FIX #2 — daysAhead is used only for display scaling, not for DB filtering here.
-      const daysAhead = Math.max(
-        1,
-        parseInt(req.query.daysAhead as string) || 7,
-      );
-
-      // Fetch (or lazily create) the stored grocery list — no mutations.
       let groceryList = await GroceryList.findOne({ userId });
 
       if (!groceryList) {
         groceryList = await GroceryList.create({ userId, items: [] });
       }
 
-      // FIX #3 — Build the response from what's already in the DB.
-      // If the list is empty the caller should trigger POST /sync first.
       const items = groceryList.items.map((item) =>
-        toResponseItem(
-          {
-            name: item.name,
-            category: item.category,
-            totalQuantity: Number(item.totalQuantity),
-            unit: item.unit,
-            isPurchased: item.isPurchased,
-          },
-          daysAhead,
-        ),
+        toResponseItem({
+          name: item.name,
+          category: item.category,
+          totalQuantity: Number(item.totalQuantity),
+          unit: item.unit,
+          isPurchased: item.isPurchased,
+        }),
       );
 
       res.status(200).json({
@@ -504,10 +489,11 @@ router.post(
         }
       }
 
-      // ── Step 3: Fetch all nutrition plans for resolved user IDs ────────────
-      const plans = await NutritionPlan.find({
-        userId: { $in: userIds },
-      });
+      // ── Step 3: Fetch latest nutrition plan per user ──────────────────────
+      const planDocs = await Promise.all(
+        userIds.map(id => NutritionPlan.findOne({ userId: id }).sort({ date: -1 })),
+      );
+      const plans = planDocs.filter((p): p is NonNullable<typeof p> => p != null);
 
       if (!plans.length) {
         res.status(404).json({
@@ -520,8 +506,8 @@ router.post(
         `[sync] Found ${plans.length} nutrition plan(s) across ${userIds.length} user(s).`,
       );
 
-      // ── Step 4: Extract raw ingredients ───────────────────────────────────
-      const rawIngredients = extractRawIngredients(plans);
+      // ── Step 4: Extract raw ingredients (filtered by day ≤ daysAhead) ─────
+      const rawIngredients = extractRawIngredients(plans, daysAhead);
 
       if (!rawIngredients.length) {
         res.status(422).json({
@@ -534,25 +520,28 @@ router.post(
         `[sync] Extracted ${rawIngredients.length} raw ingredient entries.`,
       );
 
-      // ── Step 5: Aggregate, categorize, and scale by daysAhead ─────────────
-      const aggregated = aggregateIngredients(rawIngredients, daysAhead);
+      // ── Step 5: Aggregate and categorize (no multiplier) ───────────────────
+      const aggregated = aggregateIngredients(rawIngredients);
 
       console.info(
         `[sync] Aggregated to ${aggregated.length} unique grocery item(s).`,
       );
 
-      // ── Step 6: Preserve isPurchased state from existing list ──────────────
-      const existingList = await GroceryList.findOne({ userId });
+      // ── Step 6: Preserve isPurchased across all relevant users ─────────────
+      const existingLists = await GroceryList.find({
+        userId: { $in: userIds },
+      });
       const purchasedSet = new Set(
-        existingList?.items
+        existingLists
+          .flatMap(list => list.items)
           .filter((i) => i.isPurchased)
-          .map((i) => i.name.toLowerCase()) ?? [],
+          .map((i) => i.name.toLowerCase()),
       );
 
       const newItems = aggregated.map((agg) => ({
         name: agg.name,
         category: agg.category,
-        totalQuantity: agg.totalQuantity, // already scaled × daysAhead
+        totalQuantity: agg.totalQuantity,
         unit: agg.unit,
         isPurchased: purchasedSet.has(agg.name.toLowerCase()),
         consumers: userIds,
@@ -695,98 +684,5 @@ router.post(
   },
 );
 
-// router.post(
-//   "/share",
-//   authMiddleware,
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const authReq = req as AuthRequest;
-//       const userId = authReq.user?.userId;
-
-//       const groceryList = await GroceryList.findOne({ userId });
-
-//       if (!groceryList) {
-//         return res.status(404).json({ error: "No grocery list found" });
-//       }
-
-//       const token = uuidv4();
-//       const expiresAt = new Date();
-//       expiresAt.setDate(expiresAt.getDate() + 7);
-
-//       const sharedList = await SharedList.create({
-//         token,
-//         userId,
-//         items: groceryList.items.map((item) => ({
-//           name: item.name,
-//           category: item.category,
-//           quantity: formatQuantity(item.totalQuantity, item.unit),
-//           isPurchased: item.isPurchased,
-//         })),
-//         expiresAt,
-//       });
-
-//       res.status(201).json({
-//         success: true,
-//         shareUrl: `/shared-list/${token}`,
-//       });
-//     } catch (error) {
-//       next(error);
-//     }
-//   },
-// );
-
-// router.get(
-//   "/shared/:token",
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//       const { token } = req.params;
-
-//       const sharedList = await SharedList.findOne({ token });
-
-//       if (!sharedList) {
-//         return res.status(404).json({ error: "List not found or expired" });
-//       }
-
-//       if (new Date() > sharedList.expiresAt) {
-//         return res.status(410).json({ error: "Link has expired" });
-//       }
-
-//       res.status(200).json({
-//         items: sharedList.items,
-//         expiresAt: sharedList.expiresAt,
-//       });
-//     } catch (error) {
-//       next(error);
-//     }
-//   },
-// );
-
-router.get(
-  "/export/pdf",
-  authMiddleware,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as AuthRequest).user?.userId;
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      const [user, groceryList] = await Promise.all([
-        User.findById(userId),
-        GroceryList.findOne({ userId }),
-      ]);
-
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if (!groceryList || groceryList.items.length === 0)
-        return res.status(400).json({ message: "Grocery list is empty, sync from your meal plan first" });
-
-      const pdfBuffer = await generatePDF("grocery", groceryList, user);
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", 'attachment; filename="grocery-list.pdf"');
-      res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
 
 export default router;

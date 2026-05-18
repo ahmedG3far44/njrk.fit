@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { CheckCircle2, Circle, Utensils, Dumbbell, Calendar, ChevronLeft, ChevronRight, Loader2, GripVertical } from 'lucide-react';
+import { CheckCircle2, Circle, Utensils, Dumbbell, Calendar, ChevronLeft, ChevronRight, Loader2, GripVertical, Cookie } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { scheduleService, ScheduleItem } from '../services/scheduleService';
@@ -22,8 +22,9 @@ interface DraggableItemProps {
   moveItem: (dragIndex: number, hoverIndex: number) => void;
   onMarkComplete: (itemId: string, currentCompleted: boolean) => void;
   completingId: string | null;
-  getTypeIcon: (type: 'meal' | 'workout') => React.ReactNode;
-  getTypeColor: (type: 'meal' | 'workout') => string;
+  getTypeIcon: (type: 'meal' | 'snack' | 'workout') => React.ReactNode;
+  getTypeColor: (type: 'meal' | 'snack' | 'workout') => string;
+  canComplete: boolean;
 }
 
 const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
@@ -34,6 +35,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
   completingId,
   getTypeIcon,
   getTypeColor,
+  canComplete,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -95,15 +97,24 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
               <div className={`p-2 rounded-lg ${getTypeColor(slot.type)}`}>
                 {getTypeIcon(slot.type)}
               </div>
-              <h3 className={`font-bold ${slot.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
-                {slot.title}
-              </h3>
+              <div>
+                <h3 className={`font-bold ${slot.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                  {slot.title}
+                </h3>
+                <span className={`text-xs font-medium ${
+                  slot.type === 'meal' ? 'text-orange-500' :
+                  slot.type === 'snack' ? 'text-amber-500' :
+                  'text-blue-500'
+                }`}>
+                  {slot.type === 'workout' ? 'Training Session' : slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
+                </span>
+              </div>
             </div>
             {slot.completed ? (
               <div className="flex items-center gap-1 text-green-600 text-sm font-bold">
                 <CheckCircle2 className="w-4 h-4" /> Done
               </div>
-            ) : (
+            ) : canComplete ? (
               <button 
                 onClick={() => onMarkComplete(slot.id, slot.completed)}
                 disabled={completingId === slot.id}
@@ -115,18 +126,25 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                   'Mark Done'
                 )}
               </button>
+            ) : (
+              <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
+                <Circle className="w-4 h-4" /> Future
+              </div>
             )}
           </div>
           
-          <div className="flex gap-4 text-xs text-slate-500 pl-12">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pl-12">
             {slot.calories && (
-              <span className={slot.type === 'workout' ? 'text-orange-500' : ''}>
+              <span className={slot.type === 'workout' ? 'text-orange-500 font-medium' : ''}>
                 {slot.type === 'workout' ? '🔥 Burn ' : '🔥 '}
-                {slot.calories} {slot.type === 'meal' ? 'kcal' : 'kcal'}
+                {slot.calories} kcal
               </span>
             )}
             {slot.duration && <span>⏱️ {slot.duration}</span>}
-            {slot.type === 'meal' && slot.details.macros && (
+            {slot.type === 'workout' && slot.details.type && (
+              <span className="text-blue-500 font-medium">{slot.details.type}</span>
+            )}
+            {(slot.type === 'meal' || slot.type === 'snack') && slot.details.macros && (
               <>
                 <span>P: {slot.details.macros.protein}g</span>
                 <span>C: {slot.details.macros.carbs}g</span>
@@ -144,7 +162,7 @@ interface TimeSlot {
   id: string;
   time: string;
   title: string;
-  type: 'meal' | 'workout';
+  type: 'meal' | 'snack' | 'workout';
   calories?: number;
   duration?: string;
   durationMin?: number;
@@ -152,6 +170,8 @@ interface TimeSlot {
   details: {
     macros?: { calories: number; protein: number; carbs: number; fat: number };
     estimatedCaloriesBurn?: number;
+    type?: string;
+    mealType?: string;
   };
 }
 
@@ -187,15 +207,14 @@ export const Schedule: React.FC = () => {
       }
       
       const slots: TimeSlot[] = response.timeline.map((item: ScheduleItem) => {
-        // Handle different API response structures
         const details = item.details || {};
         
         return {
           id: item.id,
           time: item.time,
           title: item.name,
-          type: item.type as 'meal' | 'workout',
-          calories: item.type === 'meal' 
+          type: item.type as 'meal' | 'snack' | 'workout',
+          calories: item.type === 'meal' || item.type === 'snack'
             ? (details.macros?.calories || details.calories)
             : details.estimatedCaloriesBurn,
           duration: details.durationMin ? `${details.durationMin} min` : undefined,
@@ -298,17 +317,21 @@ export const Schedule: React.FC = () => {
     });
   };
 
-  const getTypeIcon = (type: 'meal' | 'workout') => {
+  const getTypeIcon = (type: 'meal' | 'snack' | 'workout') => {
     if (type === 'meal') return <Utensils className="w-4 h-4" />;
+    if (type === 'snack') return <Cookie className="w-4 h-4" />;
     if (type === 'workout') return <Dumbbell className="w-4 h-4" />;
     return <CheckCircle2 className="w-4 h-4" />;
   };
 
-  const getTypeColor = (type: 'meal' | 'workout') => {
+  const getTypeColor = (type: 'meal' | 'snack' | 'workout') => {
     if (type === 'meal') return 'bg-orange-100 text-orange-600';
+    if (type === 'snack') return 'bg-amber-100 text-amber-600';
     if (type === 'workout') return 'bg-blue-100 text-blue-600';
     return 'bg-purple-100 text-purple-600';
   };
+
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -397,6 +420,7 @@ export const Schedule: React.FC = () => {
                       completingId={completingId}
                       getTypeIcon={getTypeIcon}
                       getTypeColor={getTypeColor}
+                      canComplete={isToday}
                     />
                   </motion.div>
                 ))}

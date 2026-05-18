@@ -17,31 +17,6 @@ export interface AuthRequest extends Request {
   };
 }
 
-// export const requireAuth = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction,
-// ) => {
-//   try {
-//     const token = req.headers.authorization?.replace("Bearer ", "");
-
-//     if (!token) {
-//       return res.status(401).json({ error: "Authentication required" });
-//     }
-
-//     const payload = jwtUtils.verifyAccessToken(token);
-
-//     const user = await User.findById(payload.userId);
-//     if (!user) {
-//       return res.status(401).json({ error: "User not found" });
-//     }
-
-//     (req as AuthRequest).user = payload;
-//     next();
-//   } catch (error) {
-//     return res.status(401).json({ error: "Invalid or expired token" });
-//   }
-// };
 
 export const authMiddleware = async (
   req: Request,
@@ -52,8 +27,6 @@ export const authMiddleware = async (
     let accessToken = req.cookies.accessToken;
     let refreshToken = req.cookies.refreshToken;
     let googleAccessToken = req.cookies.googleAccessToken;
-
-    console.log("google user access token from cookies", googleAccessToken); 
 
     if (!accessToken && !refreshToken) {
       const authHeader = req.headers.authorization?.replace("Bearer ", "");
@@ -72,12 +45,9 @@ export const authMiddleware = async (
       try {
         const payload = jwtUtils.verifyAccessToken(accessToken);
         (req as AuthRequest).user = payload;
-        console.log("access token verified successfully");
-
         return next();
       } catch (accessError) {
         console.log("access token verification failed", accessError);
-        console.log(accessError);
       }
     }
 
@@ -89,11 +59,9 @@ export const authMiddleware = async (
 
     try {
       const refreshPayload = jwtUtils.verifyRefreshToken(refreshToken);
-      console.log("refresh token verified successfully");
       const user = await User.findById(refreshPayload?._id);
 
       if (!user) {
-        console.log("user not found");
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         return res.status(401).json({ error: "User not found" });
@@ -122,7 +90,6 @@ export const authMiddleware = async (
       (req as AuthRequest).user = userPayload;
       return next();
     } catch (refreshError) {
-      // 4. If refresh token is expired/invalid => clear cookies and redirect
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
       return res.status(401).json({

@@ -1,7 +1,7 @@
 import { api } from '../lib/api';
 
 export interface ScheduleItem {
-  type: 'meal' | 'workout';
+  type: 'meal' | 'snack' | 'workout';
   id: string;
   name: string;
   time: string;
@@ -20,6 +20,7 @@ export interface ScheduleDetails {
   type?: string;
   durationMin?: number;
   estimatedCaloriesBurn?: number;
+  mealType?: 'meal' | 'snack';
   exercises?: Array<{
     name: string;
     sets?: number;

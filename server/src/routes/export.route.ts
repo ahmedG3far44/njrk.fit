@@ -84,12 +84,12 @@ const pdfController = {
             if (!groceryList) return res.status(404).json({ message: "Grocery list not found" });
 
             if (!groceryList || groceryList?.items?.length === 0) {
-                return res.status(400).json({ message: "can't export PDF, Grocery list is empty, make sure you have a nutrition plan set up and regenerate the grocery list " });
+                return res.status(400).json({ message: "can't export PDF, grocery list is empty, make sure you have a nutrition plan set up and regenerate the grocery list " });
             }
 
             const pdfBuffer = await generatePDF('grocery', groceryList, user);
 
-            sendPDF(res, pdfBuffer, "grocery.pdf");
+            sendPDF(res, pdfBuffer, "groceries.pdf");
 
         } catch (error) {
             console.error("exportGroceryListPDF error:", error);
@@ -100,9 +100,9 @@ const pdfController = {
 };
 
 
-router.get('/meal/pdf', authMiddleware, pdfController.exportNutritionPlanPDF);
+router.get('/nutrition/pdf', authMiddleware, pdfController.exportNutritionPlanPDF);
 router.get('/fitness/pdf', authMiddleware, pdfController.exportFitnessPlanPDF);
-router.get('/grocery/pdf', authMiddleware, pdfController.exportGroceryListPDF);
+router.get('/groceries/pdf', authMiddleware, pdfController.exportGroceryListPDF);
 
 
 export default router;

@@ -36,6 +36,5 @@ const SubscriptionTransactionSchema = new Schema<ISubscriptionTransaction>({
 
 SubscriptionTransactionSchema.index({ createdAt: -1 });
 SubscriptionTransactionSchema.index({ status: 1, createdAt: -1 });
-SubscriptionTransactionSchema.index({ stripeEventId: 1 }, { sparse: true });
 
 export default mongoose.model<ISubscriptionTransaction>('SubscriptionTransaction', SubscriptionTransactionSchema);

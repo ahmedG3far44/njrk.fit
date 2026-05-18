@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Trophy, Users, Medal, Search, TrendingUp, Target, Flame, Loader2, X, Image, Send, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Trophy, Users, Medal, Search, TrendingUp, Flame, Loader2, X, Image, Send, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider';
@@ -41,6 +41,7 @@ export const Social: React.FC = () => {
   const [leaderboardStats, setLeaderboardStats] = useState({ percentile: 0, totalUsers: 0 });
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
+  const [leaderboardScope, setLeaderboardScope] = useState<'global' | 'family'>('global');
 
   // Fetch posts
   const fetchPosts = useCallback(async (pageNum: number = 1, append: boolean = false) => {
@@ -77,11 +78,12 @@ export const Social: React.FC = () => {
     }
   }, [activeTab, fetchPosts]);
 
-  // Fetch leaderboard when tab is active
+  // Fetch leaderboard when tab or scope changes
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       setLoadingLeaderboard(true);
-      communityService.getLeaderboard()
+      setLeaderboardSearch('');
+      communityService.getLeaderboard(leaderboardScope)
         .then((data) => {
           setLeaderboardData(data.leaderboard);
           setCurrentUserRank(data.currentUser);
@@ -95,7 +97,7 @@ export const Social: React.FC = () => {
           setLoadingLeaderboard(false);
         });
     }
-  }, [activeTab]);
+  }, [activeTab, leaderboardScope]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -689,8 +691,24 @@ export const Social: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="p-8 bg-gradient-to-r from-green-900 to-green-800 text-center text-white">
                 <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-400 fill-current" />
-                <h2 className="text-3xl font-bold mb-2">Global Leaderboard</h2>
-                <p className="text-green-200">Ranked by Streak Score & Goal Adherence</p>
+                <h2 className="text-3xl font-bold mb-2">Leaderboard</h2>
+                <p className="text-green-200">Ranked by Streak Score & Points</p>
+                {/* Scope Toggle */}
+                <div className="flex bg-green-800/30 p-1 rounded-xl border border-white/10 w-fit mx-auto mt-4">
+                  {(['global', 'family'] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setLeaderboardScope(s)}
+                      className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
+                        leaderboardScope === s
+                          ? 'bg-white text-green-800 shadow-sm'
+                          : 'text-green-200 hover:text-white'
+                      }`}
+                    >
+                      {s === 'family' ? 'Family' : 'Global'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Current User Stats */}
@@ -741,9 +759,8 @@ export const Social: React.FC = () => {
               {/* Legend */}
               <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-6 text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <span className="flex-1">Rank / User</span>
-                <span className="w-24 text-center flex items-center gap-1 justify-center"><Flame className="w-3.5 h-3.5 text-orange-500" /> Streak</span>
-                <span className="w-28 text-center flex items-center gap-1 justify-center"><Target className="w-3.5 h-3.5 text-green-500" /> Goal %</span>
-                <span className="w-24 text-center flex items-center gap-1 justify-center"><TrendingUp className="w-3.5 h-3.5 text-green-500" /> Points</span>
+                <span className="w-28 text-center flex items-center gap-1 justify-center"><Flame className="w-3.5 h-3.5 text-orange-500" /> Streak</span>
+                <span className="w-28 text-center flex items-center gap-1 justify-center"><TrendingUp className="w-3.5 h-3.5 text-green-500" /> Points</span>
               </div>
 
               {loadingLeaderboard ? (
@@ -801,10 +818,12 @@ export const Social: React.FC = () => {
                               {user.name}
                               {isCurrentUser && <span className="ml-2 text-xs text-green-600">(You)</span>}
                             </h4>
-                            <div className="text-xs text-slate-400">Global League</div>
+                            <div className="text-xs text-slate-400">
+                              {leaderboardScope === 'family' ? 'Family' : 'Global'} League
+                            </div>
                           </div>
 
-                          <div className="w-24 text-center flex-shrink-0">
+                          <div className="w-28 text-center flex-shrink-0">
                             <div className="flex items-center justify-center gap-1">
                               <span className="text-lg">🔥</span>
                               <span className="font-bold text-slate-900">{user.streak}</span>
@@ -812,20 +831,7 @@ export const Social: React.FC = () => {
                             <div className="text-[10px] text-slate-400">day streak</div>
                           </div>
 
-                          <div className="w-28 flex-shrink-0">
-                            <div className="flex items-between mb-1">
-                              <span className="text-xs font-bold text-slate-900">{user.goalAdherence}%</span>
-                            </div>
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${user.goalAdherence >= 90 ? 'bg-green-500' : user.goalAdherence >= 75 ? 'bg-green-400' : 'bg-orange-500'}`}
-                                style={{ width: `${user.goalAdherence}%` }}
-                              />
-                            </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5">goal adherence</div>
-                          </div>
-
-                          <div className="w-24 text-right flex-shrink-0">
+                          <div className="w-28 text-right flex-shrink-0">
                             <div className="font-bold text-green-700 text-lg">{user.points.toLocaleString()}</div>
                             <div className="text-xs text-slate-400">pts</div>
                           </div>
@@ -837,8 +843,17 @@ export const Social: React.FC = () => {
               ) : (
                 <div className="p-12 text-center text-slate-400">
                   <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">No leaderboard data</p>
-                  <p className="text-sm">Start earning points to appear here!</p>
+                  {leaderboardScope === 'family' ? (
+                    <>
+                      <p className="font-medium">No family members</p>
+                      <p className="text-sm">Upgrade to Family Plan to add members and track together.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">No leaderboard data</p>
+                      <p className="text-sm">Start earning points to appear here!</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

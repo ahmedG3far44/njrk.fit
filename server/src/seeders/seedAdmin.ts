@@ -20,11 +20,7 @@ export const seedAdmins = async () => {
 
   for (const adminData of admins) {
     const existing = await Admin.findOne({ email: adminData.email });
-    if (existing) {
-      console.log(`Admin already exists: ${adminData.email}`);
-      continue;
-    }
-
+    if (existing) continue;
     const passwordHash = await hashPassword(adminData.password);
     await Admin.create({
       email: adminData.email,
@@ -32,9 +28,5 @@ export const seedAdmins = async () => {
       name: adminData.name,
       role: adminData.role,
     });
-
-    console.log(`Admin created: ${adminData.email} (${adminData.role})`);
   }
-
-  console.log('Admin seeding complete.');
 };

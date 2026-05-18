@@ -37,6 +37,8 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
                 metadata: { userId: user._id.toString() },
             });
             stripeCustomerId = customer.id;
+            user.subscription.stripeCustomerId = customer.id;
+            await user.save();
         }
 
         const session = await stripe.checkout.sessions.create({

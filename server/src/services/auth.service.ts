@@ -198,12 +198,16 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
             return { success: false, message: 'User not found' };
         }
 
+    const daysToReachGoal = data.goalDate
+      ? Math.ceil((new Date(data.goalDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      : 120;
+
     const result = calculateUserHealthTargets({
       currentWeightKg: data.weight,
       targetWeightKg: data.targetWeight,
       age: data.age,
       activityLevel: data.activityLevel,
-      daysToReachGoal: 120,
+      daysToReachGoal: Math.max(daysToReachGoal, 7),
       goal: data.userGoal,
     });
 
@@ -222,6 +226,7 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
         user.goal = data.userGoal;
         user.targetWeight = data.targetWeight;
         user.fitnessGoals = data.fitnessGoal;
+        user.goalDate = data.goalDate;
         user.onboardingCompleted = true;
         user.estimatedSteps = estimatedSteps;
         user.estimatedSleepHours = estimatedSleepHours;

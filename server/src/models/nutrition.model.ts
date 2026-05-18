@@ -16,6 +16,7 @@ interface IMeal {
   macros: IMacros;
   ingredients: { name: string; quantity: number; unit?: string }[];
   instructions: string[];
+  isCompleted?: boolean;
 }
 
 export interface INutritionPlan extends Document {
@@ -44,6 +45,7 @@ const MealSchema = new Schema<IMeal>({
     },
   ],
   instructions: [{ type: String }],
+  isCompleted: { type: Boolean, default: false },
 });
 
 const NutritionPlanSchema = new Schema<INutritionPlan>(

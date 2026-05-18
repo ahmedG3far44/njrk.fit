@@ -208,33 +208,6 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
 });
 
 router.get(
-  '/export/pdf',
-  authMiddleware,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as AuthRequest).user?.userId;
-      if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-      const [user, fitnessPlan] = await Promise.all([
-        User.findById(userId),
-        WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 }),
-      ]);
-
-      if (!user) return res.status(404).json({ message: 'User not found' });
-      if (!fitnessPlan) return res.status(404).json({ message: 'No fitness plan found, create a workout plan first' });
-
-      const pdfBuffer = await generatePDF('workout', fitnessPlan, user);
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="workout-plan.pdf"');
-      res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-router.get(
   '/exercise-image/:exerciseId',
   async (req: Request, res: Response) => {
     try {

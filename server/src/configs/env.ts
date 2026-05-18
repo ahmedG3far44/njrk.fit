@@ -4,58 +4,44 @@ import { z } from 'zod';
 dotenv.config();
 
 const envSchema = z.object({
-    PORT: z.string().default('8080'),
-    NODE_ENV: z.string().default('development'),
+    PORT: z.string().default(process.env.PORT || '8080'),
+    NODE_ENV: z.string().default(process.env.NODE_ENV || 'development'),
 
-    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
-    CLIENT_URL: z.string().default('http://localhost:5173'),
-    API_URL: z.string().default('http://localhost:8080/api'),
+    ALLOWED_ORIGINS: z.string().default(process.env.ALLOWED_ORIGINS || 'http://localhost:5173'),
+    CLIENT_URL: z.string().default(process.env.CLIENT_URL || 'http://localhost:5173'),
+    API_URL: z.string().default(process.env.API_URL || 'http://localhost:8080/api'),
 
-    MONGODB_URI: z.string().default("mongodb://localhost:27017/njrk"),
+    MONGODB_URI: z.string().default(process.env.MONGODB_URI || "mongodb://localhost:27017/njrk"),
 
-    
-    S3_BUCKET_NAME: z.string().min(1, 'S3_BUCKET_NAME is required'),
-    S3_REGION: z.string().default('us-east-1'),
-    S3_ACCESS_KEY_ID: z.string().min(1, 'S3_ACCESS_KEY_ID is required'),
-    S3_SECRET_ACCESS_KEY: z.string().min(1, 'S3_SECRET_ACCESS_KEY is required'),
+    STRIPE_SECRET_KEY: z.string().default(process.env.STRIPE_SECRET_KEY || ""),
+    STRIPE_WEBHOOK_SECRET: z.string().default(process.env.STRIPE_WEBHOOK_SECRET || ""),
 
-    STRIPE_SECRET_KEY: z.string().default('sk_test_51TJWvyRPSIjKJwi6NZEWveg1OOYEL3Z0aAJrGjeV8boI9yPPFEka3C0rvg3AfGJLCtda7zQSnN5JhKbIjx02W94t00GKZWRVb4'), 
-    STRIPE_WEBHOOK_SECRET: z.string().default('whsec_13d5831238f76ff2f8c8cd2f7cab809c04fef9ec0616e93b79ff9c1486cb50f4'),
+    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters').default(process.env.JWT_SECRET || ""),
+    JWT_EXPIRATION: z.string().default('1h').default(process.env.JWT_EXPIRATION || ""),
+    JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters').default(process.env.JWT_REFRESH_SECRET || ""),
+    JWT_REFRESH_EXPIRATION: z.string().default('7d').default(process.env.JWT_REFRESH_EXPIRATION || ""),
 
-    EMAIL_USER: z.string().email().default('njerka.fit@gmail.com'),
-    EMAIL_PASSWORD: z.string().default('njrk fit@2026'),
-    EMAIL_HOST: z.string().default('smtp.gmail.com'),
-    EMAIL_PORT: z.string().default('587'),
+    JWT_ADMIN_SECRET: z.string().default('admin-jwt-secret-k3y-must-be-at-least-32-characters-long').default(process.env.JWT_ADMIN_SECRET || ""),
+    JWT_ADMIN_EXPIRATION: z.string().default('24h').default(process.env.JWT_ADMIN_EXPIRATION || ""),
 
-    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-    JWT_EXPIRATION: z.string().default('1h'),
-    JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
-    JWT_REFRESH_EXPIRATION: z.string().default('7d'),
+    ADMIN_EMAIL_1: z.string().email().default('admin@njerka.com').default(process.env.ADMIN_EMAIL_1 || ""),
+    ADMIN_PASSWORD_1: z.string().min(8).default('Admin123!').default(process.env.ADMIN_PASSWORD_1 || ""),
+    ADMIN_NAME_1: z.string().default('Super Admin').default(process.env.ADMIN_NAME_1 || ""),
+    ADMIN_EMAIL_2: z.string().email().default('ops@njerka.com').default(process.env.ADMIN_EMAIL_2 || ""),
+    ADMIN_PASSWORD_2: z.string().min(8).default('Ops123!').default(process.env.ADMIN_PASSWORD_2 || ""),
+    ADMIN_NAME_2: z.string().default('Operations Admin').default(process.env.ADMIN_NAME_2 || ""),
 
-    JWT_ADMIN_SECRET: z.string().default('admin-jwt-secret-k3y-must-be-at-least-32-characters-long'),
-    JWT_ADMIN_EXPIRATION: z.string().default('24h'),
+    GOOGLE_CLIENT_ID: z.string().default(process.env.GOOGLE_CLIENT_ID || ""),
+    GOOGLE_CLIENT_SECRET: z.string().default(process.env.GOOGLE_CLIENT_SECRET || ""),
 
-    ADMIN_EMAIL_1: z.string().email().default('admin@njerka.com'),
-    ADMIN_PASSWORD_1: z.string().min(8).default('Admin123!'),
-    ADMIN_NAME_1: z.string().default('Super Admin'),
-    ADMIN_EMAIL_2: z.string().email().default('ops@njerka.com'),
-    ADMIN_PASSWORD_2: z.string().min(8).default('Ops123!'),
-    ADMIN_NAME_2: z.string().default('Operations Admin'),
-    
-    GOOGLE_CLIENT_ID: z.string().default('691688385657-i821cud5r17h2dfv7kmnk161701jcr6h.apps.googleusercontent.com'),
-    GOOGLE_CLIENT_SECRET: z.string().default('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'),
 
-    OLLAMA_URL: z.string().default('http://localhost:11434/api/generate'),
-    OLLAMA_MODEL: z.string().default('qwen2.5-coder:1.5b'),
-    OLLAMA_API_KEY: z.string().default('89dd178811ad48ee91a49437af6099d2.pp68HePfs7bMRJWPUEfBnaEL'),
+    OPENROUTER_API_KEY: z.string().default(process.env.OPENROUTER_API_KEY || ""),
 
-    OPENROUTER_API_KEY: z.string().default('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'),
+    CLOUDINARY_NAME: z.string().default(process.env.CLOUDINARY_NAME || ""),
+    CLOUDINARY_API_KEY: z.string().default(process.env.CLOUDINARY_API_KEY || ""),
+    CLOUDINARY_API_SECRET: z.string().default(process.env.CLOUDINARY_API_SECRET || ""),
 
-    GOOGLE_API_KEY: z.string().default('AIzaSyC3bY3mYGc6bwa0yJxjAtnQ-SIsTah85PA'),
-    CLOUDINARY_NAME: z.string().default('drjne80qo'),
-    CLOUDINARY_API_KEY: z.string().default('915692518451686'),
-    CLOUDINARY_API_SECRET: z.string().default('Jmf5qnqzDlPevD7NAYvUevLSNDg'),
-    RAPIDAPI_KEY: z.string().min(1, 'RAPIDAPI_KEY is required'),
+    RAPIDAPI_KEY: z.string().default(process.env.RAPIDAPI_KEY || ""),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

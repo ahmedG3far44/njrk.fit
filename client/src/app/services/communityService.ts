@@ -81,18 +81,19 @@ export const communityService = {
     return api.delete<{ comment: Comment }>(`/community/posts/${postId}/comment/${commentId}`);
   },
 
-  async getLeaderboard(): Promise<{
+  async getLeaderboard(scope?: string): Promise<{
     leaderboard: LeaderboardEntry[];
     currentUser: LeaderboardEntry;
     percentile: number;
     totalUsers: number;
   }> {
+    const query = scope && scope !== 'global' ? `?scope=${scope}` : '';
     return api.get<{
       leaderboard: LeaderboardEntry[];
       currentUser: LeaderboardEntry;
       percentile: number;
       totalUsers: number;
-    }>('/leaderboard');
+    }>(`/leaderboard${query}`);
   },
 };
 

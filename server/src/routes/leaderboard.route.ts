@@ -19,21 +19,40 @@ router.get(
       const authReq = req as AuthRequest;
       const userId = authReq.user?.userId;
       const limit = parseInt(req.query.limit as string) || 50;
+      const scope = (req.query.scope as string) || "global";
 
-      const users = await User.find({})
+      const currentUser = await User.findById(userId).select(
+        "name avatarUrl totalPoints currentStreak familyMembers",
+      );
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let userFilter: Record<string, unknown> = {};
+
+      if (scope === "family") {
+        const familyIds = [
+          userId,
+          ...(currentUser.familyMembers || []),
+        ].filter(Boolean);
+        userFilter = { _id: { $in: familyIds } };
+      }
+
+      const users = await User.find(userFilter)
         .select("name avatarUrl totalPoints currentStreak")
         .sort({ totalPoints: -1 })
         .limit(limit);
 
       const currentUserRank = await User.countDocuments({
-        totalPoints: { $gt: (await User.findById(userId))?.totalPoints || 0 },
+        ...userFilter,
+        totalPoints: { $gt: currentUser.totalPoints || 0 },
       });
 
-      const currentUser = await User.findById(userId).select(
-        "name avatarUrl totalPoints currentStreak",
-      );
+      const totalUsers =
+        scope === "global"
+          ? await User.countDocuments()
+          : await User.countDocuments(userFilter);
 
-      const totalUsers = await User.countDocuments();
       const percentile =
         totalUsers > 0
           ? Math.round(((totalUsers - currentUserRank) / totalUsers) * 100)
@@ -49,19 +68,20 @@ router.get(
         goalAdherence: Math.min(100, Math.round((user.totalPoints || 0) / 500)),
       }));
 
+      const currentEntry = leaderboard.find(
+        (e) => e.id.toString() === userId,
+      );
+
       res.status(200).json({
         leaderboard,
         currentUser: {
-          rank: currentUserRank + 1,
-          id: currentUser?._id,
-          name: currentUser?.name,
-          avatarUrl: currentUser?.avatarUrl,
-          points: currentUser?.totalPoints || 0,
-          streak: currentUser?.currentStreak || 0,
-          goalAdherence: Math.min(
-            100,
-            Math.round((currentUser?.totalPoints || 0) / 500),
-          ),
+          rank: currentEntry?.rank || currentUserRank + 1,
+          id: currentUser._id,
+          name: currentUser.name,
+          avatarUrl: currentUser.avatarUrl,
+          points: currentUser.totalPoints || 0,
+          streak: currentUser.currentStreak || 0,
+          goalAdherence: 0,
         },
         percentile,
         totalUsers,

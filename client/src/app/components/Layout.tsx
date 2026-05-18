@@ -117,7 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       </AnimatePresence>
 
       {/* ── Desktop Sidebar ── */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 h-full relative">
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 h-full relative">
         {/* Logo */}
         <div className="p-5 pb-3 flex items-start justify-start border-b border-slate-100">
           <NjerkaLogo size='small' text={true} />

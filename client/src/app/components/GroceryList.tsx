@@ -113,7 +113,7 @@ export const GroceryList: React.FC = () => {
   };
 
   const handleExportPdf = () => {
-    window.open(`${API_URL}/groceries/export/pdf`, '_blank');
+    window.open(`${API_URL}/export/groceries/pdf`, '_blank');
   };
 
   const toggleItem = (name: string) => {

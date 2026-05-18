@@ -360,7 +360,6 @@ interface IOnboardingRequest {
   activityLevel: ActivityLevel;
   religion: Religion;
   dietaryRestrictions: string[];
-  medicalDocuments?: string[];
   userGoal: Goal;
   targetWeight: number;
   fitnessGoal: string;
@@ -401,10 +400,10 @@ const onboardingSchema = z.object({
   ]),
   religion: z.enum(["muslim", "christian"]),
   dietaryRestrictions: z.array(z.string()).optional(),
-  medicalDocuments: z.array(z.string()).optional(),
   userGoal: z.enum(["lose_weight", "gain_weight", "maintain_weight"]),
   targetWeight: z.number(),
   fitnessGoal: z.string(),
+  goalDate: z.string().optional(),
 });
 
 export type TOnboarding = z.infer<typeof onboardingSchema>;
