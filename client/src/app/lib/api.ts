@@ -5,22 +5,33 @@ type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
 
 interface ApiRequestOptions extends RequestInit {
   skipAuthRefresh?: boolean;
+  timeoutMs?: number;
 }
 
 class ApiError extends Error {
   status: number;
   response: Response;
+  data: unknown;
 
-  constructor(response: Response) {
-    super(`API request failed with status ${response.status}`);
+  constructor(response: Response, data?: unknown) {
+    const message =
+      typeof data === 'object' && data !== null && 'error' in data
+        ? String((data as { error: unknown }).error)
+        : typeof data === 'object' && data !== null && 'message' in data
+          ? String((data as { message: unknown }).message)
+          : `API request failed with status ${response.status}`;
+
+    super(message);
     this.name = 'ApiError';
     this.status = response.status;
     this.response = response;
+    this.data = data;
   }
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 const AUTH_REFRESH_ENDPOINT = import.meta.env.VITE_AUTH_REFRESH_ENDPOINT ?? '/auth/refresh-token';
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 20000);
 
 let refreshPromise: Promise<void> | null = null;
 
@@ -102,30 +113,48 @@ export const api = {
   },
 
   async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { skipAuthRefresh, ...requestOptions } = options;
+    const { skipAuthRefresh, timeoutMs, ...requestOptions } = options;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs ?? REQUEST_TIMEOUT_MS);
     const headers: ApiHeaders = {
       ...(requestOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(requestOptions.headers as ApiHeaders | undefined),
     };
 
-    const config = await applyRequestInterceptors({ ...requestOptions, headers });
-    let response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+    const config = await applyRequestInterceptors({
+      ...requestOptions,
+      headers,
+      signal: requestOptions.signal ?? controller.signal,
+    });
 
-    if (response.status === 401 && !skipAuthRefresh) {
-      try {
-        await refreshAccessToken();
-        response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
-      } catch {
-        window.dispatchEvent(new Event('njerka:unauthorized'));
-        throw new ApiError(response);
+    try {
+      let response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+
+      if (response.status === 401 && !skipAuthRefresh) {
+        try {
+          await refreshAccessToken();
+          response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+        } catch {
+          window.dispatchEvent(new Event('njerka:unauthorized'));
+          throw new ApiError(response);
+        }
       }
-    }
 
-    if (!response.ok) {
-      throw new ApiError(response);
-    }
+      if (!response.ok) {
+        const data = await parseResponse<unknown>(response);
+        throw new ApiError(response, data);
+      }
 
-    return parseResponse<T>(response);
+      return parseResponse<T>(response);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw new Error('The server did not respond. Please check that the API server is running.');
+      }
+
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
   },
 
   get<T>(endpoint: string, options?: ApiRequestOptions) {

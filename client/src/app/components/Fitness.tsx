@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { fitnessService, WorkoutSession, WorkoutPlan, Exercise } from '../services/fitnessService';
 import { FitnessPlanLoader } from './GeneratingLoaders';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api' || '/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 interface Workout {
   _id: string;
@@ -101,10 +101,12 @@ export const Fitness: React.FC = () => {
       const dateParam = view === 'daily' ? 'today' : 'week';
       const response = await fitnessService.getCurrent({ date: dateParam });
 
-      if (response.data && response.data.length > 0) {
+      const responseSessions = Array.isArray(response.data) ? response.data : [];
+
+      if (responseSessions.length > 0) {
         setHasPlan(true);
         setPlanEndDate(response.planEndDate || null);
-        const sessions = response.data.map((session: WorkoutSession): Workout => ({
+        const sessions = responseSessions.map((session: WorkoutSession): Workout => ({
           _id: session._id,
           title: session.name,
           type: session.type,

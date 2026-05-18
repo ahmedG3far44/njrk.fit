@@ -17,6 +17,18 @@ export interface AuthRequest extends Request {
   };
 }
 
+const clearAuthCookies = (res: Response) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+  };
+
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
+  res.clearCookie("googleAccessToken", cookieOptions);
+};
+
 // export const requireAuth = async (
 //   req: Request,
 //   res: Response,
@@ -94,8 +106,7 @@ export const authMiddleware = async (
 
       if (!user) {
         console.log("user not found");
-        res.clearCookie("accessToken");
-        res.clearCookie("refreshToken");
+        clearAuthCookies(res);
         return res.status(401).json({ error: "User not found" });
       }
 
@@ -123,8 +134,7 @@ export const authMiddleware = async (
       return next();
     } catch (refreshError) {
       // 4. If refresh token is expired/invalid => clear cookies and redirect
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      clearAuthCookies(res);
       return res.status(401).json({
         error: "Session expired. Please log in again.",
         code: "SESSION_EXPIRED",

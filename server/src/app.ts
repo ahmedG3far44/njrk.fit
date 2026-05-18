@@ -23,9 +23,14 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { requestLogger } from "./middlewares/requestLogger";
 
 const app = express();
+app.set("etag", false);
 dbConnection;
 
 app.use(requestLogger);
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
 app.use(cors(corsOptions));
 app.use(cookieParser());
 

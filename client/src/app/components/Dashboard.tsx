@@ -119,9 +119,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
   const fetchFitnessData = useCallback(async () => {
     try {
       const response = await fitnessService.getCurrent({ date: 'today' });
-      if (response && response.data && response.data.length > 0) {
+      const sessions = Array.isArray(response?.data) ? response.data : [];
+
+      if (sessions.length > 0) {
         const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-        const todaySession = response.data.find((s: any) => s.dayOfWeek === today) || response.data[0];
+        const todaySession = sessions.find((s: any) => s.dayOfWeek === today) || sessions[0];
 
         if (todaySession) {
           setNextWorkout({

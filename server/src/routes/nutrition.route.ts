@@ -333,16 +333,18 @@ router.get(
       }
 
       if (!nutritionPlan) {
-        return res
-          .status(404)
-          .json({ error: "No nutrition plan found for this date" });
+        return res.status(200).json({
+          meals: [],
+          targetMacros: { calories: 0, protein: 0, carbs: 0, fats: 0 },
+          planDate: null,
+        });
       }
 
-      if (!meals || meals.length === 0) {
-        return res.status(404).json({ error: "No meals found for this date" });
-      }
-
-      res.status(200).json({ meals, targetMacros: nutritionPlan.targetMacros, planDate: nutritionPlan.date });
+      res.status(200).json({
+        meals,
+        targetMacros: nutritionPlan.targetMacros,
+        planDate: nutritionPlan.date,
+      });
     } catch (error) {
       next(error);
     }

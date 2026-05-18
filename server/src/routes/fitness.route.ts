@@ -165,16 +165,18 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
       userId,
     });
 
-    let workouts: any;
+    let workouts: any[] = [];
 
-    if (dateParam === "week") {
-      workouts = workoutPlan?.sessions;
-    } else {
-      workouts = workoutPlan?.sessions.filter((s) => s.dayOfWeek === currentDay);
+    if (workoutPlan) {
+      if (dateParam === "week") {
+        workouts = workoutPlan.sessions || [];
+      } else {
+        workouts = workoutPlan.sessions.filter((s) => s.dayOfWeek === currentDay);
+      }
     }
 
     res.status(200).json({
-      data: workouts ? workouts : "No workouts scheduled for today.",
+      data: workouts,
       planEndDate: workoutPlan?.endDate || null,
     });
   } catch (error) {

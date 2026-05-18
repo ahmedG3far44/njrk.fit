@@ -68,7 +68,7 @@ export const groceryService = {
   },
 
   async exportPdf(): Promise<Blob> {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/groceries/export/pdf`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/groceries/export/pdf`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -4,12 +4,13 @@ import { z } from 'zod';
 dotenv.config();
 
 const envSchema = z.object({
-    PORT: z.string().default('8080'),
+    PORT: z.string().default('8081'),
     NODE_ENV: z.string().default('development'),
 
-    ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+    // Allow both Vite dev and prod ports by default
+    ALLOWED_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174'),
     CLIENT_URL: z.string().default('http://localhost:5173'),
-    API_URL: z.string().default('http://localhost:8080/api'),
+    API_URL: z.string().default('http://localhost:8081/api'),
 
     MONGODB_URI: z.string().default("mongodb://localhost:27017/njrk"),
 
@@ -59,8 +60,16 @@ export const env = {
 };
 
 export const corsOptions = {
-    origin: env.ALLOWED_ORIGINS,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean | string) => void) => {
+        if (!origin) return callback(null, true); // allow non-browser requests
+        const allowed = env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+        if (allowed.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 };

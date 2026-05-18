@@ -10,7 +10,7 @@ import { type FamilyMember, type PendingInvitation, type FamilyResponse, type Se
 import { MealPlanLoader } from './GeneratingLoaders';
 
 
-const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080/api';
+const API_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8081/api';
 
 interface MealCardProps {
   meal: Meal;
@@ -198,7 +198,7 @@ export const Nutrition: React.FC = () => {
   const generatePlan = async (counts?: { mealsCount: number; snacksCount: number; favoriteFoods: string[] }) => {
     setIsGenerating(true);
     try {
-      const data = await api.post<GenerateResponse>('/nutrition/generate', counts || {});
+      const data = await api.post<GenerateResponse>('/nutrition/generate', counts || {}, { timeoutMs: 180000 });
       setNutritionPlan(data.plan);
       toast.success('Meal plan generated successfully!');
       await fetchMeals(viewMode, activeProfileId !== 'me' ? activeProfileId : undefined);

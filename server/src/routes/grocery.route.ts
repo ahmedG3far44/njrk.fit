@@ -49,6 +49,12 @@ const CATEGORIES: GroceryCategory[] = [
   "Other",
 ];
 
+const CATEGORY_OVERRIDES: Record<string, GroceryCategory> = {
+  "peanut butter": "Other",
+  "almond butter": "Other",
+  "cashew butter": "Other",
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Category keyword map
 // Each category holds lowercase keywords. An ingredient name is matched against
@@ -291,12 +297,17 @@ const CATEGORY_KEYWORDS: Record<GroceryCategory, string[]> = {
 
 function categorizeIngredient(name: string): GroceryCategory {
   const lower = name.toLowerCase().trim();
+  const override = CATEGORY_OVERRIDES[lower];
+  if (override) return override;
 
   for (const category of CATEGORIES) {
     if (category === "Other") continue;
-    const matched = CATEGORY_KEYWORDS[category].some((kw) =>
-      lower.includes(kw),
-    );
+    const matched = CATEGORY_KEYWORDS[category]
+      .sort((a, b) => b.length - a.length)
+      .some((kw) => {
+        const escapedKeyword = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return new RegExp(`(^|\\W)${escapedKeyword}(\\W|$)`, "i").test(lower);
+      });
     if (matched) return category;
   }
 
@@ -352,6 +363,7 @@ function aggregateIngredients(
   rawIngredients: NormalizedIngredient[],
   daysAhead: number,
 ): AggregatedItem[] {
+  const scaleFactor = daysAhead > 7 ? daysAhead / 7 : 1;
   // Map key: "normalizedName|unit" ensures duplicates are merged correctly
   const map = new Map<string, AggregatedItem>();
 
@@ -383,10 +395,10 @@ function aggregateIngredients(
     }
   }
 
-  // Apply daysAhead multiplier once, after all entries are merged
+  // Meal plans are already weekly. Keep 7-day sync unscaled; scale longer windows.
   return Array.from(map.values()).map((item) => ({
     ...item,
-    totalQuantity: parseFloat((item.totalQuantity * daysAhead).toFixed(2)),
+    totalQuantity: parseFloat((item.totalQuantity * scaleFactor).toFixed(2)),
   }));
 }
 
@@ -398,13 +410,12 @@ function toResponseItem(
     unit: string;
     isPurchased: boolean;
   },
-  daysAhead: number,
 ) {
 
   return {
     name: item.name,
     category: item.category,
-    quantity: formatQuantity(item.totalQuantity * daysAhead, item.unit),
+    quantity: formatQuantity(item.totalQuantity, item.unit),
     checked: item.isPurchased,
     isPurchased: item.isPurchased,
   };
@@ -419,11 +430,6 @@ router.get(
       const userId = authReq.user?.userId;
 
       // FIX #2 — daysAhead is used only for display scaling, not for DB filtering here.
-      const daysAhead = Math.max(
-        1,
-        parseInt(req.query.daysAhead as string) || 7,
-      );
-
       // Fetch (or lazily create) the stored grocery list — no mutations.
       let groceryList = await GroceryList.findOne({ userId });
 
@@ -441,9 +447,7 @@ router.get(
             totalQuantity: Number(item.totalQuantity),
             unit: item.unit,
             isPurchased: item.isPurchased,
-          },
-          daysAhead,
-        ),
+          }),
       );
 
       res.status(200).json({

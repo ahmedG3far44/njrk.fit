@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import NjerkaLogo from './NjerkaLogo';
 
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080") as string;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api") as string;
 
 
 interface AuthProps { 
@@ -94,8 +94,8 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
         }
       }
     } catch (error: unknown) {
-      const err = error as { status?: number; response?: { message?: string } };
-      const message = err.response?.message || 'Something went wrong. Please try again.';
+      const err = error as { status?: number; data?: { error?: string; message?: string }; message?: string };
+      const message = err.data?.error || err.data?.message || err.message || 'Something went wrong. Please try again.';
 
       if (err.status === 401) {
         setErrors({ password: 'Invalid email or password' });

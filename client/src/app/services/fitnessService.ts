@@ -48,14 +48,19 @@ export interface CompleteSessionResponse {
 
 export const fitnessService = {
   async generate(data: GenerateFitnessData): Promise<{ workoutPlan: WorkoutPlan }> {
-    return api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', data);
+    return api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', data, { timeoutMs: 180000 });
   },
 
   async completeSession(sessionId: string, data?: CompleteSessionData): Promise<CompleteSessionResponse> {
     return api.patch<CompleteSessionResponse>(`/fitness/session/${sessionId}/complete`, data ?? {});
   },
 
-  async getCurrent(params: { date: 'today' | 'week' }): Promise<{ data: WorkoutSession[]; planEndDate?: string }> {
-    return api.get<{ data: WorkoutSession[]; planEndDate?: string }>(`/fitness/current?date=${params.date}`);
+  async getCurrent(params: { date: 'today' | 'week' }): Promise<{ data: WorkoutSession[]; planEndDate?: string | null }> {
+    const response = await api.get<{ data: WorkoutSession[] | string; planEndDate?: string | null }>(`/fitness/current?date=${params.date}`);
+
+    return {
+      ...response,
+      data: Array.isArray(response.data) ? response.data : [],
+    };
   },
 };

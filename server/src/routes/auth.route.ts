@@ -67,7 +67,7 @@ interface GoogleUserProfile {
 }
 
 router.get("/google", (req: Request, res: Response) => {
-  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+  const redirectUri = `${(env.API_URL || "http://localhost:8081/api").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
   const clientId = env.GOOGLE_CLIENT_ID;
 
   const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent`;
@@ -75,7 +75,7 @@ router.get("/google", (req: Request, res: Response) => {
 });
 
 router.get("/google/fit-connect", authMiddleware, (req: Request, res: Response) => {
-  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+  const redirectUri = `${(env.API_URL || "http://localhost:8081/api").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
   const clientId = env.GOOGLE_CLIENT_ID;
   const userId = (req as AuthRequest).user?._id;
 
@@ -87,7 +87,7 @@ router.get("/google/fit-connect", authMiddleware, (req: Request, res: Response) 
 router.get("/google/callback", async (req: Request, res: Response) => {
   const code = req.query.code as string;
   const state = req.query.state as string;
-  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+  const redirectUri = `${(env.API_URL || "http://localhost:8081/api").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
   const clientUrl = env.CLIENT_URL;
 
   if (!code) {

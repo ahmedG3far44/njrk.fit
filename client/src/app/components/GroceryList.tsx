@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { groceryService, GroceryItem } from "../services/groceryService";
 
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 export const GroceryList: React.FC = () => {
   const [items, setItems] = useState<GroceryItem[]>([]);
