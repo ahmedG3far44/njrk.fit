@@ -6,6 +6,7 @@ export interface CheckInResponse {
   availableFreezes: number;
   isFirstCheckIn: boolean;
   isFrozen: boolean;
+  didCheckIn: boolean;
   message: string;
 }
 
@@ -60,7 +61,9 @@ export interface InsightsData {
 
 export const gamificationService = {
   async checkIn(): Promise<CheckInResponse> {
-    return api.post<CheckInResponse>('/gamification/check-in');
+    return api.post<CheckInResponse>('/gamification/check-in', {
+      timezoneOffset: -new Date().getTimezoneOffset(),
+    });
   },
 
   async useFreeze(data?: FreezeData): Promise<FreezeResponse> {

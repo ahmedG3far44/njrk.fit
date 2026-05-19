@@ -186,12 +186,19 @@ export const Schedule: React.FC = () => {
         return;
       }
       
-      const slots: TimeSlot[] = response.timeline.map((item: ScheduleItem) => {
+      const slots: TimeSlot[] = response.timeline.map((item: ScheduleItem, index: number) => {
         // Handle different API response structures
         const details = item.details || {};
+        const fallbackId = [
+          formatDate(selectedDate),
+          item.type || 'item',
+          item.time || 'no-time',
+          item.name || 'untitled',
+          index,
+        ].join('-');
         
         return {
-          id: item.id,
+          id: item.id || fallbackId,
           time: item.time,
           title: item.name,
           type: item.type as 'meal' | 'workout',
@@ -383,7 +390,7 @@ export const Schedule: React.FC = () => {
               <AnimatePresence>
                 {timeSlots.map((slot, index) => (
                   <motion.div
-                    key={slot.id}
+                    key={`${slot.id}-${slot.time}-${index}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}

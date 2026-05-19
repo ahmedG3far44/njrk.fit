@@ -9,6 +9,7 @@ interface CheckInResult {
     availableFreezes: number;
     isFirstCheckIn: boolean;
     isFrozen: boolean;
+    didCheckIn: boolean;
 }
 
 interface InsightsResult {
@@ -56,15 +57,14 @@ const calculateEstimatedSteps = (activityLevel: string, workoutsCompleted: numbe
     return baseSteps + workoutBonus;
 };
 
-const getUserLocalDate = (timezoneOffset: number): Date => {
-    const now = new Date();
-    const utc = now.getTime();
+const getUserLocalDate = (date: Date, timezoneOffset: number): Date => {
+    const utc = date.getTime();
     const localTime = utc + (timezoneOffset * 60000);
     return new Date(localTime);
 };
 
 const getDateKey = (date: Date, timezoneOffset: number): string => {
-    const localDate = getUserLocalDate(timezoneOffset);
+    const localDate = getUserLocalDate(date, timezoneOffset);
     return localDate.toISOString().split('T')[0];
 };
 
@@ -201,6 +201,7 @@ export const checkIn = async (userId: string, timezoneOffset: number = 0): Promi
             availableFreezes: user.availableFreezes,
             isFirstCheckIn: false,
             isFrozen: false,
+            didCheckIn: false,
         };
     }
 
@@ -238,6 +239,7 @@ export const checkIn = async (userId: string, timezoneOffset: number = 0): Promi
         availableFreezes: user.availableFreezes,
         isFirstCheckIn: isFirstCheckIn,
         isFrozen: false,
+        didCheckIn: true,
     };
 };
 

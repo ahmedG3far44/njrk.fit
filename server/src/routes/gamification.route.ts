@@ -17,14 +17,17 @@ router.post('/check-in', authMiddleware, async (req, res, next) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
+    const timezoneOffset = Number(req.body?.timezoneOffset) || 0;
 
-    const result = await checkIn(userId!);
+    const result = await checkIn(userId!, timezoneOffset);
 
-    await awardPoints(
-      userId!,
-      10,
-      result.isFirstCheckIn ? 'First check-in' : 'Daily check-in'
-    );
+    if (result.didCheckIn) {
+      await awardPoints(
+        userId!,
+        10,
+        result.isFirstCheckIn ? 'First check-in' : 'Daily check-in'
+      );
+    }
 
     res.status(200).json({
       currentStreak: result.currentStreak,
@@ -32,6 +35,7 @@ router.post('/check-in', authMiddleware, async (req, res, next) => {
       availableFreezes: result.availableFreezes,
       isFirstCheckIn: result.isFirstCheckIn,
       isFrozen: result.isFrozen,
+      didCheckIn: result.didCheckIn,
       message: result.isFirstCheckIn
         ? 'First check-in! Your streak has started.'
         : `Streak: ${result.currentStreak} days`,
