@@ -3,7 +3,7 @@ import {
   ArrowRight, CheckCircle, Users, Heart, TrendingUp, Star,
   Check, Camera, Brain, Dumbbell, ShoppingCart, Leaf
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, cubicBezier } from 'motion/react';
 import NjerkaLogo from './NjerkaLogo';
 
 interface LandingPageProps {
@@ -13,7 +13,8 @@ interface LandingPageProps {
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] } },
+  // Use cubicBezier helper for proper easing function typing
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: cubicBezier(0.42, 0, 0.58, 1) } },
 };
 
 const staggerContainer = {
