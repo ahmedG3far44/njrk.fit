@@ -289,32 +289,81 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
         transition={{ delay: 0.1, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         className="grid grid-cols-3 gap-4"
       >
-        {vitals.map((v, i) => (
-          <motion.div
-            key={v.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className={`w-8 h-8 ${v.bg} rounded-xl flex items-center justify-center`}>
-                <v.icon className={`w-4 h-4 ${v.color}`} />
-              </div>
-              <span className="text-xs font-bold text-slate-400">{v.target}</span>
-            </div>
-            <div className="font-bold text-slate-900 mb-1">{v.value}</div>
-            <div className="text-xs text-slate-400 mb-2">{v.label}</div>
-            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        {vitals.map((v, i) => {
+          const isSteps = v.label === 'Steps';
+          const isGoogleLinked = Boolean(user?.googleId);
+
+          if (isSteps && !isGoogleLinked) {
+            const stepGoal = user?.estimatedSteps || 5000;
+            const getGoalDurationDays = () => {
+              if (!user?.goalDate) return 120;
+              const startDate = user.createdAt ? new Date(user.createdAt) : new Date();
+              const endDate = new Date(user.goalDate);
+              const diffTime = endDate.getTime() - startDate.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return diffDays > 0 ? diffDays : 120;
+            };
+            const days = getGoalDurationDays();
+            const totalSteps = stepGoal * days;
+
+            return (
               <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${v.progress}%` }}
-                transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-                className={`h-full ${v.progressColor} rounded-full`}
-              />
-            </div>
-          </motion.div>
-        ))}
+                key={v.label}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-8 h-8 ${v.bg} rounded-xl flex items-center justify-center`}>
+                      <v.icon className={`w-4 h-4 ${v.color}`} />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">Target: {stepGoal.toLocaleString()}/d</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-lg font-black text-slate-900 leading-tight">
+                      {stepGoal.toLocaleString()} <span className="text-[10px] text-slate-400 font-semibold">/ day</span>
+                    </div>
+                    <div className="text-xs font-bold text-green-700">
+                      {totalSteps.toLocaleString()} <span className="text-[9px] text-slate-400 font-medium">total ({days}d)</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[10px] font-semibold text-slate-400 mt-2">
+                  Daily & Total Steps
+                </div>
+              </motion.div>
+            );
+          }
+
+          return (
+            <motion.div
+              key={v.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-8 h-8 ${v.bg} rounded-xl flex items-center justify-center`}>
+                  <v.icon className={`w-4 h-4 ${v.color}`} />
+                </div>
+                <span className="text-xs font-bold text-slate-400">{v.target}</span>
+              </div>
+              <div className="font-bold text-slate-900 mb-1">{v.value}</div>
+              <div className="text-xs text-slate-400 mb-2">{v.label}</div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${v.progress}%` }}
+                  transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+                  className={`h-full ${v.progressColor} rounded-full`}
+                />
+              </div>
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       {/* ── Nutrition Snapshot ── */}

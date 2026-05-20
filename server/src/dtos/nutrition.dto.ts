@@ -15,7 +15,8 @@ export const refineMealSchema = z.object({
 
 export const generateWorkoutPlanSchema = z.object({
     duration: z.number().int().min(15).max(120).default(60),
-    equipment: z.array(z.string()).default([]),
+    trainingDays: z.number().int().min(1).max(7).default(3),
+    trainingProgram: z.enum(['push_pull_legs', 'upper_lower', 'anterior_posterior', 'arnold_split', 'full_body']).default('full_body'),
     startDate: z.string().optional(),
 });
 

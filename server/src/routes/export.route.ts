@@ -17,7 +17,7 @@ const getLatestDocument = async (model: any, userId: string) => {
 
 const sendPDF = (res: Response, buffer: Buffer, filename: string) => {
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.send(buffer);
 };
 

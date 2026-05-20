@@ -30,18 +30,20 @@ interface WeeklySession {
   session?: Workout;
 }
 
-const EQUIPMENT_OPTIONS = [
-  'Dumbbells', 'Barbell', 'Kettlebell', 'Resistance Bands',
-  'Bodyweight', 'Cable Machine', 'Pull-up Bar',
-  'Rowing Machine', 'Treadmill', 'Cycling'
+const PROGRAM_SPLIT_OPTIONS = [
+  { value: 'push_pull_legs', label: 'Push Pull Legs (PPL)', desc: 'Alternate Push (chest/shoulders/triceps), Pull (back/biceps), and Legs (quads/hamstrings/glutes).' },
+  { value: 'upper_lower', label: 'Upper / Lower', desc: 'Alternate between Upper Body and Lower Body training days.' },
+  { value: 'anterior_posterior', label: 'Anterior / Posterior', desc: 'Alternate Anterior (front body muscles) and Posterior (back body muscles).' },
+  { value: 'arnold_split', label: 'Arnold Split', desc: 'Split by Chest/Back, Shoulders/Arms, and Legs.' },
+  { value: 'full_body', label: 'Full Body', desc: 'Train your entire body every session.' }
 ];
 
 const STORAGE_KEY = 'njerka_fitness_preferences';
 
 interface SavedPreferences {
-  training_days: number;
+  trainingDays: number;
   duration: number;
-  equipment: string[];
+  trainingProgram: 'push_pull_legs' | 'upper_lower' | 'anterior_posterior' | 'arnold_split' | 'full_body';
 }
 
 export const Fitness: React.FC = () => {
@@ -62,7 +64,7 @@ export const Fitness: React.FC = () => {
 
   const [trainingDays, setTrainingDays] = useState(3);
   const [duration, setDuration] = useState(60);
-  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [trainingProgram, setTrainingProgram] = useState<'push_pull_legs' | 'upper_lower' | 'anterior_posterior' | 'arnold_split' | 'full_body'>('full_body');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
@@ -77,9 +79,9 @@ export const Fitness: React.FC = () => {
     if (saved) {
       try {
         const prefs: SavedPreferences = JSON.parse(saved);
-        setTrainingDays(prefs.training_days || 3);
+        setTrainingDays(prefs.trainingDays || 3);
         setDuration(prefs.duration || 60);
-        setSelectedEquipment(prefs.equipment || []);
+        setTrainingProgram(prefs.trainingProgram || 'full_body');
       } catch (e) {
         console.error('Failed to load preferences:', e);
       }
@@ -87,11 +89,15 @@ export const Fitness: React.FC = () => {
   }, []);
 
   // Save preferences
-  const savePreferences = (days: number, dur: number, equip: string[]) => {
+  const savePreferences = (
+    days: number,
+    dur: number,
+    program: 'push_pull_legs' | 'upper_lower' | 'anterior_posterior' | 'arnold_split' | 'full_body'
+  ) => {
     const prefs: SavedPreferences = {
-      training_days: days,
+      trainingDays: days,
       duration: dur,
-      equipment: equip
+      trainingProgram: program
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
   };
@@ -171,20 +177,16 @@ export const Fitness: React.FC = () => {
 
   // Handle generate plan
   const handleGeneratePlan = async () => {
-    if (selectedEquipment.length === 0) {
-      toast.error('Please select at least one equipment');
-      return;
-    }
     setShowStyleModal(false);
     setIsGenerating(true);
     try {
       // Save preferences
-      savePreferences(trainingDays, duration, selectedEquipment);
+      savePreferences(trainingDays, duration, trainingProgram);
 
       const response = await fitnessService.generate({
         duration,
-        training_days: trainingDays,
-        equipment: selectedEquipment,
+        trainingDays,
+        trainingProgram,
         startDate
       });
 
@@ -289,15 +291,6 @@ export const Fitness: React.FC = () => {
     } finally {
       setCompletingId(null);
     }
-  };
-
-  // Toggle equipment selection
-  const toggleEquipment = (equipment: string) => {
-    setSelectedEquipment(prev =>
-      prev.includes(equipment)
-        ? prev.filter(e => e !== equipment)
-        : [...prev, equipment]
-    );
   };
 
   const typeConfig: Record<string, { bg: string; text: string; dot: string }> = {
@@ -412,31 +405,32 @@ export const Fitness: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Equipment */}
+                {/* Training Program Split */}
                 <div>
                   <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                    Available Equipment
+                    Training Program Split
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {EQUIPMENT_OPTIONS.map(equip => (
+                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+                    {PROGRAM_SPLIT_OPTIONS.map(program => (
                       <button
-                        key={equip}
-                        onClick={() => toggleEquipment(equip)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all border ${selectedEquipment.includes(equip)
-                          ? 'bg-green-50 border-green-500 text-green-700'
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-green-300'
+                        key={program.value}
+                        type="button"
+                        onClick={() => setTrainingProgram(program.value as any)}
+                        className={`p-3 rounded-xl text-left transition-all border flex flex-col gap-1 ${trainingProgram === program.value
+                          ? 'bg-green-50 border-green-500 text-green-900 shadow-sm shadow-green-50'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-green-300'
                           }`}
                       >
-                        {selectedEquipment.includes(equip) && (
-                          <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                        )}
-                        {equip}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-bold text-sm">{program.label}</span>
+                          {trainingProgram === program.value && (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-green-600 flex-shrink-0" />
+                          )}
+                        </div>
+                        <span className="text-xs text-slate-500 leading-snug">{program.desc}</span>
                       </button>
                     ))}
                   </div>
-                  {selectedEquipment.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">Please select at least one equipment</p>
-                  )}
                 </div>
 
                 {/* Start Date */}
@@ -463,7 +457,7 @@ export const Fitness: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleGeneratePlan}
-                    disabled={selectedEquipment.length === 0 || isGenerating}
+                    disabled={isGenerating}
                     className="flex-1 py-3 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-200"
                   >
                     <Sparkles className="w-4 h-4" />

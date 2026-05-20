@@ -5,6 +5,8 @@ import ProgressLog from '../models/progress.model';
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthRequest, authMiddleware } from '../middlewares/authMiddleware';
 import { awardPoints } from '../services/gamification.service';
+import { upload } from '../configs/multer';
+import { uploadToCloudinary } from '../services/upload.service';
 
 const router = Router();
 
@@ -16,18 +18,16 @@ router.get('/can-update', authMiddleware, async (req: Request, res: Response, ne
 
         const user = await User.findById(userId).select('lastStatsUpdate');
 
-        if (!user || !user.lastStatsUpdate) {
-            const nextSunday = new Date(now);
-            nextSunday.setDate(now.getDate() + (7 - now.getDay()));
-            nextSunday.setHours(0, 0, 0, 0);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-            const isSunday = now.getDay() === 0;
-
+        // New users (no previous weight log) can log immediately!
+        if (!user.lastStatsUpdate) {
             return res.status(200).json({
-                canUpdate: isSunday,
-                message: isSunday ? 'You can update today!' : 'Waiting for first Sunday',
-                daysUntilUpdate: isSunday ? 0 : Math.ceil((nextSunday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
-                nextUpdateDate: nextSunday
+                canUpdate: true,
+                message: 'Welcome! You can log your initial stats now.',
+                daysUntilUpdate: 0,
             });
         }
 
@@ -42,7 +42,7 @@ router.get('/can-update', authMiddleware, async (req: Request, res: Response, ne
         nextAllowedDate.setDate(lastUpdate.getDate() + 7);
 
         return res.status(200).json({
-            canUpdate: true,
+            canUpdate: false,
             message: `You can update on ${nextAllowedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`,
             daysUntilUpdate: 7 - daysDiff,
             nextUpdateDate: nextAllowedDate
@@ -52,7 +52,7 @@ router.get('/can-update', authMiddleware, async (req: Request, res: Response, ne
     }
 });
 
-router.post('/log', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/log', authMiddleware, upload.single('scanFile'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authReq = req as AuthRequest;
         const userId = authReq.user?.userId;
@@ -76,23 +76,45 @@ router.post('/log', authMiddleware, async (req: Request, res: Response, next: Ne
         }
 
         let scanFileUrl: string | undefined;
+        if (req.file) {
+            try {
+                const uploadResult = await uploadToCloudinary(req.file.buffer, 'inbody_scans');
+                scanFileUrl = uploadResult.secure_url;
+            } catch (uploadError) {
+                console.error('Failed to upload scan file to Cloudinary:', uploadError);
+            }
+        }
+
+        // Handle tags properly if stringified JSON array
+        let parsedTags: string[] = [];
+        if (tags) {
+            try {
+                parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+            } catch (err) {
+                if (typeof tags === 'string') {
+                    parsedTags = tags.split(',').map(t => t.trim()).filter(Boolean);
+                }
+            }
+        }
+
+        const parsedWeight = (weightKg && weightKg !== 'undefined' && weightKg !== 'null') ? parseFloat(weightKg) : undefined;
 
         const progressLog = await ProgressLog.create({
             userId,
             date: new Date(),
-            weightKg: weightKg ? parseFloat(weightKg) : undefined,
-            bodyFatPercentage: bodyFatPercentage ? parseFloat(bodyFatPercentage) : undefined,
-            muscleMass: muscleMass ? parseFloat(muscleMass) : undefined,
-            dailySteps: dailySteps ? parseInt(dailySteps) : undefined,
-            tags: tags ? JSON.parse(tags) : [],
-            notes,
+            weightKg: parsedWeight,
+            bodyFatPercentage: (bodyFatPercentage && bodyFatPercentage !== 'undefined' && bodyFatPercentage !== 'null') ? parseFloat(bodyFatPercentage) : undefined,
+            muscleMass: (muscleMass && muscleMass !== 'undefined' && muscleMass !== 'null') ? parseFloat(muscleMass) : undefined,
+            dailySteps: (dailySteps && dailySteps !== 'undefined' && dailySteps !== 'null') ? parseInt(dailySteps) : undefined,
+            tags: parsedTags,
+            notes: notes === 'undefined' ? '' : notes,
             scanFileUrl,
             source: scanFileUrl ? 'inbody_scan' : (source as 'manual' | 'inbody_scan') || 'manual',
         });
 
-        if (weightKg) {
+        if (parsedWeight) {
             await User.findByIdAndUpdate(userId, {
-                weight: parseFloat(weightKg),
+                weight: parsedWeight,
                 lastStatsUpdate: new Date()
             });
         } else {

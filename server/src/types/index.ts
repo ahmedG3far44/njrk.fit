@@ -35,6 +35,7 @@ export interface UserContext {
   allergies?: string[];
   isFasting?: boolean;
   trainingDays?: number;
+  trainingProgram?: string;
   equipment?: string[];
   mealsCount?: number;
   snacksCount?: number;

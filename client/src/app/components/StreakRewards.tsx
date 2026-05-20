@@ -24,6 +24,20 @@ interface Milestone {
   unlocked: boolean;
 }
 
+interface StreakActivity {
+  date: string;
+  type: 'check-in' | 'freeze';
+}
+
+const toDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseActivityDateKey = (value: string) => value.split('T')[0];
+
 export const StreakRewards: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'status' | 'rewards'>('status');
   const [loading, setLoading] = useState(true);
@@ -37,7 +51,7 @@ export const StreakRewards: React.FC = () => {
     pointsToRedeem: 0,
   });
   
-  const [activityData, setActivityData] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<StreakActivity[]>([]);
   const [milestones] = useState<Milestone[]>([]);
 
   useEffect(() => {
@@ -59,7 +73,7 @@ export const StreakRewards: React.FC = () => {
         if (Array.isArray(activity)) {
           setActivityData(activity);
         } else if (activity && typeof activity === 'object') {
-          const activityArray = (activity as any).activity || (activity as any).data || [];
+          const activityArray = (activity as any).activities || (activity as any).activity || (activity as any).data || [];
           setActivityData(Array.isArray(activityArray) ? activityArray : []);
         }
       } catch (error) {
@@ -77,26 +91,21 @@ export const StreakRewards: React.FC = () => {
   const getWeekDays = () => {
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const today = new Date();
-    const lastCheckIn = streakData.lastCheckInDate ? new Date(streakData.lastCheckInDate) : null;
+    const todayKey = toDateKey(today);
+    const activityKeys = new Set(activityData.map(activity => parseActivityDateKey(activity.date)));
     
     return days.map((day, i) => {
       // Calculate the day of week (Monday = 0 in our array)
       const date = new Date(today);
       date.setDate(today.getDate() - (6 - i));
+      const dateKey = toDateKey(date);
       
       let status: 'complete' | 'current' | 'upcoming' = 'upcoming';
       
-      if (lastCheckIn) {
-        const checkInDate = new Date(lastCheckIn);
-        checkInDate.setHours(0, 0, 0, 0);
-        const currentDate = new Date(date);
-        currentDate.setHours(0, 0, 0, 0);
-        
-        if (currentDate < checkInDate) {
-          status = 'complete';
-        } else if (currentDate.getTime() === checkInDate.getTime()) {
-          status = 'current';
-        }
+      if (dateKey === todayKey) {
+        status = 'current';
+      } else if (activityKeys.has(dateKey)) {
+        status = 'complete';
       }
       
       return { day, status };
@@ -159,8 +168,8 @@ export const StreakRewards: React.FC = () => {
             {weekDays.map((d, i) => (
               <div key={i} className="flex flex-col items-center gap-2">
                 <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all ${
-                  d.status === 'complete' ? 'bg-white text-orange-600 border-white' :
-                  d.status === 'current' ? 'bg-orange-600 border-white text-white ring-2 ring-white/50 ring-offset-2 ring-offset-orange-500' :
+                  d.status === 'complete' ? 'bg-amber-100 text-orange-700 border-amber-100' :
+                  d.status === 'current' ? 'bg-green-600 border-white text-white ring-2 ring-green-200 ring-offset-2 ring-offset-orange-500' :
                   'bg-transparent border-white/30 text-white/50'
                 }`}>
                   {d.status === 'complete' ? <Check className="w-6 h-6" /> : d.day}
@@ -247,26 +256,33 @@ export const StreakRewards: React.FC = () => {
                     const currentMonth = today.getMonth();
                     const currentYear = today.getFullYear();
                     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    const activityByDate = new Map(
+                      activityData.map((activity) => [parseActivityDateKey(activity.date), activity.type])
+                    );
                     
                     return Array.from({ length: daysInMonth }).map((_, i) => {
                       const dayNumber = i + 1;
                       const isToday = dayNumber === currentDay;
+                      const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+                      const activityType = activityByDate.get(dateKey);
                       
-                      const hasActivity = activityData.some((activity: any) => {
-                        const activityDate = new Date(activity.date);
-                        return activityDate.getDate() === dayNumber && 
-                               activityDate.getMonth() === currentMonth && 
-                               activityDate.getFullYear() === currentYear;
-                      });
+                      const dayTitle = activityType
+                        ? `${activityType === 'freeze' ? 'Freeze used' : 'Streak counted'} on ${dateKey}`
+                        : isToday
+                          ? 'Today'
+                          : dateKey;
                       
                       return (
                         <div 
                           key={i} 
+                          title={dayTitle}
                           className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
                             isToday
                               ? 'bg-green-600 text-white ring-2 ring-green-300 ring-offset-1'
-                              : hasActivity 
-                                ? 'bg-green-100 text-green-700' 
+                              : activityType === 'freeze'
+                                ? 'bg-blue-100 text-blue-700'
+                              : activityType === 'check-in'
+                                ? 'bg-amber-100 text-orange-700' 
                                 : 'bg-slate-50 text-slate-400'
                           }`}
                         >

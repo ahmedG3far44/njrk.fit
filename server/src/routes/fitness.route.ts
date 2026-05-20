@@ -21,12 +21,16 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
-    const { duration, equipment } = req.body;
+    const { duration, trainingDays, trainingProgram } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+
+    if (trainingDays) user.trainingDays = trainingDays;
+    if (trainingProgram) user.trainingProgram = trainingProgram;
+    await user.save();
 
     const existingPlan = await WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 });
     if (existingPlan && existingPlan.endDate > new Date()) {
@@ -47,11 +51,14 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       allergies: user.allergies,
       dietaryRestrictions: user.dietaryRestrictions,
       equipment: user.equipment,
+      trainingDays: trainingDays || user.trainingDays || 3,
+      trainingProgram: trainingProgram || user.trainingProgram || 'full_body',
     };
 
     const plan = await generateWorkoutPlan(
       userContext,
-      equipment || user.equipment || [],
+      userContext.trainingProgram || 'full_body',
+      userContext.trainingDays || 3,
       duration || 60
     );
 

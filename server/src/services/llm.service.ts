@@ -140,11 +140,9 @@ const normalizeLLMOutput = (data: any) => {
 const generateWorkoutPlanPrompt = (
   user: UserContext,
   training_days: number,
-  equipment: string[],
+  training_program: string,
   duration: number = 60,
 ): string => {
-  const equip =
-    equipment?.length > 0 ? equipment : "Gym equipment available for use";
   const activityLevel = user.activityLevel || "moderate";
 
   return `
@@ -155,29 +153,56 @@ USER PROFILE:
 - Activity level: ${activityLevel}
 - Fitness goals: ${user.fitnessGoals || "general fitness"}
 
+TRAINING METHOD:
+- Program Split: ${training_program}
+- Training Days: ${training_days} days per week
+- Session Duration: ${duration} minutes per training day
+
+PROGRAM SPLIT RULES:
+1. "push_pull_legs": Alternate Push (chest, shoulders, triceps), Pull (back, biceps), and Legs (quads, hamstrings, glutes, calves).
+2. "upper_lower": Alternate Upper Body and Lower Body training days.
+3. "anterior_posterior": Alternate Anterior (front body muscles: chest, quads, shoulders, abs) and Posterior (back body muscles: back, hamstrings, glutes, calves, triceps).
+4. "arnold_split": Split by Chest/Back, Shoulders/Arms, and Legs.
+5. "full_body": Each training day exercises the whole body (Legs, Chest, Back, Shoulders, Arms, Core).
+
 CONSTRAINTS (STRICT — MUST FOLLOW):
-- Training days per week: ${training_days}
 - Total days in plan: 7 (Monday → Sunday)
-- Days NOT used for training MUST be marked as "Recovery"
-- Each training session duration MUST be exactly: ${duration} minutes
-- Only use exercises that match available equipment: ${equip}
-- If equipment is "bodyweight", do NOT include gym equipment exercises
-- Distribute training days logically across the week (no clustering all in a row unless necessary)
-- Include variety: Strength, Cardio, Mixed, Yoga (if appropriate)
-- Recovery days must NOT include exercises
+- Exactly ${training_days} days MUST be training days. The rest (${7 - training_days} days) MUST be flagged as "Recovery" days.
+- Recovery days must have "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, and "exercises": [] (empty array).
+- Each active training session duration MUST be exactly: ${duration} minutes.
+- Distribute training days logically across the week (e.g. for a 3-day split: Monday, Wednesday, Friday active; other days recovery).
 - EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING):
   1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
-  2. AVOID overly complex names. Use "Dumbbell Row" instead of "Bent-Over Dumbbell Rows".
-  3. For Cardio, strictly use standard names like: "Treadmill", "Cycling", "Jump Rope", "Burpee".
-  4. For Yoga/Recovery, use basic poses: "Plank", "Crunch", "Sit up".
-
+  2. AVOID complex descriptive names. Use exact terms from our standard database whenever possible:
+     - "Squat"
+     - "Push-up"
+     - "Push up"
+     - "Lunge"
+     - "Deadlift"
+     - "Calf raise"
+     - "Glute bridge"
+     - "Dumbbell row"
+     - "Bent over row"
+     - "Dumbbell press"
+     - "Overhead press"
+     - "Bicep curl"
+     - "Triceps extension"
+     - "Plank"
+     - "High knees"
+     - "Mountain climber"
+     - "Burpee"
+     - "Dumbbell step-up"
+     - "Jumping jack"
+     - "Crunch"
+     - "Sit up"
+  3. Ensure capitalization is clean and matches the above list. Do NOT invent name variations.
 
 OUTPUT REQUIREMENTS:
-- Always return exactly 7 sessions (one per day)
+- Always return exactly 7 sessions (one per day, Monday through Sunday)
 - Respect training_days count strictly (e.g., if 4 → only 4 non-recovery sessions)
 - Each session must include:
-- dayOfWeek: "Monday" to "Sunday"
-  - name: Workout name
+  - dayOfWeek: "Monday" to "Sunday"
+  - name: Workout session name (e.g., "Push Strength Workout" or "Lower Body Focus")
   - type: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery"
   - durationMin: number (use ${duration} for training, 0 for recovery)
   - estimatedCaloriesBurn: number (0 for recovery)
@@ -192,13 +217,15 @@ OUTPUT VALID JSON ONLY:
   "sessions": [
     {
       "dayOfWeek": "Monday",
-      "name": "Upper Body Strength",
+      "name": "Push Strength Focus",
       "type": "Strength",
       "durationMin": ${duration},
-      "estimatedCaloriesBurn": 400,
+      "estimatedCaloriesBurn": 420,
       "exercises": [
-        {"name":"Push-ups","sets":3,"reps":"10-15"}
-        ]
+        {"name": "Bench Press", "sets": 4, "reps": "8-10"},
+        {"name": "Overhead press", "sets": 3, "reps": "10"},
+        {"name": "Triceps extension", "sets": 3, "reps": "12"}
+      ]
     }
   ]
 }
@@ -366,13 +393,14 @@ export const generateMealPlan = async (
 
 export const generateWorkoutPlan = async (
   user: UserContext,
-  equipment: string[] = [],
+  trainingProgram: string = 'full_body',
+  trainingDays: number = 3,
   duration: number = 60,
 ): Promise<WorkoutPlanResponse> => {
   const prompt = generateWorkoutPlanPrompt(
     user,
-    user?.trainingDays || 3,
-    equipment,
+    trainingDays,
+    trainingProgram,
     duration,
   );
 

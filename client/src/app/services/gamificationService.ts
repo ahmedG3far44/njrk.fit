@@ -60,7 +60,8 @@ export interface InsightsData {
 
 export const gamificationService = {
   async checkIn(): Promise<CheckInResponse> {
-    return api.post<CheckInResponse>('/gamification/check-in');
+    const timezoneOffset = -new Date().getTimezoneOffset();
+    return api.post<CheckInResponse>('/gamification/check-in', { timezoneOffset });
   },
 
   async useFreeze(data?: FreezeData): Promise<FreezeResponse> {
@@ -81,7 +82,7 @@ export const gamificationService = {
 
   async getActivity(params?: ActivityParams): Promise<unknown> {
     const searchParams = new URLSearchParams();
-    if (params?.timezoneOffset !== undefined) searchParams.append('timezoneOffset', String(params.timezoneOffset));
+    searchParams.append('timezoneOffset', String(params?.timezoneOffset ?? -new Date().getTimezoneOffset()));
     if (params?.month !== undefined) searchParams.append('month', String(params.month));
     if (params?.year !== undefined) searchParams.append('year', String(params.year));
     const query = searchParams.toString();

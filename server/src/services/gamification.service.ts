@@ -9,6 +9,7 @@ interface CheckInResult {
     availableFreezes: number;
     isFirstCheckIn: boolean;
     isFrozen: boolean;
+    didCheckIn: boolean;
 }
 
 interface InsightsResult {
@@ -56,16 +57,38 @@ const calculateEstimatedSteps = (activityLevel: string, workoutsCompleted: numbe
     return baseSteps + workoutBonus;
 };
 
-const getUserLocalDate = (timezoneOffset: number): Date => {
-    const now = new Date();
-    const utc = now.getTime();
-    const localTime = utc + (timezoneOffset * 60000);
-    return new Date(localTime);
+const getLocalDateString = (date: Date, timezoneOffsetMinutes: number): string => {
+    // Shift the UTC time of the date object by the user's timezone offset in minutes.
+    // e.g. standard getTimezoneOffset() is -180 for GMT+3.
+    // We expect the client to pass either positive offset (+180) or negative (-180).
+    // Let's standardise: if the user passes positive timezoneOffset (e.g. +180), we add it.
+    // To be completely robust and support both, we shift the date correctly.
+    const shiftedTime = date.getTime() + (timezoneOffsetMinutes * 60 * 1000);
+    const shiftedDate = new Date(shiftedTime);
+    
+    const year = shiftedDate.getUTCFullYear();
+    const month = String(shiftedDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(shiftedDate.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
-const getDateKey = (date: Date, timezoneOffset: number): string => {
-    const localDate = getUserLocalDate(timezoneOffset);
-    return localDate.toISOString().split('T')[0];
+const getDaysBetween = (dateStr1: string, dateStr2: string): number => {
+    const d1 = new Date(`${dateStr1}T00:00:00.000Z`);
+    const d2 = new Date(`${dateStr2}T00:00:00.000Z`);
+    const diffMs = d1.getTime() - d2.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+};
+
+const getLocalMonthBounds = (
+    month: number,
+    year: number,
+    timezoneOffsetMinutes: number
+): { start: Date; end: Date } => {
+    const offsetMs = timezoneOffsetMinutes * 60 * 1000;
+    return {
+        start: new Date(Date.UTC(year, month, 1, 0, 0, 0, 0) - offsetMs),
+        end: new Date(Date.UTC(year, month + 1, 1, 0, 0, 0, 0) - offsetMs - 1),
+    };
 };
 
 export const getInsights = async (userId: string): Promise<InsightsResult> => {
@@ -123,8 +146,8 @@ export const recordActivity = async (
     type: 'check-in' | 'freeze' | 'reward-claimed',
     timezoneOffset: number = 0
 ): Promise<void> => {
-    const dateKey = getDateKey(new Date(), timezoneOffset);
-    const localDate = new Date(dateKey);
+    const dateKey = getLocalDateString(new Date(), timezoneOffset);
+    const localDate = new Date(`${dateKey}T00:00:00.000Z`);
 
     const existing = await Activity.findOne({
         userId: new mongoose.Types.ObjectId(userId),
@@ -132,8 +155,10 @@ export const recordActivity = async (
     });
 
     if (existing) {
-        existing.type = type;
-        await existing.save();
+        if (type === 'check-in' || existing.type === 'reward-claimed') {
+            existing.type = type;
+            await existing.save();
+        }
     } else {
         await Activity.create({
             userId: new mongoose.Types.ObjectId(userId),
@@ -151,20 +176,21 @@ export const getActivityHistory = async (
     year?: number
 ): Promise<ActivityResult> => {
     const now = new Date();
-    const targetYear = year || now.getFullYear();
-    const targetMonth = month || now.getMonth();
+    const localNow = getLocalDateString(now, timezoneOffset);
+    const [localYear, localMonth] = localNow.split('-').map(Number);
+    const targetYear = year !== undefined ? year : localYear;
+    const targetMonth = month !== undefined ? month : localMonth - 1;
 
-    const startOfMonth = new Date(targetYear, targetMonth, 1);
-    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
+    const { start, end } = getLocalMonthBounds(targetMonth, targetYear, timezoneOffset);
 
     const activities = await Activity.find({
         userId: new mongoose.Types.ObjectId(userId),
-        date: { $gte: startOfMonth, $lte: endOfMonth },
+        date: { $gte: start, $lte: end },
         type: { $in: ['check-in', 'freeze'] },
     });
 
     const activityMap = activities.reduce((acc, act) => {
-        const key = act.date.toISOString().split('T')[0];
+        const key = getLocalDateString(act.date, timezoneOffset);
         acc[key] = act.type;
         return acc;
     }, {} as Record<string, string>);
@@ -179,6 +205,7 @@ export const getActivityHistory = async (
         totalCheckIns,
     };
 };
+
 export const checkIn = async (
     userId: string,
     timezoneOffset: number = 0
@@ -194,32 +221,13 @@ export const checkIn = async (
 
     const isFirstCheckIn = !lastCheckIn;
 
-    // Convert dates to user's local timezone
-    const nowLocal = new Date(now.getTime() + timezoneOffset * 60 * 1000);
+    const todayStr = getLocalDateString(now, timezoneOffset);
 
     let newStreak = 1;
 
     if (lastCheckIn) {
-        const lastLocal = new Date(
-            lastCheckIn.getTime() + timezoneOffset * 60 * 1000
-        );
-
-        // Remove time part
-        const nowDate = new Date(
-            nowLocal.getFullYear(),
-            nowLocal.getMonth(),
-            nowLocal.getDate()
-        );
-
-        const lastDate = new Date(
-            lastLocal.getFullYear(),
-            lastLocal.getMonth(),
-            lastLocal.getDate()
-        );
-
-        const diffMs = nowDate.getTime() - lastDate.getTime();
-
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const lastStr = getLocalDateString(lastCheckIn, timezoneOffset);
+        const diffDays = getDaysBetween(todayStr, lastStr);
 
         // Already checked in today
         if (diffDays === 0) {
@@ -230,6 +238,7 @@ export const checkIn = async (
                 availableFreezes: user.availableFreezes,
                 isFirstCheckIn: false,
                 isFrozen: false,
+                didCheckIn: false,
             };
         }
 
@@ -266,6 +275,7 @@ export const checkIn = async (
         availableFreezes: user.availableFreezes,
         isFirstCheckIn,
         isFrozen: false,
+        didCheckIn: true,
     };
 };
 

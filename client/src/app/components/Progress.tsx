@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { TrendingUp, X, Brain, Send, Scale, Sparkles, Check, Lock, Calendar, Footprints, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { progressService, CanUpdateResponse } from '../services/progressService';
 import { gamificationService } from '../services/gamificationService';
 import { nutritionService } from '../services/nutritionService';
@@ -20,8 +21,18 @@ export const Progress: React.FC = () => {
   const [aiFeeling, setAiFeeling] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const { user, isGoogleUser } = useAuth();
+
+  const getGoalDurationDays = () => {
+    if (!user?.goalDate) return 120;
+    const startDate = user.createdAt ? new Date(user.createdAt) : new Date();
+    const endDate = new Date(user.goalDate);
+    const diffTime = endDate.getTime() - startDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 120;
+  };
 
   const [weightData, setWeightData] = useState<WeightEntry[]>([]);
   const [canUpdateInfo, setCanUpdateInfo] = useState<CanUpdateResponse | null>(null);
@@ -121,6 +132,7 @@ export const Progress: React.FC = () => {
         source: 'manual'
       });
 
+      navigate('/dashboard/progress', { replace: true });
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
@@ -156,7 +168,7 @@ export const Progress: React.FC = () => {
             <option value="30days">Last Month</option>
             <option value="7days">Last 7 Days</option>
           </select>
-          {!canUpdateInfo?.canUpdate ? (
+          {canUpdateInfo?.canUpdate ? (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -314,6 +326,7 @@ export const Progress: React.FC = () => {
           </div>
         </div>
 
+
         {/* Activity Chart */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-6">Daily Steps</h3>
@@ -370,16 +383,18 @@ export const Progress: React.FC = () => {
                   <div className="text-3xl font-bold text-slate-900">
                     {((user?.estimatedSteps || 5000)).toLocaleString()}
                   </div>
-                  <div className="text-slate-500 text-sm">Daily Step Goal</div>
+                  <div className="text-slate-500 text-sm">Daily Steps Goal</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
                   <div className="bg-green-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-green-700">{(user?.estimatedSteps || 5000).toLocaleString()}</div>
-                    <div className="text-xs text-slate-500">Goal</div>
+                    <div className="text-sm font-bold text-green-700">{(user?.estimatedSteps || 5000).toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-500">Daily Steps</div>
                   </div>
                   <div className="bg-amber-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-amber-600">{(user?.estimatedSteps || 5000).toLocaleString()}</div>
-                    <div className="text-xs text-slate-500">To Reach Goal</div>
+                    <div className="text-sm font-bold text-amber-600">
+                      {((user?.estimatedSteps || 5000) * getGoalDurationDays()).toLocaleString()}
+                    </div>
+                    <div className="text-[10px] text-slate-500">Total Steps ({getGoalDurationDays()} days)</div>
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">

@@ -159,6 +159,16 @@ export function calculateUserHealthTargets({
 
   let estimatedSteps: number;
 
+  const stepsByActivity: Record<string, number> = {
+    sedentary: 5000,
+    light: 6500,
+    moderate: 8000,
+    active: 10000,
+    very_active: 12000,
+  };
+
+  const baseSteps = stepsByActivity[activityLevel] || 6000;
+
   if (isLosingWeight) {
     const weightToLoseKg = currentWeightKg - targetWeightKg;
 
@@ -166,19 +176,18 @@ export function calculateUserHealthTargets({
       const totalCaloriesToBurn = weightToLoseKg * CALORIES_PER_KG;
       const dailyCaloriesToBurn = totalCaloriesToBurn / daysToReachGoal;
       const caloriesPerStep = estimateCaloriesPerStep(currentWeightKg);
-      estimatedSteps = Math.ceil(dailyCaloriesToBurn / caloriesPerStep);
+      
+      // Target a realistic fraction of the calorie deficit (20%) through steps
+      const extraStepsFromDeficit = Math.ceil((dailyCaloriesToBurn * 0.20) / caloriesPerStep);
+      estimatedSteps = baseSteps + extraStepsFromDeficit;
+      
+      // Clamp between 5,000 and 15,000 steps per day
+      estimatedSteps = Math.min(Math.max(estimatedSteps, 5000), 15000);
     } else {
-      estimatedSteps = 5000;
+      estimatedSteps = baseSteps;
     }
   } else {
-    const stepsByActivity: Record<string, number> = {
-      sedentary: 3000,
-      light: 5000,
-      moderate: 7000,
-      active: 9000,
-      very_active: 11000,
-    };
-    estimatedSteps = stepsByActivity[activityLevel] || 5000;
+    estimatedSteps = baseSteps;
   }
 
   const estimatedSleepHours = estimateSleepHours(age);

@@ -26,6 +26,8 @@ export interface IUser extends Document {
   goalDate?: string;
   dietaryRestrictions: string[];
   equipment?: string[];
+  trainingProgram?: string;
+  trainingDays?: number;
   allergies?: string[];
   familyMembers: Types.ObjectId[];
   subscription: {
@@ -98,6 +100,8 @@ const UserSchema = new Schema<IUser>({
   goalDate: { type: String },
   dietaryRestrictions: [{ type: String }],
   equipment: [{ type: String }],
+  trainingProgram: { type: String, default: 'full_body' },
+  trainingDays: { type: Number, default: 3 },
 
   familyMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   subscription: {

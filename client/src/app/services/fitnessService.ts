@@ -34,8 +34,8 @@ export interface WorkoutPlan {
 
 export interface GenerateFitnessData {
   duration: number;        // 15-120, default 60
-  training_days: number;   // 1-7, default 3
-  equipment: string[];     // array of equipment names
+  trainingDays: number;   // 1-7, default 3
+  trainingProgram: 'push_pull_legs' | 'upper_lower' | 'anterior_posterior' | 'arnold_split' | 'full_body';
   startDate?: string;       // ISO date string
 }
 
