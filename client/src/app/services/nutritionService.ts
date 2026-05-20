@@ -40,6 +40,7 @@ export interface GenerateNutritionData {
   favoriteFoods?: string[];
   startDate?: string;
   userId?: string;
+  repeatMeals?: boolean;
 }
 
 export interface RefineMealData {

@@ -281,6 +281,7 @@ const CATEGORY_KEYWORDS: Record<GroceryCategory, string[]> = {
   Other: [], // fallback — no keywords needed
 };
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: categorizeIngredient
 //
@@ -304,91 +305,313 @@ function categorizeIngredient(name: string): GroceryCategory {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: extractRawIngredients
-//
-// Walks plans → meals → ingredients and normalizes every entry into
-// { name, quantity, unit }. Handles both object-shaped and legacy string entries.
+// Smart Grocery Sync Helpers & Lookups
 // ─────────────────────────────────────────────────────────────────────────────
 
-function extractRawIngredients(
-  plans: Awaited<ReturnType<typeof NutritionPlan.find>>,
-  daysAhead: number,
-): NormalizedIngredient[] {
-  const result: NormalizedIngredient[] = [];
+interface MacroProfile {
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
-  for (const plan of plans) {
-    for (const meal of plan.meals || []) {
-      const dayMatch = (meal as any).day?.match(/^Day\s+(\d+)$/i);
-      const dayNum = dayMatch ? parseInt(dayMatch[1], 10) : Infinity;
-      if (dayNum > daysAhead) continue;
+const INGREDIENT_MACROS: Record<string, MacroProfile> = {
+  // Proteins
+  chicken: { protein: 31, carbs: 0, fat: 3.6 },
+  beef: { protein: 26, carbs: 0, fat: 15 },
+  lamb: { protein: 25, carbs: 0, fat: 21 },
+  turkey: { protein: 29, carbs: 0, fat: 7 },
+  pork: { protein: 27, carbs: 0, fat: 14 },
+  salmon: { protein: 20, carbs: 0, fat: 13 },
+  tuna: { protein: 28, carbs: 0, fat: 1 },
+  shrimp: { protein: 24, carbs: 0.2, fat: 0.3 },
+  prawn: { protein: 24, carbs: 0.2, fat: 0.3 },
+  egg: { protein: 13, carbs: 1.1, fat: 11 },
+  eggs: { protein: 13, carbs: 1.1, fat: 11 },
+  tofu: { protein: 8, carbs: 2, fat: 4.8 },
+  tempeh: { protein: 19, carbs: 9, fat: 11 },
+  steak: { protein: 25, carbs: 0, fat: 15 },
+  cod: { protein: 20, carbs: 0, fat: 0.7 },
+  tilapia: { protein: 20, carbs: 0, fat: 1.7 },
+  sardine: { protein: 25, carbs: 0, fat: 11 },
+  duck: { protein: 19, carbs: 0, fat: 14 },
+  veal: { protein: 24, carbs: 0, fat: 9 },
+  bacon: { protein: 37, carbs: 1.4, fat: 42 },
+  ham: { protein: 21, carbs: 1.5, fat: 6 },
+  sausage: { protein: 12, carbs: 1.5, fat: 27 },
+  protein_powder: { protein: 80, carbs: 5, fat: 3 },
+  whey: { protein: 80, carbs: 5, fat: 3 },
 
-      for (const ingredient of meal.ingredients || []) {
-        const ing = ingredient as any;
+  // Dairy
+  milk: { protein: 3.4, carbs: 4.8, fat: 3.25 },
+  cheese: { protein: 25, carbs: 1.3, fat: 33 },
+  butter: { protein: 0.9, carbs: 0.1, fat: 81 },
+  ghee: { protein: 0.3, carbs: 0, fat: 99.5 },
+  cream: { protein: 2.7, carbs: 2.7, fat: 36 },
+  yogurt: { protein: 10, carbs: 3.6, fat: 0.4 },
+  yoghurt: { protein: 10, carbs: 3.6, fat: 0.4 },
+  cottage_cheese: { protein: 11, carbs: 3.4, fat: 4.3 },
+  ricotta: { protein: 11, carbs: 3, fat: 13 },
+  mozzarella: { protein: 22, carbs: 2.2, fat: 22 },
+  cheddar: { protein: 25, carbs: 1.3, fat: 33 },
+  parmesan: { protein: 38, carbs: 4.1, fat: 29 },
+  feta: { protein: 14, carbs: 4, fat: 21 },
+  sour_cream: { protein: 2.4, carbs: 4.6, fat: 19.3 },
+  cream_cheese: { protein: 6, carbs: 4, fat: 34 },
 
-        if (typeof ing === "string") {
-          // Legacy string e.g. "200 chicken breast"
-          const match = ing.match(/^([\d.\/\s]+)?\s*(.+)$/);
-          if (match) {
-            result.push({
-              name: match[2]?.trim() || ing,
-              quantity: parseFloat(match[1]?.trim()) || 1,
-              unit: "g",
-            });
-          }
-        } else if (ing && typeof ing === "object" && ing.name) {
-          result.push({
-            name: String(ing.name).trim(),
-            quantity: Number(ing.quantity) || 1,
-            unit: String(ing.unit ?? "g").trim(), // preserve actual unit
-          });
-        } else {
-          console.warn(
-            `[sync] Unrecognized ingredient shape: ${JSON.stringify(ing)}`,
-          );
-        }
+  // Grains
+  rice: { protein: 2.7, carbs: 28, fat: 0.3 },
+  pasta: { protein: 5, carbs: 30, fat: 0.9 },
+  bread: { protein: 9, carbs: 49, fat: 3.2 },
+  oat: { protein: 16.9, carbs: 66, fat: 6.9 },
+  oats: { protein: 16.9, carbs: 66, fat: 6.9 },
+  flour: { protein: 10, carbs: 76, fat: 1 },
+  quinoa: { protein: 4.4, carbs: 21.3, fat: 1.9 },
+  barley: { protein: 12, carbs: 73, fat: 2.3 },
+  bulgur: { protein: 12, carbs: 76, fat: 1.3 },
+  couscous: { protein: 12, carbs: 77, fat: 0.6 },
+  tortilla: { protein: 8, carbs: 46, fat: 8 },
+  wrap: { protein: 8, carbs: 46, fat: 8 },
+  pita: { protein: 9, carbs: 55, fat: 1.2 },
+  cereal: { protein: 8, carbs: 80, fat: 3 },
+  granola: { protein: 10, carbs: 64, fat: 20 },
+
+  // Fruits
+  apple: { protein: 0.3, carbs: 14, fat: 0.2 },
+  banana: { protein: 1.1, carbs: 23, fat: 0.3 },
+  orange: { protein: 0.9, carbs: 12, fat: 0.1 },
+  grape: { protein: 0.7, carbs: 18, fat: 0.2 },
+  grapes: { protein: 0.7, carbs: 18, fat: 0.2 },
+  strawberry: { protein: 0.7, carbs: 8, fat: 0.3 },
+  strawberries: { protein: 0.7, carbs: 8, fat: 0.3 },
+  blueberry: { protein: 0.7, carbs: 14, fat: 0.3 },
+  blueberries: { protein: 0.7, carbs: 14, fat: 0.3 },
+  mango: { protein: 0.8, carbs: 15, fat: 0.4 },
+  pineapple: { protein: 0.5, carbs: 13, fat: 0.1 },
+  avocado: { protein: 2, carbs: 8.5, fat: 15 },
+  coconut: { protein: 3.3, carbs: 15, fat: 33 },
+
+  // Vegetables
+  spinach: { protein: 2.9, carbs: 3.6, fat: 0.4 },
+  kale: { protein: 4.3, carbs: 8.8, fat: 0.9 },
+  broccoli: { protein: 2.8, carbs: 7, fat: 0.4 },
+  carrot: { protein: 0.9, carbs: 9.6, fat: 0.2 },
+  carrots: { protein: 0.9, carbs: 9.6, fat: 0.2 },
+  onion: { protein: 1.1, carbs: 9.3, fat: 0.1 },
+  onions: { protein: 1.1, carbs: 9.3, fat: 0.1 },
+  garlic: { protein: 6.4, carbs: 33, fat: 0.5 },
+  tomato: { protein: 0.9, carbs: 3.9, fat: 0.2 },
+  tomatoes: { protein: 0.9, carbs: 3.9, fat: 0.2 },
+  potato: { protein: 2, carbs: 17, fat: 0.1 },
+  potatoes: { protein: 2, carbs: 17, fat: 0.1 },
+  sweet_potato: { protein: 1.6, carbs: 20, fat: 0.1 },
+  sweet_potatoes: { protein: 1.6, carbs: 20, fat: 0.1 },
+};
+
+function normalizeIngredientName(name: string): string {
+  let lower = name.toLowerCase().trim();
+
+  // Strip leading numbers and units/pieces e.g. "3 " or "200g " or "2 piece "
+  lower = lower.replace(/^[\d\.\/\s-\x2D]+(?:g|kg|oz|lb|ml|l|cup|tbsp|tsp|piece|pieces|pcs|dozen)?\s+/i, "");
+
+  // Remove common cooking / preparation adjectives
+  const adjectives = [
+    "boiled", "boilded", "scrambled", "omelet", "omlet", "fried", "poached", "baked",
+    "roasted", "grilled", "steamed", "cooked", "raw", "fresh", "sliced", "chopped",
+    "diced", "minced", "grated", "mashed", "pureed", "peeled", "dried", "frozen",
+    "organic", "large", "medium", "small", "whole", "shredded", "canned"
+  ];
+
+  // Regex to remove the adjectives as whole words
+  const adjRegex = new RegExp(`\\b(${adjectives.join("|")})\\b`, "gi");
+  lower = lower.replace(adjRegex, "").replace(/\s+/g, " ").trim();
+
+  // Standardize plurals to singular for common foods
+  const pluralPairs: [RegExp, string][] = [
+    [/\beggs\b/g, "egg"],
+    [/\btomatoes\b/g, "tomato"],
+    [/\bpotatoes\b/g, "potato"],
+    [/\bcarrots\b/g, "carrot"],
+    [/\bapples\b/g, "apple"],
+    [/\bbananas\b/g, "banana"],
+    [/\bonions\b/g, "onion"],
+    [/\bpeppers\b/g, "pepper"],
+    [/\bmushrooms\b/g, "mushroom"],
+    [/\bpeaches\b/g, "peach"],
+    [/\bpears\b/g, "pear"],
+    [/\bplums\b/g, "plum"],
+    [/\bcherries\b/g, "cherry"],
+    [/\bkiwis\b/g, "kiwi"],
+    [/\blemons\b/g, "lemon"],
+    [/\blimes\b/g, "lime"],
+    [/\bavocados\b/g, "avocado"],
+    [/\bdates\b/g, "date"],
+    [/\bapricots\b/g, "apricot"],
+    [/\bcloves\b/g, "clove"],
+    [/\bleaves\b/g, "leaf"],
+    [/\bpeas\b/g, "pea"],
+  ];
+
+  for (const [pluralRegex, singular] of pluralPairs) {
+    lower = lower.replace(pluralRegex, singular);
+  }
+
+  if (lower.endsWith("s")) {
+    const commonSingulars = ["breast", "thigh", "wing", "fillet", "steak", "bean", "lentil", "berry", "strawberry", "blueberry", "raspberry", "grape"];
+    for (const item of commonSingulars) {
+      if (lower.endsWith(item + "s")) {
+        lower = lower.slice(0, -1);
       }
     }
   }
 
-  return result;
+  return lower.trim();
 }
 
-function aggregateIngredients(
-  rawIngredients: NormalizedIngredient[],
-): AggregatedItem[] {
-  const map = new Map<string, AggregatedItem>();
+function capitalizeWords(str: string): string {
+  return str
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
-  for (const ing of rawIngredients) {
-    const name = ing.name.trim();
-    const unit = (ing.unit || "g").trim().toLowerCase();
-    const quantity = Number(ing.quantity) || 0;
+function getMacrosForIngredient(name: string): MacroProfile | null {
+  const lower = name.toLowerCase().trim().replace(/\s+/g, "_");
 
-    if (!name || quantity <= 0) {
-      console.warn(
-        `[sync] Skipping invalid ingredient: ${JSON.stringify(ing)}`,
-      );
-      continue;
-    }
+  // 1. Direct match
+  if (INGREDIENT_MACROS[lower]) {
+    return INGREDIENT_MACROS[lower];
+  }
 
-    const key = `${name.toLowerCase()}|${unit}`;
-
-    if (map.has(key)) {
-      map.get(key)!.totalQuantity += quantity;
-    } else {
-      map.set(key, {
-        name,
-        category: categorizeIngredient(name),
-        totalQuantity: quantity,
-        unit,
-        isPurchased: false,
-      });
+  // 2. Substring match
+  for (const [key, macros] of Object.entries(INGREDIENT_MACROS)) {
+    if (lower.includes(key) || key.includes(lower)) {
+      return macros;
     }
   }
 
-  return Array.from(map.values()).map((item) => ({
-    ...item,
-    totalQuantity: parseFloat(item.totalQuantity.toFixed(2)),
-  }));
+  // 3. Fallback profiles based on original keywords
+  for (const category of CATEGORIES) {
+    if (category === "Other" || category === "Spices") continue;
+    const matched = CATEGORY_KEYWORDS[category].some((kw) =>
+      lower.includes(kw.replace(/\s+/g, "_")),
+    );
+    if (matched) {
+      switch (category) {
+        case "Proteins":
+          return { protein: 25, carbs: 0, fat: 5 };
+        case "Dairy":
+          return { protein: 10, carbs: 4, fat: 15 };
+        case "Grains":
+          return { protein: 8, carbs: 60, fat: 2 };
+        case "Fruits":
+          return { protein: 1, carbs: 15, fat: 0.2 };
+        case "Vegetables":
+          return { protein: 2, carbs: 6, fat: 0.2 };
+      }
+    }
+  }
+
+  return null;
+}
+
+function categorizeIngredientByMacros(name: string): GroceryCategory {
+  const normalized = normalizeIngredientName(name);
+  const macros = getMacrosForIngredient(normalized);
+
+  if (macros) {
+    const { protein, carbs, fat } = macros;
+
+    // Rule 1: Protein > Carbs & Fats
+    if (protein > carbs && protein > fat) {
+      return "Proteins";
+    }
+
+    // Rule 2: Carbs > Protein & Fats
+    if (carbs > protein && carbs > fat) {
+      const lower = normalized.toLowerCase();
+      for (const cat of ["Grains", "Fruits", "Vegetables"] as GroceryCategory[]) {
+        if (CATEGORY_KEYWORDS[cat].some((kw) => lower.includes(kw))) {
+          return cat;
+        }
+      }
+      return "Grains";
+    }
+
+    // Rule 3: Fats > others
+    if (fat > protein && fat > carbs) {
+      const lower = normalized.toLowerCase();
+      if (
+        CATEGORY_KEYWORDS["Dairy"].some((kw) => lower.includes(kw)) ||
+        lower.includes("cheese") ||
+        lower.includes("butter") ||
+        lower.includes("milk") ||
+        lower.includes("cream")
+      ) {
+        return "Dairy";
+      }
+      // If not dairy, check if matches other category list
+      for (const cat of ["Fruits", "Vegetables", "Proteins", "Grains"] as GroceryCategory[]) {
+        if (CATEGORY_KEYWORDS[cat].some((kw) => lower.includes(kw))) {
+          return cat;
+        }
+      }
+      return "Other";
+    }
+  }
+
+  return categorizeIngredient(name);
+}
+
+function getUniqueDaysInPlan(plan: any): number {
+  const days = new Set<string>();
+  for (const meal of plan.meals || []) {
+    if (meal.day) {
+      days.add(String(meal.day).trim().toLowerCase());
+    }
+  }
+  return days.size || 7;
+}
+
+function getAggregatedIngredientsForPlan(plan: any): Array<{
+  normalizedName: string;
+  unit: string;
+  quantity: number;
+}> {
+  const map = new Map<string, { normalizedName: string; unit: string; quantity: number }>();
+  for (const meal of plan.meals || []) {
+    for (const ingredient of meal.ingredients || []) {
+      const ing = ingredient as any;
+      let name = "";
+      let quantity = 1;
+      let unit = "g";
+
+      if (typeof ing === "string") {
+        const match = ing.match(/^([\d.\/\s]+)?\s*(.+)$/);
+        if (match) {
+          name = match[2]?.trim() || ing;
+          quantity = parseFloat(match[1]?.trim()) || 1;
+        } else {
+          name = ing;
+        }
+      } else if (ing && typeof ing === "object" && ing.name) {
+        name = String(ing.name).trim();
+        quantity = Number(ing.quantity) || 1;
+        unit = String(ing.unit ?? "g").trim().toLowerCase();
+      }
+
+      if (!name || quantity <= 0) continue;
+
+      const normName = normalizeIngredientName(name);
+      const key = `${normName}|${unit}`;
+
+      if (map.has(key)) {
+        map.get(key)!.quantity += quantity;
+      } else {
+        map.set(key, { normalizedName: normName, unit, quantity });
+      }
+    }
+  }
+  return Array.from(map.values());
 }
 
 function toResponseItem(item: {
@@ -506,10 +729,39 @@ router.post(
         `[sync] Found ${plans.length} nutrition plan(s) across ${userIds.length} user(s).`,
       );
 
-      // ── Step 4: Extract raw ingredients (filtered by day ≤ daysAhead) ─────
-      const rawIngredients = extractRawIngredients(plans, daysAhead);
+      // ── Step 4: Average and Scale quantities per plan ──────────────────────
+      interface AggregatedGlobalItem {
+        name: string;
+        category: GroceryCategory;
+        totalQuantity: number;
+        unit: string;
+      }
 
-      if (!rawIngredients.length) {
+      const globalMap = new Map<string, AggregatedGlobalItem>();
+
+      for (const plan of plans) {
+        const planDays = getUniqueDaysInPlan(plan);
+        const planIngredients = getAggregatedIngredientsForPlan(plan);
+
+        for (const ing of planIngredients) {
+          const dailyAvg = ing.quantity / planDays;
+          const scaledQty = dailyAvg * daysAhead;
+
+          const key = `${ing.normalizedName}|${ing.unit}`;
+          if (globalMap.has(key)) {
+            globalMap.get(key)!.totalQuantity += scaledQty;
+          } else {
+            globalMap.set(key, {
+              name: capitalizeWords(ing.normalizedName),
+              category: categorizeIngredientByMacros(ing.normalizedName),
+              totalQuantity: scaledQty,
+              unit: ing.unit,
+            });
+          }
+        }
+      }
+
+      if (!globalMap.size) {
         res.status(422).json({
           error: "Nutrition plans exist but contain no valid ingredients.",
         });
@@ -517,17 +769,10 @@ router.post(
       }
 
       console.info(
-        `[sync] Extracted ${rawIngredients.length} raw ingredient entries.`,
+        `[sync] Aggregated to ${globalMap.size} unique scaled grocery item(s).`,
       );
 
-      // ── Step 5: Aggregate and categorize (no multiplier) ───────────────────
-      const aggregated = aggregateIngredients(rawIngredients);
-
-      console.info(
-        `[sync] Aggregated to ${aggregated.length} unique grocery item(s).`,
-      );
-
-      // ── Step 6: Preserve isPurchased across all relevant users ─────────────
+      // ── Step 5: Preserve isPurchased across all relevant users ─────────────
       const existingLists = await GroceryList.find({
         userId: { $in: userIds },
       });
@@ -535,19 +780,19 @@ router.post(
         existingLists
           .flatMap(list => list.items)
           .filter((i) => i.isPurchased)
-          .map((i) => i.name.toLowerCase()),
+          .map((i) => normalizeIngredientName(i.name)),
       );
 
-      const newItems = aggregated.map((agg) => ({
+      const newItems = Array.from(globalMap.values()).map((agg) => ({
         name: agg.name,
         category: agg.category,
-        totalQuantity: agg.totalQuantity,
+        totalQuantity: parseFloat(agg.totalQuantity.toFixed(2)),
         unit: agg.unit,
-        isPurchased: purchasedSet.has(agg.name.toLowerCase()),
+        isPurchased: purchasedSet.has(normalizeIngredientName(agg.name)),
         consumers: userIds,
       }));
 
-      // ── Step 7: Upsert grocery list ────────────────────────────────────────
+      // ── Step 6: Upsert grocery list ────────────────────────────────────────
       await GroceryList.findOneAndUpdate(
         { userId },
         {
@@ -560,7 +805,7 @@ router.post(
         { upsert: true, new: true },
       );
 
-      // ── Step 8: Build response ─────────────────────────────────────────────
+      // ── Step 7: Build response ─────────────────────────────────────────────
       const flatItems = newItems.map((item) => ({
         name: item.name,
         category: item.category,

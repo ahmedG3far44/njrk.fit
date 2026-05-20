@@ -5,6 +5,7 @@ export const generateMealPlanSchema = z.object({
     snacksCount: z.number().int().min(0).max(3).default(0),
     favoriteFoods: z.array(z.string()).default([]),
     startDate: z.string().optional(),
+    repeatMeals: z.boolean().optional(),
 });
 
 export const refineMealSchema = z.object({

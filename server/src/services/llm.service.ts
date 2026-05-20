@@ -210,6 +210,7 @@ const generateMealPlanPrompt = (
   mealsCount: number = 3,
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
+  repeatMealsEveryDay: boolean = false,
 ): string => {
   const bmr = calculateBMR(user);
   const tdee = calculateTDEE(user, bmr);
@@ -282,7 +283,10 @@ STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
 4. FOOD QUALITY:
    - Use realistic, culturally neutral meals
    - Prefer whole foods over processed foods
-   - Avoid repeating the same meal more than twice in the week
+   ${repeatMealsEveryDay ? "- You MUST repeat the exact same meals/snacks every day. Copy Day 1 meals/snacks exactly for Days 2 to 7." : "- Avoid repeating the same meal more than twice in the week"}
+   ${repeatMealsEveryDay ? `
+   - REPEAT MEAL PLAN CONSTRAINT (CRITICAL): Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, and Day 7 must have the EXACT identical meals, with identical names, times, ingredients, quantities, instructions, and macro values. Every single day's menu must be a carbon copy of Day 1's menu.` : `
+   - DIVERSE MEALS CONSTRAINT: Enforce variety throughout the week. Avoid repeating the exact same meals from day to day. Every day should have a unique and different menu.`}
 
 5. STRUCTURE:
    - Meal times (approximate):
@@ -340,8 +344,9 @@ export const generateMealPlan = async (
   mealsCount: number = 3,
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
+  repeatMealsEveryDay: boolean = false,
 ): Promise<MealPlanResponse> => {
-  const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods);
+  const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods, repeatMealsEveryDay);
   const totalMeals = mealsCount * 7;
   const totalSnacks = snacksCount * 7;
 

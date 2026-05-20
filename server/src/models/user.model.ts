@@ -56,6 +56,7 @@ export interface IUser extends Document {
     autoGenerateMeals: boolean;
     isFasting: boolean;
     familyPlan: boolean;
+    repeatMealsEveryDay: boolean;
     manualPrompt?: string;
     reminderTime?: string;
     reminderTypes?: string[];
@@ -130,6 +131,7 @@ const UserSchema = new Schema<IUser>({
     autoGenerateMeals: { type: Boolean, default: false },
     isFasting: { type: Boolean, default: false },
     familyPlan: { type: Boolean, default: false },
+    repeatMealsEveryDay: { type: Boolean, default: false },
     manualPrompt: { type: String },
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],

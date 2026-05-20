@@ -42,6 +42,10 @@ const envSchema = z.object({
     CLOUDINARY_API_SECRET: z.string().default(process.env.CLOUDINARY_API_SECRET || ""),
 
     RAPIDAPI_KEY: z.string().default(process.env.RAPIDAPI_KEY || ""),
+    EMAIL_HOST: z.string().default(process.env.EMAIL_HOST || "smtp.gmail.com"),
+    EMAIL_PORT: z.string().default(process.env.EMAIL_PORT || "587"),
+    EMAIL_USER: z.string().default(process.env.EMAIL_USER || ""),
+    EMAIL_PASSWORD: z.string().default(process.env.EMAIL_PASSWORD || ""),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

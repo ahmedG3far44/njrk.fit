@@ -155,6 +155,13 @@ export const Nutrition: React.FC = () => {
   const [snacksCount, setSnacksCount] = useState(0);
   const [favoriteFoods, setFavoriteFoods] = useState<string[]>([]);
   const [foodInput, setFoodInput] = useState('');
+  const [repeatMeals, setRepeatMeals] = useState(false);
+
+  useEffect(() => {
+    if (user?.preferences?.repeatMealsEveryDay !== undefined) {
+      setRepeatMeals(user.preferences.repeatMealsEveryDay);
+    }
+  }, [user]);
 
   const fetchMeals = useCallback(async (mode: 'today' | 'week', userId?: string) => {
     setIsLoadingMeals(true);
@@ -195,7 +202,7 @@ export const Nutrition: React.FC = () => {
     }
   }, []);
 
-  const generatePlan = async (counts?: { mealsCount: number; snacksCount: number; favoriteFoods: string[] }) => {
+  const generatePlan = async (counts?: { mealsCount: number; snacksCount: number; favoriteFoods: string[]; repeatMeals?: boolean }) => {
     setIsGenerating(true);
     try {
       const data = await api.post<GenerateResponse>('/nutrition/generate', counts || {});
@@ -212,7 +219,7 @@ export const Nutrition: React.FC = () => {
 
   const handleGenerateWithConfig = () => {
     setShowGenerateModal(false);
-    generatePlan({ mealsCount, snacksCount, favoriteFoods });
+    generatePlan({ mealsCount, snacksCount, favoriteFoods, repeatMeals });
     setMealsCount(3);
     setSnacksCount(0);
     setFavoriteFoods([]);
@@ -401,15 +408,53 @@ export const Nutrition: React.FC = () => {
             canRefine={isOwnProfile}
             replacementsLeft={replacementsLeft}
             onMealRefined={(refinedMeal) => {
+              const originalMeal = selectedMeal;
               setSelectedMeal(refinedMeal);
-              setCurrentMeals(prev => prev.map(m => m._id === refinedMeal._id ? refinedMeal : m));
+              const isRepeat = !!user?.preferences?.repeatMealsEveryDay;
+              if (isRepeat && originalMeal) {
+                setCurrentMeals(prev => prev.map(m => {
+                  const isSameMeal =
+                    m._id === refinedMeal._id ||
+                    (m.time === originalMeal.time && m.mealType === originalMeal.mealType) ||
+                    m.name === originalMeal.name;
+                  if (isSameMeal) {
+                    return {
+                      ...refinedMeal,
+                      _id: m._id,
+                      day: m.day,
+                    };
+                  }
+                  return m;
+                }));
+              } else {
+                setCurrentMeals(prev => prev.map(m => m._id === refinedMeal._id ? refinedMeal : m));
+              }
             }}
             onReplaced={(newMeal) => {
               const updated = replacementsLeft - 1;
               setReplacementsLeft(updated);
               localStorage.setItem(`replacements_left_${user?._id}`, String(updated));
+              const originalMeal = selectedMeal;
               setSelectedMeal(newMeal);
-              setCurrentMeals(prev => prev.map(m => m._id === newMeal._id ? newMeal : m));
+              const isRepeat = !!user?.preferences?.repeatMealsEveryDay;
+              if (isRepeat && originalMeal) {
+                setCurrentMeals(prev => prev.map(m => {
+                  const isSameMeal =
+                    m._id === newMeal._id ||
+                    (m.time === originalMeal.time && m.mealType === originalMeal.mealType) ||
+                    m.name === originalMeal.name;
+                  if (isSameMeal) {
+                    return {
+                      ...newMeal,
+                      _id: m._id,
+                      day: m.day,
+                    };
+                  }
+                  return m;
+                }));
+              } else {
+                setCurrentMeals(prev => prev.map(m => m._id === newMeal._id ? newMeal : m));
+              }
             }}
           />
         )}
@@ -594,6 +639,21 @@ export const Nutrition: React.FC = () => {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                 />
                 <p className="text-xs text-slate-400 mt-1">Press Enter or comma to add</p>
+              </div>
+
+              {/* Repeat Meals Option */}
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div>
+                  <label className="text-sm font-bold text-slate-900 block">Repeat Same Meals Every Day</label>
+                  <p className="text-xs text-slate-500 mt-0.5">Use the exact same 3-4 meals every day of the week, or keep them different every day.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRepeatMeals(!repeatMeals)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${repeatMeals ? 'bg-green-600' : 'bg-slate-200'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${repeatMeals ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
               </div>
 
               <button

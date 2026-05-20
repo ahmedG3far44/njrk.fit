@@ -181,6 +181,10 @@ function drawPageHeader(doc: PDFKit.PDFDocument, type: 'grocery' | 'workout' | '
 function drawFooter(doc: PDFKit.PDFDocument, pageNum: number, totalPages: number) {
   const y = PAGE.height - 50;
 
+  // Temporarily disable bottom margin to prevent PDFKit from triggering page breaks when drawing footer text
+  const originalBottom = (doc as any).page.margins.bottom;
+  (doc as any).page.margins.bottom = 0;
+
   doc.save()
     .rect(0, y - 10, PAGE.width, 60)
     .fill(BRAND.primary)
@@ -205,6 +209,9 @@ function drawFooter(doc: PDFKit.PDFDocument, pageNum: number, totalPages: number
       y + 14,
       { width: CONTENT_WIDTH, align: 'center' },
     );
+
+  // Restore the original bottom margin
+  (doc as any).page.margins.bottom = originalBottom;
 }
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────

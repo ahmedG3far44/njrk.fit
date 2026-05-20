@@ -20,6 +20,7 @@ export interface AuthUser {
     autoGenerateMeals?: boolean;
     isFasting?: boolean;
     familyPlan?: boolean;
+    repeatMealsEveryDay?: boolean;
     manualPrompt?: string;
   }
   familyMembers?: number, 

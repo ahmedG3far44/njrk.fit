@@ -55,6 +55,10 @@ router.post(
         }
       }
 
+      const repeatMeals = req.body.repeatMeals === true || req.body.repeatMeals === 'true';
+      user.preferences.repeatMealsEveryDay = repeatMeals;
+      await user.save();
+
       const userContext: UserContext = {
         name: user.name,
         weight: user.weight,
@@ -79,6 +83,7 @@ router.post(
         req.body.mealsCount,
         req.body.snacksCount,
         req.body.favoriteFoods,
+        repeatMeals,
       );
 
       const startDate = req.body.startDate
@@ -163,29 +168,45 @@ router.post(
         userContext,
       );
 
+      const isRepeat = !!user.preferences?.repeatMealsEveryDay;
+
+      if (isRepeat) {
+        // Update all duplicate meals in the plan
+        nutritionPlan.meals = nutritionPlan.meals.map((m) => {
+          const isSameMeal =
+            m._id?.toString() === mealId ||
+            (m.time === currentMeal.time && m.mealType === currentMeal.mealType) ||
+            m.name === currentMeal.name;
+
+          if (isSameMeal) {
+            return {
+              ...refinedMeal,
+              _id: m._id,
+              day: m.day,
+            } as any;
+          }
+          return m;
+        });
+      } else {
+        // Update only the refined meal
+        nutritionPlan.meals = nutritionPlan.meals.map((m) => {
+          if (m._id?.toString() === mealId) {
+            return {
+              ...refinedMeal,
+              _id: m._id,
+              day: m.day,
+            } as any;
+          }
+          return m;
+        });
+      }
+
+      await nutritionPlan.save();
+
       const refinedMealWithId = {
         ...refinedMeal,
         _id: currentMeal._id,
       };
-
-      const updatedNutritionPlan = await NutritionPlan.findOneAndUpdate(
-        {
-          userId: userId,
-          "meals._id": mealId as string,
-        },
-        {
-          $set: { "meals.$": refinedMealWithId },
-        },
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
-
-      console.log(
-        "updated Nutrition Plan in refined meal",
-        updatedNutritionPlan,
-      );
 
       res.status(200).json({ meal: refinedMealWithId });
     } catch (error) {
@@ -238,29 +259,45 @@ router.post(
 
       const regeneratedMeal = await regenerateMeal(currentMeal, userContext);
 
+      const isRepeat = !!user.preferences?.repeatMealsEveryDay;
+
+      if (isRepeat) {
+        // Update all duplicate meals in the plan
+        nutritionPlan.meals = nutritionPlan.meals.map((m) => {
+          const isSameMeal =
+            m._id?.toString() === mealId ||
+            (m.time === currentMeal.time && m.mealType === currentMeal.mealType) ||
+            m.name === currentMeal.name;
+
+          if (isSameMeal) {
+            return {
+              ...regeneratedMeal,
+              _id: m._id,
+              day: m.day,
+            } as any;
+          }
+          return m;
+        });
+      } else {
+        // Update only the replaced meal
+        nutritionPlan.meals = nutritionPlan.meals.map((m) => {
+          if (m._id?.toString() === mealId) {
+            return {
+              ...regeneratedMeal,
+              _id: m._id,
+              day: m.day,
+            } as any;
+          }
+          return m;
+        });
+      }
+
+      await nutritionPlan.save();
+
       const regeneratedMealWithId = {
         ...regeneratedMeal,
         _id: currentMeal._id,
       };
-
-      const updatedNutritionPlan = await NutritionPlan.findOneAndUpdate(
-        {
-          userId: userId,
-          "meals._id": mealId as string,
-        },
-        {
-          $set: { "meals.$": regeneratedMealWithId },
-        },
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
-
-      console.log(
-        "updated Nutrition Plan in refined meal",
-        updatedNutritionPlan,
-      );
 
       res.status(200).json({ meal: regeneratedMealWithId });
     } catch (error) {
