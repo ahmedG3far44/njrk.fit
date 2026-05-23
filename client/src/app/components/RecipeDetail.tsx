@@ -33,6 +33,56 @@ interface RecipeDetailProps {
     instructions?: string[];
   };
 }
+const getDynamicMealImage = (mealName: string = '') => {
+  const name = mealName.toLowerCase();
+  
+  if (name.includes('chicken') || name.includes('turkey') || name.includes('poultry')) {
+    return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('salmon') || name.includes('fish') || name.includes('tuna') || name.includes('seafood') || name.includes('shrimp')) {
+    return 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('salad') || name.includes('greens') || name.includes('spinach') || name.includes('avocado')) {
+    return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('smoothie') || name.includes('shake') || name.includes('juice') || name.includes('drink')) {
+    return 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('egg') || name.includes('eggs') || name.includes('omelet') || name.includes('scramble') || name.includes('benedict')) {
+    return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('oat') || name.includes('oatmeal') || name.includes('chia') || name.includes('yogurt') || name.includes('berry') || name.includes('berries')) {
+    return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('beef') || name.includes('steak') || name.includes('meat') || name.includes('pork') || name.includes('lamb') || name.includes('burger') || name.includes('ribs')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('soup') || name.includes('stew') || name.includes('broth') || name.includes('ramen') || name.includes('lentil')) {
+    return 'https://images.unsplash.com/photo-1547592165-e1d17fed6006?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('pancake') || name.includes('waffle') || name.includes('toast') || name.includes('bread') || name.includes('sandwich')) {
+    return 'https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&q=80&w=800';
+  }
+  if (name.includes('snack') || name.includes('nut') || name.includes('almond') || name.includes('bar') || name.includes('fruit') || name.includes('apple')) {
+    return 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&q=80&w=800';
+  }
+
+  // Fallback stable hash function selection
+  const fallbacks = [
+    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&q=80&w=800',
+    'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&q=80&w=800'
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % fallbacks.length;
+  return fallbacks[index];
+};
 
 export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefined, onReplaced, recipe, canRefine = true, replacementsLeft = 3 }) => {
   const [aiInstruction, setAiInstruction] = useState('');
@@ -126,9 +176,14 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
     fat: getFat(),
     ingredients: currentRecipe?.ingredients,
     steps: getSteps(),
+    image: currentRecipe?.image || getDynamicMealImage(currentRecipe?.name || recipe?.name || defaultRecipe.name),
   };
 
   const handleRefine = async () => {
+    if (replacementsLeft <= 0) {
+      toast.error('No replacements or refinements left today!');
+      return;
+    }
     if (!aiInstruction.trim()) return;
     setIsRegenerating(true);
     try {
@@ -218,8 +273,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                   className="absolute inset-0"
                 >
                   <img
-                    src={data.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
+                    src={data.image}
                     alt={data.name}
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+                    }}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 text-white">
@@ -309,7 +367,8 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       <button
                         key={s}
                         onClick={() => setAiInstruction(s)}
-                        className="text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all font-medium"
+                        disabled={replacementsLeft <= 0}
+                        className="text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all font-medium disabled:opacity-50 disabled:hover:bg-slate-50 disabled:hover:text-slate-600 disabled:hover:border-slate-200 disabled:cursor-not-allowed"
                       >
                         {s}
                       </button>
@@ -322,13 +381,14 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       value={aiInstruction}
                       onChange={e => setAiInstruction(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleRefine()}
-                      placeholder="e.g. Make it vegan and under 400 calories..."
-                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
+                      disabled={replacementsLeft <= 0 || isRegenerating}
+                      placeholder={replacementsLeft <= 0 ? 'No refinements left today' : 'e.g. Make it vegan and under 400 calories...'}
+                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                     <button
                       onClick={handleRefine}
-                      disabled={!aiInstruction.trim() || isRegenerating}
-                      className="bg-gradient-to-r from-green-800 to-green-700 text-white p-3 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      disabled={!aiInstruction.trim() || isRegenerating || replacementsLeft <= 0}
+                      className="bg-gradient-to-r from-green-800 to-green-700 text-white p-3 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
                       <Send className="w-5 h-5" />
                     </button>
@@ -336,17 +396,17 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
 
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-slate-400">
-                      Replacements left: <strong>{replacementsLeft}</strong>/3
+                      Replacements / Refinements left: <strong>{replacementsLeft}</strong>/3
                     </span>
                   </div>
 
                   <button
                     onClick={handleReplace}
                     disabled={replacementsLeft <= 0 || isRegenerating}
-                    className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm"
+                    className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm cursor-pointer"
                   >
                     <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
-                    {replacementsLeft <= 0 ? 'No Replacements Left' : 'Regenerate this Meal (AI Surprise)'}
+                    {replacementsLeft <= 0 ? 'No Tries Left' : 'Regenerate this Meal (AI Surprise)'}
                   </button>
                 </div>
                 )}

@@ -203,11 +203,20 @@ export const Nutrition: React.FC = () => {
   }, []);
 
   const generatePlan = async (counts?: { mealsCount: number; snacksCount: number; favoriteFoods: string[]; repeatMeals?: boolean }) => {
+    if (currentMeals.length > 0 && replacementsLeft <= 0) {
+      toast.error('No replacements or regenerations left today!');
+      return;
+    }
     setIsGenerating(true);
     try {
       const data = await api.post<GenerateResponse>('/nutrition/generate', counts || {});
       setNutritionPlan(data.plan);
       toast.success('Meal plan generated successfully!');
+      if (currentMeals.length > 0) {
+        const updated = replacementsLeft - 1;
+        setReplacementsLeft(updated);
+        localStorage.setItem(`replacements_left_${user?._id}`, String(updated));
+      }
       await fetchMeals(viewMode, activeProfileId !== 'me' ? activeProfileId : undefined);
     } catch (error) {
       toast.error('Failed to generate meal plan. Please try again.');
@@ -323,10 +332,18 @@ export const Nutrition: React.FC = () => {
 
   // Auto-enable family mode when there are family members
   useEffect(() => {
-    if (familyMembers.length > 0 && !isFamilyMode) {
+    if (user?.preferences?.familyPlan && familyMembers.length > 0 && !isFamilyMode) {
       setIsFamilyMode(true);
     }
-  }, [familyMembers]);
+  }, [familyMembers, isFamilyMode, user?.preferences?.familyPlan]);
+
+  // Turn off family mode if Family Plan Management is disabled in preferences
+  useEffect(() => {
+    if (user && !user.preferences?.familyPlan) {
+      setIsFamilyMode(false);
+      setActiveProfileId('me');
+    }
+  }, [user?.preferences?.familyPlan, user]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -408,6 +425,10 @@ export const Nutrition: React.FC = () => {
             canRefine={isOwnProfile}
             replacementsLeft={replacementsLeft}
             onMealRefined={(refinedMeal) => {
+              const updated = replacementsLeft - 1;
+              setReplacementsLeft(updated);
+              localStorage.setItem(`replacements_left_${user?._id}`, String(updated));
+
               const originalMeal = selectedMeal;
               setSelectedMeal(refinedMeal);
               const isRepeat = !!user?.preferences?.repeatMealsEveryDay;
@@ -678,13 +699,15 @@ export const Nutrition: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {
                 !isGenerating && <>
-                  <button
-                    onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
-                  >
-                    {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                    <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
-                  </button>
+                  {user?.preferences?.familyPlan && (
+                    <button
+                      onClick={() => { setIsFamilyMode(!isFamilyMode); setActiveProfileId('me'); }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}
+                    >
+                      {isFamilyMode ? <Users className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                      <span className="hidden sm:inline">{isFamilyMode ? 'Family Plan' : 'Solo Mode'}</span>
+                    </button>
+                  )}
 
 
                   <div className="flex bg-slate-100 p-1 rounded-xl">
@@ -707,9 +730,15 @@ export const Nutrition: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05, boxShadow: '0 15px 35px -5px rgba(22,101,52,0.35)' }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => setShowGenerateModal(true)}
+                  onClick={() => {
+                    if (currentMeals.length > 0 && replacementsLeft <= 0) {
+                      toast.error('No replacements or regenerations left today!');
+                      return;
+                    }
+                    setShowGenerateModal(true);
+                  }}
                   disabled={isGenerating}
-                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base"
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base cursor-pointer"
                 >
                   {isGenerating ? (
                     <>

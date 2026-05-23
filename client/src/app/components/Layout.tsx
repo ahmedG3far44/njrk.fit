@@ -14,13 +14,29 @@ import {
   ChevronRight,
   Zap,
   LogOut,
+  Check,
+  UserCheck,
+  Clock,
+  Target,
+  Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import NjerkaLogo from './NjerkaLogo';
 import { useAuth } from '../context/AuthProvider';
 import { Navigate } from 'react-router-dom';
+import { familyService, PendingInvitation } from '../services/familyService';
+import { toast } from 'sonner';
 
+interface Notification {
+  id: string;
+  type: 'friend_request' | 'family_invite' | 'meal_reminder' | 'team_invite';
+  title: string;
+  message: string;
+  avatar?: string;
+  time: string;
+  invitationId?: string;
+}
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,6 +49,87 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user } = useAuth();
+
+  // Notification States
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [respondedNotifs, setRespondedNotifs] = useState<Record<string, 'accepted' | 'declined'>>({});
+
+  const fetchInvitations = async (showLoading = false) => {
+    if (showLoading) setLoadingInvitations(true);
+    try {
+      const response = await familyService.getFamily();
+
+      // Map pending invitations to notification format
+      const inviteNotifications: Notification[] = response.pendingInvitations.map((invite: PendingInvitation) => ({
+        id: invite.id,
+        type: 'family_invite' as const,
+        title: invite.user?.name || 'Family Invitation',
+        message: `${invite.user?.name || 'Someone'} invited you to join their family plan`,
+        avatar: invite.user?.avatarUrl,
+        time: 'Just now',
+        invitationId: invite.id,
+      }));
+
+      setNotifications(inviteNotifications);
+    } catch (error) {
+      console.error('Failed to fetch invitations:', error);
+    } finally {
+      if (showLoading) setLoadingInvitations(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchInvitations(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (showNotifications) {
+      fetchInvitations(true);
+    }
+  }, [showNotifications]);
+
+  const handleNotifResponse = async (id: string, response: 'accepted' | 'declined') => {
+    const notif = notifications.find(n => n.id === id);
+    if (!notif?.invitationId) return;
+
+    setRespondingId(id);
+    try {
+      const action = response === 'accepted' ? 'accept' : 'reject';
+      await familyService.respondToInvitation(notif.invitationId, action);
+
+      setRespondedNotifs(prev => ({ ...prev, [id]: response }));
+      toast.success(response === 'accepted' ? 'Invitation accepted!' : 'Invitation declined');
+
+      // Remove from list after a delay
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to respond to invitation:', error);
+      toast.error('Failed to respond. Please try again.');
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
+  const dismissNotif = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const notifCount = notifications.filter(n => !respondedNotifs[n.id]).length;
+
+  const notifTypeIcon = (type: string) => {
+    if (type === 'friend_request') return <UserCheck className="w-4 h-4 text-green-700" />;
+    if (type === 'family_invite') return <Users className="w-4 h-4 text-green-600" />;
+    if (type === 'meal_reminder') return <Clock className="w-4 h-4 text-orange-500" />;
+    if (type === 'team_invite') return <Target className="w-4 h-4 text-green-500" />;
+    return <Bell className="w-4 h-4 text-slate-500" />;
+  };
   const navItems = [
     { id: 'insights', label: 'Dashboard', icon: LayoutDashboard, color: 'text-green-700' },
     { id: 'streaks', label: 'Streaks & Rewards', icon: Flame, color: 'text-orange-500' },
@@ -191,21 +288,156 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Mobile Header */}
         <header className="lg:hidden bg-white/90 backdrop-blur-xl border-b border-slate-100 px-5 py-3 flex items-center justify-between z-20 relative">
-          <img src={"./image.png"} alt="Njerka" className="h-10 w-auto object-contain" />
+          <img src="/logo.png" alt="Njerka" className="h-10 w-auto object-contain mix-blend-multiply" />
 
           <div className="flex items-center gap-2">
-            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+              {notifCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white scale-75 origin-top-right">
+                  {notifCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
             </button>
           </div>
         </header>
+
+        {/* Floating Bell Button for Desktop & Tablet */}
+        <button
+          onClick={() => setShowNotifications(true)}
+          className="hidden lg:flex absolute top-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+        >
+          <Bell className="w-5 h-5 text-slate-600" />
+          {notifCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+              {notifCount}
+            </span>
+          )}
+        </button>
+
+        {/* Notification Sidebar */}
+        <AnimatePresence>
+          {showNotifications && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed top-0 left-0 right-0 bottom-0 w-screen min-h-screen z-50 bg-black/30 backdrop-blur-sm"
+                onClick={() => setShowNotifications(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, x: 320 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 320 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
+              >
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
+                  <div>
+                    <h3 className="font-bold text-lg">Notification Center</h3>
+                    <p className="text-green-200 text-sm">{notifCount} new notifications</p>
+                  </div>
+                  <button onClick={() => setShowNotifications(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {loadingInvitations ? (
+                    <div className="text-center py-12 text-slate-400">
+                      <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
+                      <p className="font-medium">Loading notifications...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">
+                      <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">All caught up!</p>
+                      <p className="text-sm">No new notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map(notif => (
+                      <motion.div
+                        key={notif.id}
+                        layout
+                        className={`bg-white border rounded-2xl p-4 shadow-sm ${respondedNotifs[notif.id] ? 'opacity-60 border-slate-100' : 'border-slate-200'}`}
+                      >
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="relative flex-shrink-0">
+                            {notif.avatar ? (
+                              <img src={notif.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                                {notifTypeIcon(notif.type)}
+                              </div>
+                            )}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                              {notifTypeIcon(notif.type)}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-bold text-slate-900 text-sm">{notif.title}</span>
+                              <button onClick={() => dismissNotif(notif.id)} className="text-slate-300 hover:text-slate-500 flex-shrink-0 cursor-pointer">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <p className="text-slate-600 text-xs leading-relaxed mt-0.5">{notif.message}</p>
+                            <p className="text-slate-400 text-[10px] mt-1">{notif.time}</p>
+                          </div>
+                        </div>
+
+                        {(notif.type === 'family_invite') && !respondedNotifs[notif.id] && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleNotifResponse(notif.id, 'accepted')}
+                              disabled={respondingId === notif.id}
+                              className="flex-1 py-2 bg-green-700 text-white rounded-xl text-xs font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
+                            >
+                              {respondingId === notif.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" /> Accept
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleNotifResponse(notif.id, 'declined')}
+                              disabled={respondingId === notif.id}
+                              className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              {respondingId === notif.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                'Decline'
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {respondedNotifs[notif.id] && (
+                          <div className={`text-xs font-bold text-center py-1.5 rounded-xl ${respondedNotifs[notif.id] === 'accepted' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
+                            {respondedNotifs[notif.id] === 'accepted' ? '✓ Accepted' : '✕ Declined'}
+                          </div>
+                        )}
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Mobile Full Menu Overlay */}
         <AnimatePresence>

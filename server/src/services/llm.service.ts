@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { encode } from "@toon-format/toon";
 import {
   calculateBMR,
   calculateTDEE,
@@ -20,7 +21,7 @@ export const mealSchema = z.object({
   day: z.string(),
   name: z.string(),
   time: z.string(),
-  mealType: z.enum(['meal', 'snack']).default('meal'),
+  mealType: z.enum(["meal", "snack"]).default("meal"),
   macros: z.object({
     calories: z.number(),
     protein: z.number(),
@@ -70,24 +71,22 @@ const extractJSON = (text: string): any => {
 
   try {
     return JSON.parse(text);
-  } catch { }
+  } catch {}
 
-  // محاولة استخراج من code block
   const match = text.match(/```json([\s\S]*?)```/i);
   if (match) {
     try {
       return JSON.parse(match[1]);
-    } catch { }
+    } catch {}
   }
 
-  // fallback: حاول قص أول وأخر { }
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
   if (first !== -1 && last !== -1) {
     const sliced = text.slice(first, last + 1);
     try {
       return JSON.parse(sliced);
-    } catch { }
+    } catch {}
   }
 
   throw new Error("Failed to extract valid JSON from LLM");
@@ -111,7 +110,6 @@ const callLLMWithRecovery = async <T>(
       return data;
     } catch (err: any) {
       lastError = err;
-      // On failure, retry with a correction prompt telling the LLM about the schema error
       prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schema.toString()}`;
     }
   }
@@ -145,18 +143,25 @@ const generateWorkoutPlanPrompt = (
 ): string => {
   const activityLevel = user.activityLevel || "moderate";
 
+  const toonContext = encode({
+    userProfile: {
+      name: user.name,
+      activityLevel,
+      fitnessGoals: user.fitnessGoals || "general fitness",
+    },
+    trainingMethod: {
+      programSplit: training_program,
+      trainingDays: training_days,
+      sessionDurationMin: duration,
+    },
+  });
+
   return `
 You are a professional fitness coach. Generate a structured weekly workout plan.
 
-USER PROFILE:
-- Name: ${user.name}
-- Activity level: ${activityLevel}
-- Fitness goals: ${user.fitnessGoals || "general fitness"}
+CONTEXT (TOON):
+${toonContext}
 
-TRAINING METHOD:
-- Program Split: ${training_program}
-- Training Days: ${training_days} days per week
-- Session Duration: ${duration} minutes per training day
 
 PROGRAM SPLIT RULES:
 1. "push_pull_legs": Alternate Push (chest, shoulders, triceps), Pull (back, biceps), and Legs (quads, hamstrings, glutes, calves).
@@ -253,42 +258,48 @@ const generateMealPlanPrompt = (
     ? `Dietary restrictions: ${user.dietaryRestrictions}`
     : "";
   const totalItemsPerDay = mealsCount + snacksCount;
-  const totalMeals = mealsCount * 7;
-  const totalSnacks = snacksCount * 7;
-  const favFoods = favoriteFoods?.length
-    ? `Favorite foods (incorporate these where possible): ${favoriteFoods.join(", ")}`
-    : "";
+
+  // Latency optimization: If repeating meals, only generate Day 1 and programmatically copy
+  const daysToGenerate = repeatMealsEveryDay ? 1 : 7;
+  const totalItemsCount = totalItemsPerDay * daysToGenerate;
+  const expectedMeals = mealsCount * daysToGenerate;
+  const expectedSnacks = snacksCount * daysToGenerate;
+
+  const toonContext = encode({
+    userProfile: {
+      name: user.name,
+      targetDailyCaloriesKcal: calories,
+      targetMacros: { proteinG: protein, carbsG: carbs, fatsG: fats },
+      activityLevel: `${activityLevel} (${activityDesc})`,
+      goal: user?.goal || "balance_weight",
+      fitnessGoals: user?.fitnessGoals || "general fitness",
+    },
+    dietaryContext: {
+      restrictions: restrictions || "none",
+      allergies: user?.allergies || "none",
+      religion: user?.religion || "none",
+      christianFasting: user?.isFasting ?? false,
+      favoriteFoods: favoriteFoods || [],
+    },
+  });
 
   return `
-You are a professional nutritionist. Generate a personalized 7-day meal plan.
+You are a professional nutritionist. Generate a personalized ${daysToGenerate}-day meal plan.
 
-USER PROFILE:
-- Name: ${user.name}
-- Target daily calories: ${calories} kcal
-- Target macros: Protein ${protein}g, Carbs ${carbs}g, Fats ${fats}g
-- Activity level: ${activityLevel} (${activityDesc})
-- Goal: ${user?.goal || "balance_weight"}
-- Fitness goals: ${user?.fitnessGoals || "general fitness"}
-
-USER DIETARY CONTEXT:
-- Restrictions: ${restrictions || "none"}
-- Allergies: ${user?.allergies || "none"}
-- Religion: ${user?.religion || "none"}
-- Christian fasting: ${user?.isFasting ?? false}
-${favFoods ? `\n${favFoods}` : ""}
+USER CONTEXT (TOON):
+${toonContext}
 
 STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
 
 ⚠️ CRITICAL — ITEM COUNT (HIGHEST PRIORITY):
-   - Generate EXACTLY ${totalItemsPerDay} items per day × 7 days = ${totalItemsPerDay * 7} total items
-   - Each day MUST have exactly: ${mealsCount} meals + ${snacksCount} snacks
-   - Total: ${totalMeals} meals + ${totalSnacks} snacks over the entire week
+   - Generate EXACTLY ${totalItemsCount} items total across the entire response (${expectedMeals} meals + ${expectedSnacks} snacks)
+   - The plan MUST cover EXACTLY the following days: ${repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7"}
    - Set "mealType": "meal" for meals and "mealType": "snack" for snacks
    - THIS RULE OVERRIDES ALL OTHERS. If you must choose between item count and any other rule, preserve the item count.
 
 1. CALORIES & MACROS:
    - Each day MUST total ~${calories} kcal (±50 kcal)
-   - Distribute calories across ${totalItemsPerDay} items
+   - Distribute calories across ${totalItemsPerDay} items per day
    - Meals should be larger (approx 70-80% of daily calories), snacks lighter (20-30%)
    - Adjust macro distribution based on goal:
      - lose_weight → higher protein, moderate fats, lower carbs
@@ -307,13 +318,12 @@ STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
      - STRICTLY FORBIDDEN: ALL animal products (meat, chicken, fish, eggs, dairy, cheese, milk, butter)
      - Meals MUST be 100% plant-based (vegan)
 
-4. FOOD QUALITY:
+4. FOOD QUALITY & CONCISE FORMAT (CRITICAL FOR PERFORMANCE & LATENCY):
    - Use realistic, culturally neutral meals
    - Prefer whole foods over processed foods
-   ${repeatMealsEveryDay ? "- You MUST repeat the exact same meals/snacks every day. Copy Day 1 meals/snacks exactly for Days 2 to 7." : "- Avoid repeating the same meal more than twice in the week"}
-   ${repeatMealsEveryDay ? `
-   - REPEAT MEAL PLAN CONSTRAINT (CRITICAL): Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, and Day 7 must have the EXACT identical meals, with identical names, times, ingredients, quantities, instructions, and macro values. Every single day's menu must be a carbon copy of Day 1's menu.` : `
-   - DIVERSE MEALS CONSTRAINT: Enforce variety throughout the week. Avoid repeating the exact same meals from day to day. Every day should have a unique and different menu.`}
+   ${repeatMealsEveryDay ? "- Since repeatMealsEveryDay is true, you only need to output Day 1. It will be duplicated programmatically." : "- Enforce variety throughout the week. Avoid repeating the same meals from day to day. Every day should have a unique and different menu."}
+   - Keep ingredient lists concise (4-8 per meal, 1-3 per snack). ONLY include substantial ingredients with meaningful nutritional value. EXCLUDE salt, pepper, individual spices/herbs, cooking oil, vinegar, garlic, etc.
+   - Keep instructions extremely concise: maximum 3 simple, short steps per meal (e.g., "Boil pasta", "Mix with tuna", "Serve"). Avoid long descriptive paragraphs. This dramatically reduces latency.
 
 5. STRUCTURE:
    - Meal times (approximate):
@@ -322,18 +332,8 @@ STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
      - Dinner → "07:00 PM"
      ${snacksCount > 0 ? `- Snacks → "10:30 AM", "03:30 PM" (distribute snacks across day)` : ""}
 
-6. INGREDIENT EFFICIENCY (CRITICAL FOR PERFORMANCE):
-   - ONLY include substantial ingredients with meaningful nutritional value
-   - EXCLUDE negligible items: salt, pepper, individual spices/herbs, cooking oil, vinegar, baking powder/soda, garlic, small amounts of garnishes
-   - Keep ingredient lists concise (4-8 per meal, 1-3 per snack)
-   - This reduces response size and improves latency
-
-7. RECOVERY / DIGESTION BALANCE:
-   - Distribute heavy vs light meals properly
-   - Avoid overly heavy dinners for weight loss goal
-
 ⚠️ REMINDER — COUNT YOUR OUTPUT:
-- You MUST output EXACTLY ${totalItemsPerDay * 7} total items (${totalMeals} meals + ${totalSnacks} snacks)
+- You MUST output EXACTLY ${totalItemsCount} total items (${expectedMeals} meals + ${expectedSnacks} snacks)
 - Verify your count before responding. Wrong count will be rejected.
 
 OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
@@ -373,27 +373,57 @@ export const generateMealPlan = async (
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
 ): Promise<MealPlanResponse> => {
-  const prompt = generateMealPlanPrompt(user, mealsCount, snacksCount, favoriteFoods, repeatMealsEveryDay);
-  const totalMeals = mealsCount * 7;
-  const totalSnacks = snacksCount * 7;
+  const prompt = generateMealPlanPrompt(
+    user,
+    mealsCount,
+    snacksCount,
+    favoriteFoods,
+    repeatMealsEveryDay,
+  );
 
-  return callLLMWithRecovery(prompt, mealPlanResponseSchema, (data) => {
-    const mealCount = data.meals.filter((m) => m.mealType === "meal").length;
-    const snackCount = data.meals.filter((m) => m.mealType === "snack").length;
-    if (mealCount !== totalMeals || snackCount !== totalSnacks) {
-      throw new Error(
-        `Count mismatch: expected ${totalMeals} meals + ${totalSnacks} snacks ` +
-        `(= ${mealsCount} meals + ${snacksCount} snacks per day for 7 days) ` +
-        `but got ${mealCount} meals + ${snackCount} snacks. ` +
-        `Regenerate with EXACTLY ${mealsCount} meals and ${snacksCount} snacks per day.`,
-      );
+  const daysToGenerate = repeatMealsEveryDay ? 1 : 7;
+  const expectedMeals = mealsCount * daysToGenerate;
+  const expectedSnacks = snacksCount * daysToGenerate;
+
+  const response = await callLLMWithRecovery(
+    prompt,
+    mealPlanResponseSchema,
+    (data) => {
+      const mealCount = data.meals.filter((m) => m.mealType === "meal").length;
+      const snackCount = data.meals.filter(
+        (m) => m.mealType === "snack",
+      ).length;
+      if (mealCount !== expectedMeals || snackCount !== expectedSnacks) {
+        throw new Error(
+          `Count mismatch: expected ${expectedMeals} meals + ${expectedSnacks} snacks ` +
+            `(= ${mealsCount} meals + ${snacksCount} snacks per day for ${daysToGenerate} days) ` +
+            `but got ${mealCount} meals + ${snackCount} snacks. ` +
+            `Regenerate with EXACTLY ${mealsCount} meals and ${snacksCount} snacks per day.`,
+        );
+      }
+    },
+  );
+
+  if (repeatMealsEveryDay) {
+    const day1Meals = response.meals;
+    const expandedMeals: any[] = [];
+    for (let d = 1; d <= 7; d++) {
+      for (const m of day1Meals) {
+        expandedMeals.push({
+          ...m,
+          day: `Day ${d}`,
+        });
+      }
     }
-  });
+    response.meals = expandedMeals as any;
+  }
+
+  return response;
 };
 
 export const generateWorkoutPlan = async (
   user: UserContext,
-  trainingProgram: string = 'full_body',
+  trainingProgram: string = "full_body",
   trainingDays: number = 3,
   duration: number = 60,
 ): Promise<WorkoutPlanResponse> => {
@@ -423,8 +453,8 @@ Rules:
 - Keep macros within ±5%
 - Respect restrictions & allergies
 
-Meal:
-${JSON.stringify(currentMeal)}
+Meal (TOON format):
+${encode(currentMeal)}
 
 User request:
 ${refinementPrompt}
@@ -432,7 +462,6 @@ ${refinementPrompt}
 
   return callLLMWithRecovery(prompt, mealSchema);
 };
-
 
 export const regenerateMeal = async (
   meal: Meal,
@@ -479,8 +508,8 @@ ${user.religion || "None"}
 Fasting:
 ${Boolean(user.isFasting)}
 
-ORIGINAL MEAL:
-${JSON.stringify(meal, null, 2)}
+ORIGINAL MEAL (TOON format):
+${encode(meal)}
 `;
   return callLLMWithRecovery(prompt, mealSchema);
 };
@@ -495,6 +524,11 @@ ${JSON.stringify(meal, null, 2)}
 // - google/gemma-4-26b-a4b-it:free
 // - qwen/qwen3-vl-32b-instruct
 // - qwen/qwen3-embedding-4b
+
+// - qwen/qwen3-vl-32b-instruct
+// - z-ai/glm-4.5-air:free
+// - qwen/qwen3-next-80b-a3b-instruct:free
+// - qwen/qwen3-coder:free
 
 const callOpenRouter = async (prompt: string) => {
   console.log("LLM Prompt:", prompt);

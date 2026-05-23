@@ -233,20 +233,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onChangeView, onOpen
           </p>
         </div>
 
-        {/* Scan Meal CTA */}
-        <button
-          onClick={onOpenCam}
-          className="flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-xl font-bold transition-colors duration-200"
-        >
-          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Camera className="w-5 h-5" />
+        {/* Today's Focus Card */}
+        <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl">
+          <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-4 h-4 text-green-700 animate-pulse" />
           </div>
           <div className="text-left">
-            <div className="text-xs opacity-80 font-medium">AI-Powered</div>
-            <div className="text-sm font-bold">Scan Meal</div>
+            <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Today's Focus</div>
+            <div className="text-sm font-black text-slate-800">
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </div>
           </div>
-          <ScanLine className="w-5 h-5 ml-1 opacity-70" />
-        </button>
+        </div>
       </motion.div>
 
       {/* ── Streak Banner ── */}
