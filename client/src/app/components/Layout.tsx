@@ -30,12 +30,14 @@ import { toast } from 'sonner';
 
 interface Notification {
   id: string;
-  type: 'friend_request' | 'family_invite' | 'meal_reminder' | 'team_invite';
+  type: 'friend_request' | 'family_invite' | 'meal_reminder' | 'team_invite' | 'training_reminder';
   title: string;
   message: string;
   avatar?: string;
   time: string;
   invitationId?: string;
+  isLocal?: boolean;
+  isRead?: boolean;
 }
 
 interface LayoutProps {
@@ -57,6 +59,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondedNotifs, setRespondedNotifs] = useState<Record<string, 'accepted' | 'declined'>>({});
 
+  const loadLocalNotifications = () => {
+    const enabled = localStorage.getItem('daily_reminder_enabled') !== 'false';
+    if (!enabled) {
+      return [];
+    }
+    const stored = localStorage.getItem('local_notifications');
+    let localNotifs = stored ? JSON.parse(stored) : [];
+    
+    // Seed a default notification if enabled and no local notifications ever stored
+    if (localNotifs.length === 0 && !localStorage.getItem('local_notifications_seeded')) {
+      const seedNotif = {
+        id: `local_meal_${Date.now()}`,
+        type: 'meal_reminder' as const,
+        title: 'Meal Reminder',
+        message: "Welcome to Njerka! Time for your scheduled healthy meal! Make sure to log your calories.",
+        time: 'Just now',
+        isLocal: true,
+        isRead: false
+      };
+      localNotifs = [seedNotif];
+      localStorage.setItem('local_notifications', JSON.stringify(localNotifs));
+      localStorage.setItem('local_notifications_seeded', 'true');
+    }
+    
+    return localNotifs;
+  };
+
   const fetchInvitations = async (showLoading = false) => {
     if (showLoading) setLoadingInvitations(true);
     try {
@@ -73,9 +102,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
         invitationId: invite.id,
       }));
 
-      setNotifications(inviteNotifications);
+      const localNotifs = loadLocalNotifications();
+      setNotifications([...inviteNotifications, ...localNotifs]);
     } catch (error) {
       console.error('Failed to fetch invitations:', error);
+      const localNotifs = loadLocalNotifications();
+      setNotifications(localNotifs);
     } finally {
       if (showLoading) setLoadingInvitations(false);
     }
@@ -86,6 +118,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       fetchInvitations(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      fetchInvitations(false);
+    };
+    window.addEventListener('localNotificationsUpdated', handleUpdate);
+    return () => {
+      window.removeEventListener('localNotificationsUpdated', handleUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (showNotifications) {
@@ -117,7 +159,34 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     }
   };
 
+  const handleMarkAsRead = (id: string) => {
+    const stored = localStorage.getItem('local_notifications');
+    if (stored) {
+      const localNotifs = JSON.parse(stored);
+      const updated = localNotifs.map((n: any) => 
+        n.id === id ? { ...n, isRead: true } : n
+      );
+      localStorage.setItem('local_notifications', JSON.stringify(updated));
+      
+      // Update state
+      setNotifications(prev => prev.map(n => 
+        n.id === id ? { ...n, isRead: true } : n
+      ));
+      toast.success('Notification marked as read');
+    }
+  };
+
   const dismissNotif = (id: string) => {
+    const isLocal = notifications.find(n => n.id === id)?.isLocal;
+    if (isLocal) {
+      const stored = localStorage.getItem('local_notifications');
+      if (stored) {
+        const localNotifs = JSON.parse(stored);
+        const filtered = localNotifs.filter((n: any) => n.id !== id);
+        localStorage.setItem('local_notifications', JSON.stringify(filtered));
+      }
+      toast.success('Notification removed');
+    }
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
@@ -128,6 +197,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     if (type === 'family_invite') return <Users className="w-4 h-4 text-green-600" />;
     if (type === 'meal_reminder') return <Clock className="w-4 h-4 text-orange-500" />;
     if (type === 'team_invite') return <Target className="w-4 h-4 text-green-500" />;
+    if (type === 'training_reminder') return <Dumbbell className="w-4 h-4 text-green-700" />;
     return <Bell className="w-4 h-4 text-slate-500" />;
   };
   const navItems = [
@@ -369,9 +439,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                       <motion.div
                         key={notif.id}
                         layout
-                        className={`bg-white border rounded-2xl p-4 shadow-sm ${respondedNotifs[notif.id] ? 'opacity-60 border-slate-100' : 'border-slate-200'}`}
+                        className={`bg-white border rounded-2xl p-4 shadow-sm ${
+                          (respondedNotifs[notif.id] || notif.isRead) ? 'opacity-60 border-slate-100 bg-slate-50/50' : 'border-slate-200'
+                        }`}
                       >
-                        <div className="flex items-start gap-3 mb-3">
+                        <div className="flex items-start gap-3 mb-1">
                           <div className="relative flex-shrink-0">
                             {notif.avatar ? (
                               <img src={notif.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
@@ -396,8 +468,27 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                           </div>
                         </div>
 
+                        {notif.isLocal && !notif.isRead && (
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              onClick={() => handleMarkAsRead(notif.id)}
+                              className="px-2.5 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Check className="w-3 h-3" /> Mark as read
+                            </button>
+                          </div>
+                        )}
+
+                        {notif.isLocal && notif.isRead && (
+                          <div className="mt-3 flex justify-end">
+                            <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 select-none">
+                              <Check className="w-3 h-3 text-slate-400" /> Read
+                            </span>
+                          </div>
+                        )}
+
                         {(notif.type === 'family_invite') && !respondedNotifs[notif.id] && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 mt-3">
                             <button
                               onClick={() => handleNotifResponse(notif.id, 'accepted')}
                               disabled={respondingId === notif.id}
@@ -426,7 +517,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                         )}
 
                         {respondedNotifs[notif.id] && (
-                          <div className={`text-xs font-bold text-center py-1.5 rounded-xl ${respondedNotifs[notif.id] === 'accepted' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
+                          <div className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === 'accepted' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
                             {respondedNotifs[notif.id] === 'accepted' ? '✓ Accepted' : '✕ Declined'}
                           </div>
                         )}

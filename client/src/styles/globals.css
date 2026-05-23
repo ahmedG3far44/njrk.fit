@@ -43,6 +43,22 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Colors from DESIGN.md */
+  --forest-canopy: #15803d;
+  --forest-deep: #166534;
+  --forest-floor: #f0fdf4;
+  --forest-mist: #bbf7d0;
+  --peak-white: #ffffff;
+  --summit-black: #0f172a;
+  --trail-gray: #475569;
+  --gravel: #64748b;
+  --dust: #94a3b8;
+  --limestone: #e2e8f0;
+  --stone: #f1f5f9;
+  --pebble: #f8fafc;
+  --ember: #ef4444;
+  --warning-amber: #d97706;
 }
 
 .dark {
@@ -121,6 +137,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-forest-canopy: var(--forest-canopy);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-floor: var(--forest-floor);
+  --color-forest-mist: var(--forest-mist);
+  --color-peak-white: var(--peak-white);
+  --color-summit-black: var(--summit-black);
+  --color-trail-gray: var(--trail-gray);
+  --color-gravel: var(--gravel);
+  --color-dust: var(--dust);
+  --color-limestone: var(--limestone);
+  --color-stone: var(--stone);
+  --color-pebble: var(--pebble);
+  --color-ember: var(--ember);
+  --color-warning-amber: var(--warning-amber);
+  --radius-container: 1.5rem;
+  --radius-card: 1rem;
+  --radius-field: 0.75rem;
+  --radius-button: 0.75rem;
+  --radius-pill: 9999px;
+  --radius-sm: 0.5rem;
 }
 
 @layer base {

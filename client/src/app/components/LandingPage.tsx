@@ -97,7 +97,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-green-100 selection:text-green-900">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-200/40">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-peak-white border-b border-limestone">
         <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
           <NjerkaLogo />
 
@@ -125,7 +125,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {user ? (
               <Link
                 to="/dashboard"
-                className="bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-full font-bold hover:shadow-lg hover:shadow-green-200 hover:-translate-y-0.5 transition-all text-sm"
+                className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all text-sm"
               >
                 Go to Dashboard
               </Link>
@@ -133,13 +133,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <>
                 <button
                   onClick={onLogin}
-                  className="text-slate-600 font-semibold hover:text-green-700 transition-colors hidden sm:block text-sm"
+                  className="text-trail-gray font-semibold hover:text-forest-canopy transition-colors hidden sm:block text-sm"
                 >
                   Log In
                 </button>
                 <button
                   onClick={onClickPlan}
-                  className="bg-gradient-to-r from-green-800 to-green-700 text-white px-5 py-2.5 rounded-full font-bold hover:shadow-lg hover:shadow-green-200 hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm"
+                  className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm"
                 >
                   Get Started
                 </button>
@@ -203,9 +203,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="text-5xl md:text-7xl font-extrabold leading-[1.08] mb-6 tracking-tight text-slate-900"
             >
               Precision Nutrition,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-800 via-green-600 to-emerald-700">
-                Powered by AI.
-              </span>
+              <span className="text-forest-canopy">Powered by AI.</span>
             </motion.h1>
 
             <motion.p
@@ -225,15 +223,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={onGetStarted}
-                className="bg-gradient-to-r from-green-800 to-green-700 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl hover:shadow-green-200/60 transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+                className="bg-forest-canopy text-peak-white px-8 py-4 rounded-button font-bold text-lg hover:shadow-2xl hover:shadow-forest-mist transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-r from-peak-white/0 via-peak-white/10 to-peak-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 Start Your Transformation{" "}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </motion.button>
               <button
                 onClick={onLogin}
-                className="bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 hover:border-slate-300"
+                className="bg-peak-white border border-limestone text-trail-gray px-8 py-4 rounded-button font-bold text-lg hover:bg-stone transition-all flex items-center justify-center gap-2 hover:border-trail-gray"
               >
                 View Demo
               </button>
@@ -585,10 +583,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={`p-8 rounded-3xl border transition-colors bg-white ${
+                className={`p-8 rounded-3xl border transition-colors  ${
                   plan.isBest
                     ? "relative bg-green-900 text-white shadow-2xl scale-105 z-10"
-                    : "hover:border-green-200"
+                    : "hover:border-green-200 bg-white text-slate-900"
                 }`}
                 style={
                   plan.isBest
@@ -600,8 +598,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }
               >
                 {plan.isBest && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs font-bold px-6 py-2 rounded-full shadow-lg shadow-green-200 whitespace-nowrap">
-                    ✨ BEST VALUE
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-100 border border-green-500 text-green-800 text-xs font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap ">
+                    Recommended Plan
                   </div>
                 )}
                 <h3
@@ -624,13 +622,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   >
                     ${plan.price}
                   </span>
-                  <span
-                    className={
-                      plan.isBest ? "text-green-200" : "text-slate-500"
-                    }
-                  >
-                    /mo
-                  </span>
+                  <span className={"text-slate-500"}>/mo</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((item) => (
@@ -651,7 +643,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </ul>
                 <button
                   onClick={onClickPlan}
-                  className={`w-full py-3 rounded-xl font-bold transition-colors ${
+                  className={`w-full py-3 rounded-xl font-bold transition-colors cursor-pointer hover:opacity-70 ${
                     plan.isBest
                       ? "bg-white text-green-900 hover:bg-green-50"
                       : "bg-green-50 text-green-700 hover:bg-green-100"

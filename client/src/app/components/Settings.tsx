@@ -25,7 +25,7 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     weight: (user?.weight as number) || 0,
     goal: (user?.goal as "lose_weight" | "gain_weight" | "maintain_weight") || 'maintain_weight',
     religion: (user?.religion as string) || '',
-    notifications: user?.preferences?.notifications ?? true,
+    notifications: localStorage.getItem('daily_reminder_enabled') !== 'false',
     familyPlan: user?.preferences?.familyPlan ?? (user?.subscriptionTier === 'FAMILY' || user?.subscriptionTier === 'PRO'),
     autoGenerateMeals: user?.preferences?.autoGenerateMeals ?? true,
     manualPrompt: user?.preferences?.manualPrompt ?? '',
@@ -50,7 +50,7 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         religion: (user?.religion as string) || '',
         foodPreferences: user?.dietaryRestrictions || [],
         allergies: user?.allergies || [],
-        notifications: user?.preferences?.notifications ?? true,
+        notifications: localStorage.getItem('daily_reminder_enabled') !== 'false',
         weeklySummary: user?.preferences?.weeklySummary ?? true,
         mealReminders: user?.preferences?.mealReminders ?? true,
         autoGenerateMeals: user?.preferences?.autoGenerateMeals ?? true,
@@ -398,7 +398,58 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={formData.notifications} onChange={e => setFormData({ ...formData, notifications: e.target.checked })} className="sr-only peer" />
+            <input
+              type="checkbox"
+              checked={formData.notifications}
+              onChange={e => {
+                const checked = e.target.checked;
+                setFormData({ ...formData, notifications: checked });
+                localStorage.setItem('daily_reminder_enabled', checked ? 'true' : 'false');
+                
+                if (checked) {
+                  const isMeal = Math.random() > 0.5;
+                  const mealReminders = [
+                    "Time for your healthy meal! Don't forget to track your calories and macros in the Nutrition tab.",
+                    "Lunch Reminder: Make sure to consume your target protein for optimal muscle recovery.",
+                    "Dinner Time! Enjoy a light, high-protein meal to stay in line with your fitness goals.",
+                    "Pre-workout nutrition check! Fuel up with some quality carbs before your training session."
+                  ];
+                  const trainingReminders = [
+                    "It's time for your workout session! Consistency is key to achieving your fitness goals.",
+                    "Get ready to sweat! Your scheduled training session is waiting. Let's crush it!",
+                    "Time to move! Keep your daily streak alive with a 30-minute training session.",
+                    "Fitness alert: Hydrate well and start your warm-up. Today's workout is ready!"
+                  ];
+                  
+                  const type = isMeal ? 'meal_reminder' : 'training_reminder';
+                  const title = isMeal ? 'Meal Reminder' : 'Training Session';
+                  const message = isMeal 
+                    ? mealReminders[Math.floor(Math.random() * mealReminders.length)]
+                    : trainingReminders[Math.floor(Math.random() * trainingReminders.length)];
+                    
+                  const newNotif = {
+                    id: `local_${type}_${Date.now()}`,
+                    type,
+                    title,
+                    message,
+                    time: 'Just now',
+                    isLocal: true,
+                    isRead: false
+                  };
+                  
+                  const stored = localStorage.getItem('local_notifications');
+                  const existing = stored ? JSON.parse(stored) : [];
+                  localStorage.setItem('local_notifications', JSON.stringify([newNotif, ...existing]));
+                  
+                  // Dispatch a custom event to notify components
+                  window.dispatchEvent(new Event('localNotificationsUpdated'));
+                  toast.success('Daily Reminder enabled and notification sent!');
+                } else {
+                  toast.success('Daily Reminder disabled');
+                }
+              }}
+              className="sr-only peer"
+            />
             <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-700"></div>
           </label>
         </div>
