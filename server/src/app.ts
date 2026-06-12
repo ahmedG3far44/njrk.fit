@@ -37,49 +37,10 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.send(`
     <div>
-      <p>${env.PORT}</p>
-      <p>${env.NODE_ENV}</p>
-      
-      <p>${env.ALLOWED_ORIGINS}</p>
-      <p>${env.API_URL}</p>
-      <p>${env.CLIENT_URL}</p>
-      
-      <p>${env.JWT_SECRET}</p>
-      <p>${env.JWT_EXPIRATION}</p>
-      
-      <p>${env.JWT_ADMIN_EXPIRATION}</p>
-      <p>${env.JWT_ADMIN_EXPIRATION}</p>
-
-      <p>${env.JWT_REFRESH_SECRET}</p>
-      <p>${env.JWT_REFRESH_EXPIRATION}</p>
-
-      <p>${env.MONGODB_URI}</p>
-
-
-      <p>${env.CLOUDINARY_NAME}</p>
-      <p>${env.CLOUDINARY_API_KEY}</p>
-      <p>${env.CLOUDINARY_API_SECRET}</p>
-      
-      
-      <p>${env.ADMIN_EMAIL_1}</p>
-      <p>${env.ADMIN_NAME_1}</p>
-      <p>${env.ADMIN_PASSWORD_1}</p>
-
-      <p>${env.ADMIN_EMAIL_2}</p>
-      <p>${env.ADMIN_NAME_2}</p>
-      <p>${env.ADMIN_PASSWORD_2}</p>
-
-      <p>${env.RAPIDAPI_KEY}</p>
-      <p>${env.OPENROUTER_API_KEY}</p>
-
-      <p>${env.STRIPE_SECRET_KEY}</p>
-      <p>${env.STRIPE_WEBHOOK_SECRET}</p>
-      <p>${env.STRIPE_FAMILY_PRICE_ID}</p>
-      <p>${env.STRIPE_PRO_PRICE_ID}</p>
-
-      <p>${env.GOOGLE_CLIENT_ID}</p>
-      <p>${env.GOOGLE_CLIENT_SECRET}</p>
-
+      <h1>Welcome to the NJRK API</h1>
+      <p>API Version: ${env.API_URL}</p>
+      <p>Allowed Origins: ${env.ALLOWED_ORIGINS}</p>
+      <p>Documentation: <a href="/api-docs">/api-docs</a></p>
     </div>
     `);
 });
