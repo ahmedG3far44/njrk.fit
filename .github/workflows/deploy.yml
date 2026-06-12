@@ -1,0 +1,82 @@
+name: Deploy Production
+
+on:
+    push:
+        branches:
+            - final
+
+jobs:
+    deploy:
+        runs-on: self-hosted
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+
+            ##########################################################
+            # SERVER 
+            ##########################################################
+
+            - name: Install Server Dependencies
+              working-directory: ./server
+              run: npm ci
+
+            - name: Build Server
+              working-directory: ./server
+              run: npm run build
+
+            ##########################################################
+            # CLIENT
+            ##########################################################
+
+            - name: Install Client Dependencies
+              working-directory: ./client
+              run: npm ci
+
+            - name: Build Client
+              working-directory: ./client
+              run: npm run build
+
+            ##########################################################
+            # DEPLOY FILES
+            ##########################################################
+
+            - name: Create Deploy Directory
+              run: |
+                  mkdir -p /home/njerka/apps/njrk
+
+            - name: Deploy Server
+              run: |
+                  rm -rf /home/njerka/apps/njrk/server
+                  cp -R server /home/njerka/apps/njrk/
+
+            - name: Deploy Client
+              run: |
+                  rm -rf /home/njerka/apps/njrk/client
+                  mkdir -p /home/njerka/apps/njrk/client
+                  cp -R client/dist /home/njerka/apps/njrk/client/
+
+            ########################################################## #
+            # START / RESTART SERVER ##########################################################
+            - name: Start or Restart PM2 Application
+              run: |
+                APP_DIR="/home/njerka/apps/njrk/server"
+                if pm2 describe njerka_server > /dev/null; then
+                  echo "Restarting existing PM2 process..."
+                  pm2 restart njerka_server
+                else
+                  echo "Starting new PM2 process..."
+                  pm2 start "$APP_DIR/dist/index.js" --name njerka_server --time
+                fi
+                pm2 save
+
+            ########################################################## # 
+            # RELOAD NGINX ##########################################################
+            - name: Reload Nginx
+              run: |
+                  sudo systemctl reload nginx
