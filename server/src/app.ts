@@ -19,7 +19,7 @@ import subscriptionsRoutes from "./routes/subscriptions.route";
 import leaderboardRoutes from "./routes/leaderboard.route";
 import adminRoutes from "./routes/admin.routes";
 
-import { corsOptions } from "./configs/env";
+import { corsOptions, env } from "./configs/env";
 import { errorHandler } from "./middlewares/errorHandler";
 import { requestLogger } from "./middlewares/requestLogger";
 
@@ -35,7 +35,53 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.send("<h1>Njerka.fit AI Powered App Server is running!</h1>");
+  res.send(`
+    <div>
+      <p>${env.PORT}</p>
+      <p>${env.NODE_ENV}</p>
+      
+      <p>${env.ALLOWED_ORIGINS}</p>
+      <p>${env.API_URL}</p>
+      <p>${env.CLIENT_URL}</p>
+      
+      <p>${env.JWT_SECRET}</p>
+      <p>${env.JWT_EXPIRATION}</p>
+      
+      <p>${env.JWT_ADMIN_EXPIRATION}</p>
+      <p>${env.JWT_ADMIN_EXPIRATION}</p>
+
+      <p>${env.JWT_REFRESH_SECRET}</p>
+      <p>${env.JWT_REFRESH_EXPIRATION}</p>
+
+      <p>${env.MONGODB_URI}</p>
+
+
+      <p>${env.CLOUDINARY_NAME}</p>
+      <p>${env.CLOUDINARY_API_KEY}</p>
+      <p>${env.CLOUDINARY_API_SECRET}</p>
+      
+      
+      <p>${env.ADMIN_EMAIL_1}</p>
+      <p>${env.ADMIN_NAME_1}</p>
+      <p>${env.ADMIN_PASSWORD_1}</p>
+
+      <p>${env.ADMIN_EMAIL_2}</p>
+      <p>${env.ADMIN_NAME_2}</p>
+      <p>${env.ADMIN_PASSWORD_2}</p>
+
+      <p>${env.RAPIDAPI_KEY}</p>
+      <p>${env.OPENROUTER_API_KEY}</p>
+
+      <p>${env.STRIPE_SECRET_KEY}</p>
+      <p>${env.STRIPE_WEBHOOK_SECRET}</p>
+      <p>${env.STRIPE_FAMILY_PRICE_ID}</p>
+      <p>${env.STRIPE_PRO_PRICE_ID}</p>
+
+      <p>${env.GOOGLE_CLIENT_ID}</p>
+      <p>${env.GOOGLE_CLIENT_SECRET}</p>
+
+    </div>
+    `);
 });
 
 app.get("/health", async (req, res) => {

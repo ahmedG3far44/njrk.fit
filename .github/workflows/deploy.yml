@@ -8,19 +8,65 @@ on:
 jobs:
     deploy:
         runs-on: self-hosted
-
+        env:
+            ROOT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit
+            SERVER_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/server
+            CLIENT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/client
         steps:
-            - name: Checkout Code
+            - name: Checkout Repository
               uses: actions/checkout@v4
 
             - name: Setup Node
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: "22"
 
-            ##########################################################
-            # SERVER 
-            ##########################################################
+            - name: Generate Server .env
+              run: |
+                  cat > "$SERVER_DIR/.env" << EOF
+                  PORT=${{ secrets.PORT }}
+                  NODE_ENV=${{ secrets.NODE_ENV }}
+                  ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+
+                  CLIENT_URL=${{ secrets.CLIENT_URL }}
+                  API_URL=${{ secrets.API_URL }}
+
+                  OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+
+                  STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+                  STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+                  JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
+                  JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+                  JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+
+                  ADMIN_EMAIL_1=${{ secrets.ADMIN_EMAIL_1 }}
+                  ADMIN_PASSWORD_1=${{ secrets.ADMIN_PASSWORD_1 }}
+                  ADMIN_NAME_1=${{ secrets.ADMIN_NAME_1 }}
+
+                  ADMIN_EMAIL_2=${{ secrets.ADMIN_EMAIL_2 }}
+                  ADMIN_PASSWORD_2=${{ secrets.ADMIN_PASSWORD_2 }}
+                  ADMIN_NAME_2=${{ secrets.ADMIN_NAME_2 }}
+
+                  GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+                  GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+                  CLOUDINARY_NAME=${{ secrets.CLOUDINARY_NAME }}
+                  CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+                  CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+
+                  MONGODB_URI=${{ secrets.MONGODB_URI }}
+
+                  RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
+                  EOF
+
+            - name: Generate Client .env
+              run: |
+                  cat > "$CLIENT_DIR/.env.production" << EOF
+                  VITE_API_URL=${{ secrets.API_URL }}
+                  VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+                  EOF
 
             - name: Install Server Dependencies
               working-directory: ./server
@@ -30,10 +76,6 @@ jobs:
               working-directory: ./server
               run: npm run build
 
-            ##########################################################
-            # CLIENT
-            ##########################################################
-
             - name: Install Client Dependencies
               working-directory: ./client
               run: npm ci
@@ -42,41 +84,17 @@ jobs:
               working-directory: ./client
               run: npm run build
 
-            ##########################################################
-            # DEPLOY FILES
-            ##########################################################
-
-            - name: Create Deploy Directory
+            - name: Start or Restart PM2
               run: |
-                  mkdir -p /home/njerka/apps/njrk
+                  if pm2 describe njerka_server > /dev/null; then
+                    pm2 restart njerka_server
+                  else
+                    pm2 start "$SERVER_DIR/dist/index.js" \
+                      --name njerka_server \
+                      --time
+                  fi
 
-            - name: Deploy Server
-              run: |
-                  rm -rf /home/njerka/apps/njrk/server
-                  cp -R server /home/njerka/apps/njrk/
+                  pm2 save
 
-            - name: Deploy Client
-              run: |
-                  rm -rf /home/njerka/apps/njrk/client
-                  mkdir -p /home/njerka/apps/njrk/client
-                  cp -R client/dist /home/njerka/apps/njrk/client/
-
-            ########################################################## #
-            # START / RESTART SERVER ##########################################################
-            - name: Start or Restart PM2 Application
-              run: |
-                APP_DIR="/home/njerka/apps/njrk/server"
-                if pm2 describe njerka_server > /dev/null; then
-                  echo "Restarting existing PM2 process..."
-                  pm2 restart njerka_server
-                else
-                  echo "Starting new PM2 process..."
-                  pm2 start "$APP_DIR/dist/index.js" --name njerka_server --time
-                fi
-                pm2 save
-
-            ########################################################## # 
-            # RELOAD NGINX ##########################################################
             - name: Reload Nginx
-              run: |
-                  sudo systemctl reload nginx
+              run: sudo systemctl reload nginx
