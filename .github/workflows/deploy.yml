@@ -26,12 +26,13 @@ jobs:
                   cat > "$SERVER_DIR/.env" << EOF
                   PORT=${{ secrets.PORT }}
                   NODE_ENV=${{ secrets.NODE_ENV }}
-                  ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
 
+                  ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
                   CLIENT_URL=${{ secrets.CLIENT_URL }}
                   API_URL=${{ secrets.API_URL }}
 
                   OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+                  RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
 
                   STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
                   STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
@@ -58,7 +59,6 @@ jobs:
 
                   MONGODB_URI=${{ secrets.MONGODB_URI }}
 
-                  RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
                   EOF
 
             - name: Generate Client .env
@@ -89,7 +89,7 @@ jobs:
                   if pm2 describe njerka_server > /dev/null; then
                     pm2 restart njerka_server
                   else
-                    pm2 start "$SERVER_DIR/dist/index.js" \
+                    pm2 start "node $SERVER_DIR/dist/index.js" \
                       --name njerka_server \
                       --time
                   fi
