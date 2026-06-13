@@ -37,8 +37,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.send(`
     <div>
-      <h1>Welcome to the NJRK API</h1>
-      <p>API Version: ${env.API_URL}</p>
+      <h1>Welcome to the Njerka.FIT Server</h1>
+      <p>API URL: ${env.API_URL}</p>
       <p>Allowed Origins: ${env.ALLOWED_ORIGINS}</p>
       <p>Documentation: <a href="/api-docs">/api-docs</a></p>
     </div>
