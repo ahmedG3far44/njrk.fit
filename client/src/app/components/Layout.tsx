@@ -19,18 +19,23 @@ import {
   Clock,
   Target,
   Loader2,
-} from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import NjerkaLogo from './NjerkaLogo';
-import { useAuth } from '../context/AuthProvider';
-import { Navigate } from 'react-router-dom';
-import { familyService, PendingInvitation } from '../services/familyService';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import NjerkaLogo from "./NjerkaLogo";
+import { useAuth } from "../context/AuthProvider";
+import { Navigate } from "react-router-dom";
+import { familyService, PendingInvitation } from "../services/familyService";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
-  type: 'friend_request' | 'family_invite' | 'meal_reminder' | 'team_invite' | 'training_reminder';
+  type:
+    | "friend_request"
+    | "family_invite"
+    | "meal_reminder"
+    | "team_invite"
+    | "training_reminder";
   title: string;
   message: string;
   avatar?: string;
@@ -47,7 +52,12 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView, onLogout }) => {
+export const Layout: React.FC<LayoutProps> = ({
+  children,
+  currentView,
+  onChangeView,
+  onLogout,
+}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user } = useAuth();
@@ -57,32 +67,38 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingInvitations, setLoadingInvitations] = useState(false);
   const [respondingId, setRespondingId] = useState<string | null>(null);
-  const [respondedNotifs, setRespondedNotifs] = useState<Record<string, 'accepted' | 'declined'>>({});
+  const [respondedNotifs, setRespondedNotifs] = useState<
+    Record<string, "accepted" | "declined">
+  >({});
 
   const loadLocalNotifications = () => {
-    const enabled = localStorage.getItem('daily_reminder_enabled') !== 'false';
+    const enabled = localStorage.getItem("daily_reminder_enabled") !== "false";
     if (!enabled) {
       return [];
     }
-    const stored = localStorage.getItem('local_notifications');
+    const stored = localStorage.getItem("local_notifications");
     let localNotifs = stored ? JSON.parse(stored) : [];
-    
+
     // Seed a default notification if enabled and no local notifications ever stored
-    if (localNotifs.length === 0 && !localStorage.getItem('local_notifications_seeded')) {
+    if (
+      localNotifs.length === 0 &&
+      !localStorage.getItem("local_notifications_seeded")
+    ) {
       const seedNotif = {
         id: `local_meal_${Date.now()}`,
-        type: 'meal_reminder' as const,
-        title: 'Meal Reminder',
-        message: "Welcome to Njerka! Time for your scheduled healthy meal! Make sure to log your calories.",
-        time: 'Just now',
+        type: "meal_reminder" as const,
+        title: "Meal Reminder",
+        message:
+          "Welcome to Njerka! Time for your scheduled healthy meal! Make sure to log your calories.",
+        time: "Just now",
         isLocal: true,
-        isRead: false
+        isRead: false,
       };
       localNotifs = [seedNotif];
-      localStorage.setItem('local_notifications', JSON.stringify(localNotifs));
-      localStorage.setItem('local_notifications_seeded', 'true');
+      localStorage.setItem("local_notifications", JSON.stringify(localNotifs));
+      localStorage.setItem("local_notifications_seeded", "true");
     }
-    
+
     return localNotifs;
   };
 
@@ -92,20 +108,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       const response = await familyService.getFamily();
 
       // Map pending invitations to notification format
-      const inviteNotifications: Notification[] = response.pendingInvitations.map((invite: PendingInvitation) => ({
-        id: invite.id,
-        type: 'family_invite' as const,
-        title: invite.user?.name || 'Family Invitation',
-        message: `${invite.user?.name || 'Someone'} invited you to join their family plan`,
-        avatar: invite.user?.avatarUrl,
-        time: 'Just now',
-        invitationId: invite.id,
-      }));
+      const inviteNotifications: Notification[] =
+        response.pendingInvitations.map((invite: PendingInvitation) => ({
+          id: invite.id,
+          type: "family_invite" as const,
+          title: invite.user?.name || "Family Invitation",
+          message: `${invite.user?.name || "Someone"} invited you to join their family plan`,
+          avatar: invite.user?.avatarUrl,
+          time: "Just now",
+          invitationId: invite.id,
+        }));
 
       const localNotifs = loadLocalNotifications();
       setNotifications([...inviteNotifications, ...localNotifs]);
     } catch (error) {
-      console.error('Failed to fetch invitations:', error);
+      console.error("Failed to fetch invitations:", error);
       const localNotifs = loadLocalNotifications();
       setNotifications(localNotifs);
     } finally {
@@ -123,9 +140,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     const handleUpdate = () => {
       fetchInvitations(false);
     };
-    window.addEventListener('localNotificationsUpdated', handleUpdate);
+    window.addEventListener("localNotificationsUpdated", handleUpdate);
     return () => {
-      window.removeEventListener('localNotificationsUpdated', handleUpdate);
+      window.removeEventListener("localNotificationsUpdated", handleUpdate);
     };
   }, []);
 
@@ -135,89 +152,151 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     }
   }, [showNotifications]);
 
-  const handleNotifResponse = async (id: string, response: 'accepted' | 'declined') => {
-    const notif = notifications.find(n => n.id === id);
+  const handleNotifResponse = async (
+    id: string,
+    response: "accepted" | "declined",
+  ) => {
+    const notif = notifications.find((n) => n.id === id);
     if (!notif?.invitationId) return;
 
     setRespondingId(id);
     try {
-      const action = response === 'accepted' ? 'accept' : 'reject';
+      const action = response === "accepted" ? "accept" : "reject";
       await familyService.respondToInvitation(notif.invitationId, action);
 
-      setRespondedNotifs(prev => ({ ...prev, [id]: response }));
-      toast.success(response === 'accepted' ? 'Invitation accepted!' : 'Invitation declined');
+      setRespondedNotifs((prev) => ({ ...prev, [id]: response }));
+      toast.success(
+        response === "accepted"
+          ? "Invitation accepted!"
+          : "Invitation declined",
+      );
 
       // Remove from list after a delay
       setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
       }, 1500);
     } catch (error) {
-      console.error('Failed to respond to invitation:', error);
-      toast.error('Failed to respond. Please try again.');
+      console.error("Failed to respond to invitation:", error);
+      toast.error("Failed to respond. Please try again.");
     } finally {
       setRespondingId(null);
     }
   };
 
   const handleMarkAsRead = (id: string) => {
-    const stored = localStorage.getItem('local_notifications');
+    const stored = localStorage.getItem("local_notifications");
     if (stored) {
       const localNotifs = JSON.parse(stored);
-      const updated = localNotifs.map((n: any) => 
-        n.id === id ? { ...n, isRead: true } : n
+      const updated = localNotifs.map((n: any) =>
+        n.id === id ? { ...n, isRead: true } : n,
       );
-      localStorage.setItem('local_notifications', JSON.stringify(updated));
-      
+      localStorage.setItem("local_notifications", JSON.stringify(updated));
+
       // Update state
-      setNotifications(prev => prev.map(n => 
-        n.id === id ? { ...n, isRead: true } : n
-      ));
-      toast.success('Notification marked as read');
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+      toast.success("Notification marked as read");
     }
   };
 
   const dismissNotif = (id: string) => {
-    const isLocal = notifications.find(n => n.id === id)?.isLocal;
+    const isLocal = notifications.find((n) => n.id === id)?.isLocal;
     if (isLocal) {
-      const stored = localStorage.getItem('local_notifications');
+      const stored = localStorage.getItem("local_notifications");
       if (stored) {
         const localNotifs = JSON.parse(stored);
         const filtered = localNotifs.filter((n: any) => n.id !== id);
-        localStorage.setItem('local_notifications', JSON.stringify(filtered));
+        localStorage.setItem("local_notifications", JSON.stringify(filtered));
       }
-      toast.success('Notification removed');
+      toast.success("Notification removed");
     }
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  const notifCount = notifications.filter(n => !respondedNotifs[n.id]).length;
+  const notifCount = notifications.filter((n) => !respondedNotifs[n.id]).length;
 
   const notifTypeIcon = (type: string) => {
-    if (type === 'friend_request') return <UserCheck className="w-4 h-4 text-green-700" />;
-    if (type === 'family_invite') return <Users className="w-4 h-4 text-green-600" />;
-    if (type === 'meal_reminder') return <Clock className="w-4 h-4 text-orange-500" />;
-    if (type === 'team_invite') return <Target className="w-4 h-4 text-green-500" />;
-    if (type === 'training_reminder') return <Dumbbell className="w-4 h-4 text-green-700" />;
+    if (type === "friend_request")
+      return <UserCheck className="w-4 h-4 text-green-700" />;
+    if (type === "family_invite")
+      return <Users className="w-4 h-4 text-green-600" />;
+    if (type === "meal_reminder")
+      return <Clock className="w-4 h-4 text-orange-500" />;
+    if (type === "team_invite")
+      return <Target className="w-4 h-4 text-green-500" />;
+    if (type === "training_reminder")
+      return <Dumbbell className="w-4 h-4 text-green-700" />;
     return <Bell className="w-4 h-4 text-slate-500" />;
   };
   const navItems = [
-    { id: 'insights', label: 'Dashboard', icon: LayoutDashboard, color: 'text-green-700' },
-    { id: 'streaks', label: 'Streaks & Rewards', icon: Flame, color: 'text-orange-500' },
-    { id: 'schedule', label: 'Schedule', icon: Calendar, color: 'text-blue-600' },
-    { id: 'nutrition', label: 'Nutrition', icon: Utensils, color: 'text-green-700' },
-    { id: 'grocery', label: 'Grocery List', icon: ShoppingCart, color: 'text-emerald-600' },
-    { id: 'fitness', label: 'Fitness', icon: Dumbbell, color: 'text-green-800' },
-    { id: 'progress', label: 'Progress', icon: LineChart, color: 'text-blue-500' },
-    { id: 'community', label: 'Community', icon: Users, color: 'text-pink-600' },
-    { id: 'subscriptions', label: 'Subscription', icon: Zap, color: 'text-amber-500' },
-    { id: 'settings', label: 'Settings', icon: Settings, color: 'text-slate-500' },
+    {
+      id: "insights",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      color: "text-green-700",
+    },
+    {
+      id: "streaks",
+      label: "Streaks & Rewards",
+      icon: Flame,
+      color: "text-orange-500",
+    },
+    {
+      id: "schedule",
+      label: "Schedule",
+      icon: Calendar,
+      color: "text-blue-600",
+    },
+    {
+      id: "nutrition",
+      label: "Nutrition",
+      icon: Utensils,
+      color: "text-green-700",
+    },
+    {
+      id: "grocery",
+      label: "Grocery List",
+      icon: ShoppingCart,
+      color: "text-emerald-600",
+    },
+    {
+      id: "fitness",
+      label: "Fitness",
+      icon: Dumbbell,
+      color: "text-green-800",
+    },
+    {
+      id: "progress",
+      label: "Progress",
+      icon: LineChart,
+      color: "text-blue-500",
+    },
+    {
+      id: "community",
+      label: "Community",
+      icon: Users,
+      color: "text-pink-600",
+    },
+    {
+      id: "subscriptions",
+      label: "Subscription",
+      icon: Zap,
+      color: "text-amber-500",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: Settings,
+      color: "text-slate-500",
+    },
   ];
 
   const bottomNavItems = [
-    { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-    { id: 'nutrition', label: 'Nutrition', icon: Utensils },
-    { id: 'fitness', label: 'Fitness', icon: Dumbbell },
-    { id: 'progress', label: 'Progress', icon: LineChart },
+    { id: "insights", path: "/insights", label: "Home", icon: LayoutDashboard },
+    { id: "nutrition", path: "/nutrition", label: "Nutrition", icon: Utensils },
+    { id: "fitness", path: "/fitness", label: "Fitness", icon: Dumbbell },
+    { id: "progress", path: "/progress", label: "Progress", icon: LineChart },
   ];
 
   const handleLogoutClick = () => {
@@ -229,17 +308,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
     onLogout();
   };
 
-  if (!user) { 
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (!user.onboardingCompleted) {
     return <Navigate to="/onboarding" replace />;
   }
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-
       {/* ── Logout Confirmation Dialog ── */}
       <AnimatePresence>
         {showLogoutConfirm && (
@@ -254,15 +332,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
             >
               <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <LogOut className="w-7 h-7 text-red-500" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Log Out?</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                Log Out?
+              </h3>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                You'll be returned to the landing page. Your data is always saved.
+                You'll be returned to the landing page. Your data is always
+                saved.
               </p>
               <div className="flex gap-3">
                 <button
@@ -287,7 +368,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 h-full relative">
         {/* Logo */}
         <div className="p-5 pb-3 flex items-start justify-start border-b border-slate-100">
-          <NjerkaLogo size='small' text={true} />
+          <NjerkaLogo size="small" text={true} />
         </div>
 
         {/* Nav */}
@@ -298,10 +379,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               <button
                 key={item.id}
                 onClick={() => onChangeView(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors relative group ${isActive
-                  ? 'bg-green-50 text-green-800'
-                  : 'text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900 active:scale-[0.98]'
-                  }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors relative group ${
+                  isActive
+                    ? "bg-green-50 text-green-800"
+                    : "text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900 active:scale-[0.98]"
+                }`}
               >
                 {isActive && (
                   <motion.div
@@ -309,12 +391,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-700 rounded-r-full"
                   />
                 )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${isActive ? 'bg-green-100' : 'bg-transparent group-hover:bg-slate-100'
-                  }`}>
-                  <item.icon className={`w-4 h-4 ${isActive ? item.color : ''}`} />
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
+                    isActive
+                      ? "bg-green-100"
+                      : "bg-transparent group-hover:bg-slate-100"
+                  }`}
+                >
+                  <item.icon
+                    className={`w-4 h-4 ${isActive ? item.color : ""}`}
+                  />
                 </div>
                 <span className="text-sm">{item.label}</span>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto text-green-500" />}
+                {isActive && (
+                  <ChevronRight className="w-3.5 h-3.5 ml-auto text-green-500" />
+                )}
               </button>
             );
           })}
@@ -338,14 +429,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           <motion.div
             whileHover={{ scale: 1.02 }}
             className="bg-gradient-to-br from-green-800 to-green-700 rounded-2xl p-4 text-white relative overflow-hidden cursor-pointer"
-            onClick={() => onChangeView('settings')}
+            onClick={() => onChangeView("settings")}
           >
             <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
             <div className="flex items-center gap-2 mb-1.5 font-bold text-sm relative z-10">
-              <Users className="w-4 h-4" /> {user?.subscription?.subscriptionTier === "BASIC" ? "Free" : user?.subscription?.subscriptionTier === "PRO" ? "Pro" : "Family"} Plan
+              <Users className="w-4 h-4" />{" "}
+              {user?.subscription?.subscriptionTier === "BASIC"
+                ? "Free"
+                : user?.subscription?.subscriptionTier === "PRO"
+                  ? "Pro"
+                  : "Family"}{" "}
+              Plan
             </div>
             <p className="text-xs text-green-200 mb-3 relative z-10 leading-relaxed">
-              {user?.subscription?.subscriptionTier === "BASIC" ? "Upgrade to unlock more features" : user?.subscription?.subscriptionTier === "PRO" ? "Upgrade to Family Plan to add more members." : "Manage your family's nutrition."}
+              {user?.subscription?.subscriptionTier === "BASIC"
+                ? "Upgrade to unlock more features"
+                : user?.subscription?.subscriptionTier === "PRO"
+                  ? "Upgrade to Family Plan to add more members."
+                  : "Manage your family's nutrition."}
             </p>
             <div className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-xs font-bold py-2 px-3 rounded-xl transition-colors w-fit relative z-10">
               Manage Profiles <ChevronRight className="w-3 h-3" />
@@ -358,7 +459,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Mobile Header */}
         <header className="lg:hidden bg-white/90 backdrop-blur-xl border-b border-slate-100 px-5 py-3 flex items-center justify-between z-20 relative">
-          <img src="/logo.png" alt="Njerka" className="h-10 w-auto object-contain mix-blend-multiply" />
+          <NjerkaLogo size="small" text={false} />
 
           <div className="flex items-center gap-2">
             <button
@@ -376,7 +477,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <MoreHorizontal className="w-5 h-5" />
+              )}
             </button>
           </div>
         </header>
@@ -409,15 +514,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                 initial={{ opacity: 0, x: 320 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 320 }}
-                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
                 className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
               >
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
                   <div>
                     <h3 className="font-bold text-lg">Notification Center</h3>
-                    <p className="text-green-200 text-sm">{notifCount} new notifications</p>
+                    <p className="text-green-200 text-sm">
+                      {notifCount} new notifications
+                    </p>
                   </div>
-                  <button onClick={() => setShowNotifications(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -435,18 +545,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                       <p className="text-sm">No new notifications</p>
                     </div>
                   ) : (
-                    notifications.map(notif => (
+                    notifications.map((notif) => (
                       <motion.div
                         key={notif.id}
                         layout
                         className={`bg-white border rounded-2xl p-4 shadow-sm ${
-                          (respondedNotifs[notif.id] || notif.isRead) ? 'opacity-60 border-slate-100 bg-slate-50/50' : 'border-slate-200'
+                          respondedNotifs[notif.id] || notif.isRead
+                            ? "opacity-60 border-slate-100 bg-slate-50/50"
+                            : "border-slate-200"
                         }`}
                       >
                         <div className="flex items-start gap-3 mb-1">
                           <div className="relative flex-shrink-0">
                             {notif.avatar ? (
-                              <img src={notif.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                              <img
+                                src={notif.avatar}
+                                alt=""
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
                             ) : (
                               <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
                                 {notifTypeIcon(notif.type)}
@@ -458,13 +574,22 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-bold text-slate-900 text-sm">{notif.title}</span>
-                              <button onClick={() => dismissNotif(notif.id)} className="text-slate-300 hover:text-slate-500 flex-shrink-0 cursor-pointer">
+                              <span className="font-bold text-slate-900 text-sm">
+                                {notif.title}
+                              </span>
+                              <button
+                                onClick={() => dismissNotif(notif.id)}
+                                className="text-slate-300 hover:text-slate-500 flex-shrink-0 cursor-pointer"
+                              >
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                            <p className="text-slate-600 text-xs leading-relaxed mt-0.5">{notif.message}</p>
-                            <p className="text-slate-400 text-[10px] mt-1">{notif.time}</p>
+                            <p className="text-slate-600 text-xs leading-relaxed mt-0.5">
+                              {notif.message}
+                            </p>
+                            <p className="text-slate-400 text-[10px] mt-1">
+                              {notif.time}
+                            </p>
                           </div>
                         </div>
 
@@ -487,38 +612,47 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                           </div>
                         )}
 
-                        {(notif.type === 'family_invite') && !respondedNotifs[notif.id] && (
-                          <div className="flex gap-2 mt-3">
-                            <button
-                              onClick={() => handleNotifResponse(notif.id, 'accepted')}
-                              disabled={respondingId === notif.id}
-                              className="flex-1 py-2 bg-green-700 text-white rounded-xl text-xs font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
-                            >
-                              {respondingId === notif.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <>
-                                  <Check className="w-3.5 h-3.5" /> Accept
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleNotifResponse(notif.id, 'declined')}
-                              disabled={respondingId === notif.id}
-                              className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
-                            >
-                              {respondingId === notif.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                'Decline'
-                              )}
-                            </button>
-                          </div>
-                        )}
+                        {notif.type === "family_invite" &&
+                          !respondedNotifs[notif.id] && (
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={() =>
+                                  handleNotifResponse(notif.id, "accepted")
+                                }
+                                disabled={respondingId === notif.id}
+                                className="flex-1 py-2 bg-green-700 text-white rounded-xl text-xs font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
+                              >
+                                {respondingId === notif.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Check className="w-3.5 h-3.5" /> Accept
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleNotifResponse(notif.id, "declined")
+                                }
+                                disabled={respondingId === notif.id}
+                                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                              >
+                                {respondingId === notif.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  "Decline"
+                                )}
+                              </button>
+                            </div>
+                          )}
 
                         {respondedNotifs[notif.id] && (
-                          <div className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === 'accepted' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
-                            {respondedNotifs[notif.id] === 'accepted' ? '✓ Accepted' : '✕ Declined'}
+                          <div
+                            className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === "accepted" ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-400"}`}
+                          >
+                            {respondedNotifs[notif.id] === "accepted"
+                              ? "✓ Accepted"
+                              : "✕ Declined"}
                           </div>
                         )}
                       </motion.div>
@@ -548,19 +682,32 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                       key={item.id}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                      transition={{
+                        delay: i * 0.03,
+                        duration: 0.2,
+                        ease: [0.23, 1, 0.32, 1],
+                      }}
                       onClick={() => {
                         onChangeView(item.id);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium transition-all ${isActive ? 'bg-green-50 text-green-800' : 'text-slate-600 hover:bg-slate-50'
-                        }`}
+                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium transition-all ${
+                        isActive
+                          ? "bg-green-50 text-green-800"
+                          : "text-slate-600 hover:bg-slate-50"
+                      }`}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-green-100' : 'bg-slate-100'}`}>
-                        <item.icon className={`w-5 h-5 ${isActive ? item.color : 'text-slate-400'}`} />
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive ? "bg-green-100" : "bg-slate-100"}`}
+                      >
+                        <item.icon
+                          className={`w-5 h-5 ${isActive ? item.color : "text-slate-400"}`}
+                        />
                       </div>
                       <span className="font-semibold">{item.label}</span>
-                      {isActive && <div className="ml-auto w-2 h-2 bg-green-600 rounded-full" />}
+                      {isActive && (
+                        <div className="ml-auto w-2 h-2 bg-green-600 rounded-full" />
+                      )}
                     </motion.button>
                   );
                 })}
@@ -569,7 +716,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                 <motion.button
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: navItems.length * 0.03, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                  transition={{
+                    delay: navItems.length * 0.03,
+                    duration: 0.2,
+                    ease: [0.23, 1, 0.32, 1],
+                  }}
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     handleLogoutClick();
@@ -604,12 +755,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           <div className="bg-white/90 backdrop-blur-xl border-t border-slate-100 px-2 pt-2 pb-4 shadow-2xl shadow-slate-900/10">
             <div className="flex items-center justify-around max-w-md mx-auto">
               {bottomNavItems.map((item) => {
-                const isActive = currentView === item.id;
+                const isActive = currentView === item.id; // Treat "insights" as "home" for bottom nav
                 return (
                   <button
                     key={item.id}
                     onClick={() => {
-                      onChangeView(item.id);
+                      onChangeView(item.path);
                       setIsMobileMenuOpen(false);
                     }}
                     className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl transition-all relative"
@@ -621,9 +772,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                       />
                     )}
                     <div className="relative z-10">
-                      <item.icon className={`w-5 h-5 transition-colors ${isActive ? 'text-green-700' : 'text-slate-400'}`} />
+                      <item.icon
+                        className={`w-5 h-5 transition-colors ${isActive ? "text-green-700" : "text-slate-400"}`}
+                      />
                     </div>
-                    <span className={`text-[10px] font-bold relative z-10 transition-colors ${isActive ? 'text-green-700' : 'text-slate-400'}`}>
+                    <span
+                      className={`text-[10px] font-bold relative z-10 transition-colors ${isActive ? "text-green-700" : "text-slate-400"}`}
+                    >
                       {item.label}
                     </span>
                   </button>
@@ -642,12 +797,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                   />
                 )}
                 <div className="relative z-10">
-                  {isMobileMenuOpen
-                    ? <X className="w-5 h-5 text-slate-700" />
-                    : <MoreHorizontal className="w-5 h-5 text-slate-400" />
-                  }
+                  {isMobileMenuOpen ? (
+                    <X className="w-5 h-5 text-slate-700" />
+                  ) : (
+                    <MoreHorizontal className="w-5 h-5 text-slate-400" />
+                  )}
                 </div>
-                <span className={`text-[10px] font-bold relative z-10 ${isMobileMenuOpen ? 'text-slate-700' : 'text-slate-400'}`}>
+                <span
+                  className={`text-[10px] font-bold relative z-10 ${isMobileMenuOpen ? "text-slate-700" : "text-slate-400"}`}
+                >
                   More
                 </span>
               </button>
