@@ -1,100 +1,101 @@
 name: Deploy Production
 
 on:
-    push:
-        branches:
-            - final
+  push:
+    branches:
+      - final
 
 jobs:
-    deploy:
-        runs-on: self-hosted
-        env:
-            ROOT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit
-            SERVER_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/server
-            CLIENT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/client
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+  deploy:
+    runs-on: self-hosted
+    env:
+      ROOT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit
+      SERVER_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/server
+      CLIENT_DIR: /home/njerka/actions-runner/_work/njrk.fit/njrk.fit/client
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-            - name: Setup Node
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "22"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
-            - name: Generate Server .env
-              run: |
-                  cat > "$SERVER_DIR/.env" << EOF
-                  PORT=${{ secrets.PORT }}
-                  NODE_ENV=${{ secrets.NODE_ENV }}
+      - name: Generate Server .env
+        run: |
+          cat > "$SERVER_DIR/.env" << EOF
+          PORT=${{ secrets.PORT }}
+          NODE_ENV=${{ secrets.NODE_ENV }}
 
-                  ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
-                  CLIENT_URL=${{ secrets.CLIENT_URL }}
-                  API_URL=${{ secrets.API_URL }}
+          ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+          CLIENT_URL=${{ secrets.CLIENT_URL }}
+          API_URL=${{ secrets.API_URL }}
 
-                  OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
-                  RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
+          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
 
-                  STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
-                  STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
-                  JWT_SECRET=${{ secrets.JWT_SECRET }}
-                  JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
-                  JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-                  JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
 
-                  ADMIN_EMAIL_1=${{ secrets.ADMIN_EMAIL_1 }}
-                  ADMIN_PASSWORD_1=${{ secrets.ADMIN_PASSWORD_1 }}
-                  ADMIN_NAME_1=${{ secrets.ADMIN_NAME_1 }}
+          ADMIN_EMAIL_1=${{ secrets.ADMIN_EMAIL_1 }}
+          ADMIN_PASSWORD_1=${{ secrets.ADMIN_PASSWORD_1 }}
+          ADMIN_NAME_1=${{ secrets.ADMIN_NAME_1 }}
 
-                  ADMIN_EMAIL_2=${{ secrets.ADMIN_EMAIL_2 }}
-                  ADMIN_PASSWORD_2=${{ secrets.ADMIN_PASSWORD_2 }}
-                  ADMIN_NAME_2=${{ secrets.ADMIN_NAME_2 }}
+          ADMIN_EMAIL_2=${{ secrets.ADMIN_EMAIL_2 }}
+          ADMIN_PASSWORD_2=${{ secrets.ADMIN_PASSWORD_2 }}
+          ADMIN_NAME_2=${{ secrets.ADMIN_NAME_2 }}
 
-                  GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-                  GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
 
-                  CLOUDINARY_NAME=${{ secrets.CLOUDINARY_NAME }}
-                  CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
-                  CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          CLOUDINARY_NAME=${{ secrets.CLOUDINARY_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
 
-                  MONGODB_URI=${{ secrets.MONGODB_URI }}
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
 
-                  EOF
+          EOF
 
-            - name: Generate Client .env
-              run: |
-                  cat > "$CLIENT_DIR/.env.production" << EOF
-                  VITE_API_URL=${{ secrets.API_URL }}
-                  VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-                  EOF
+      - name: Generate Client .env
+        run: |
+          cat > "$CLIENT_DIR/.env.production" << EOF
+          VITE_API_BASE_URL=${{ secrets.API_URL }}
+          VITE_PRO_PLAN_PRICE_ID=${{ secrets.VITE_PRO_PLAN_PRICE_ID }}
+          VITE_FAMILY_PLAN_PRICE_ID=${{ secrets.VITE_FAMILY_PLAN_PRICE_ID }}
+          EOF
 
-            - name: Install Server Dependencies
-              working-directory: ./server
-              run: npm ci
+      - name: Install Server Dependencies
+        working-directory: ./server
+        run: npm ci
 
-            - name: Build Server
-              working-directory: ./server
-              run: npm run build
+      - name: Build Server
+        working-directory: ./server
+        run: npm run build
 
-            - name: Install Client Dependencies
-              working-directory: ./client
-              run: npm ci
+      - name: Install Client Dependencies
+        working-directory: ./client
+        run: npm ci
 
-            - name: Build Client
-              working-directory: ./client
-              run: npm run build
+      - name: Build Client
+        working-directory: ./client
+        run: npm run build
 
-            - name: Start or Restart PM2
-              run: |
-                  if pm2 describe njerka_server > /dev/null; then
-                    pm2 restart njerka_server
-                  else
-                    pm2 start "node $SERVER_DIR/dist/index.js" \
-                      --name njerka_server \
-                      --time
-                  fi
+      - name: Start or Restart PM2
+        run: |
+          if pm2 describe njerka_server > /dev/null; then
+            pm2 restart njerka_server
+          else
+            pm2 start "node $SERVER_DIR/dist/index.js" \
+              --name njerka_server \
+              --time
+          fi
 
-                  pm2 save
+          pm2 save
 
-            - name: Reload Nginx
-              run: sudo systemctl reload nginx
+      - name: Reload Nginx
+        run: sudo systemctl reload nginx
