@@ -2,6 +2,8 @@ import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
 import { TOnboarding } from '../routes/auth.route';
 import { calculateUserHealthTargets } from '../utils/calculations';
+import { sendSubscriptionEmail } from './email.service';
+
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -137,6 +139,7 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
 
 
     const user = await User.create(newUser);
+await sendSubscriptionEmail(user.email, user.name);
 
     const payload = {
         _id: user._id.toString(),

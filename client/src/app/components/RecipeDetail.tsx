@@ -229,11 +229,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
   ];
 
   return (
-    <div className="fixed z-50 w-full min-h-screen left-0 top-0 flex items-center justify-center bg-black/40 backdrop-blur-sm ">
+    <div className="fixed z-50 w-full min-h-screen left-0 top-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full lg:w-3/4 lg:rounded-2xl overflow-hidden max-h-[calc(100vh-2rem)] sm:rounded-none shadow-2xl"
+        className="w-full h-screen sm:h-auto lg:w-3/4 overflow-hidden shadow-2xl"
       >
         <button
           onClick={onClose}

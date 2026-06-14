@@ -15,8 +15,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { groceryService, GroceryItem } from "../services/groceryService";
 
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 export const GroceryList: React.FC = () => {
   const [items, setItems] = useState<GroceryItem[]>([]);
@@ -113,7 +113,7 @@ export const GroceryList: React.FC = () => {
   };
 
   const handleExportPdf = () => {
-    window.open(`${API_URL}/export/groceries/pdf`, '_blank');
+    window.open(`${API_URL}/export/groceries/pdf`, "_blank");
   };
 
   const toggleItem = (name: string) => {
@@ -231,10 +231,11 @@ export const GroceryList: React.FC = () => {
                   </label>
                   <button
                     onClick={() => setIsFamilyMode(!isFamilyMode)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${isFamilyMode
-                      ? "border-green-600 bg-green-50 ring-2 ring-green-200"
-                      : "border-slate-200 hover:bg-slate-50"
-                      }`}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${
+                      isFamilyMode
+                        ? "border-green-600 bg-green-50 ring-2 ring-green-200"
+                        : "border-slate-200 hover:bg-slate-50"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       {isFamilyMode ? (
@@ -249,10 +250,11 @@ export const GroceryList: React.FC = () => {
                       </span>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isFamilyMode
-                        ? "bg-green-600 border-green-600"
-                        : "border-slate-300"
-                        }`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        isFamilyMode
+                          ? "bg-green-600 border-green-600"
+                          : "border-slate-300"
+                      }`}
                     >
                       {isFamilyMode && <Check className="w-3 h-3 text-white" />}
                     </div>
@@ -431,10 +433,11 @@ export const GroceryList: React.FC = () => {
                         >
                           <button
                             onClick={() => toggleItem(item.name)}
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${item.checked
-                              ? "bg-green-500 border-green-500"
-                              : "border-slate-300 hover:border-green-500"
-                              }`}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                              item.checked
+                                ? "bg-green-500 border-green-500"
+                                : "border-slate-300 hover:border-green-500"
+                            }`}
                           >
                             {item.checked && (
                               <Check className="w-3.5 h-3.5 text-white" />

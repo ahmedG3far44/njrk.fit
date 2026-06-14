@@ -14,7 +14,7 @@ const TIER_PRICE_MAP: Record<string, { priceId: string; name: string; price: num
         name: 'Pro',
         price: 19.99,
     },
-    family: {
+    FAMILY: {
         priceId: env.STRIPE_FAMILY_PRICE_ID,
         name: 'Family',
         price: 29.99,
@@ -27,8 +27,9 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
         const userId = authReq.user?.userId;
 
         const { planTier } = req.body;
+        const normalizedTier = (planTier as string)?.toUpperCase();
 
-        const tierConfig = TIER_PRICE_MAP[planTier as string];
+        const tierConfig = TIER_PRICE_MAP[normalizedTier];
         if (!tierConfig) {
             return res.status(400).json({ error: `Invalid plan tier: ${planTier}` });
         }

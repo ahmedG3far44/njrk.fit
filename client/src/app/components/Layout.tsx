@@ -489,7 +489,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Floating Bell Button for Desktop & Tablet */}
         <button
           onClick={() => setShowNotifications(true)}
-          className="hidden lg:flex absolute top-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+          className="hidden lg:flex absolute bottom-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
         >
           <Bell className="w-5 h-5 text-slate-600" />
           {notifCount > 0 && (
@@ -515,7 +515,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 320 }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
+                className="fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
               >
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
                   <div>
@@ -753,7 +753,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* ── Mobile Bottom Tab Bar ── */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
           <div className="bg-white/90 backdrop-blur-xl border-t border-slate-100 px-2 pt-2 pb-4 shadow-2xl shadow-slate-900/10">
-            <div className="flex items-center justify-around max-w-md mx-auto">
+            <div className="flex items-center justify-around">
               {bottomNavItems.map((item) => {
                 const isActive = currentView === item.id; // Treat "insights" as "home" for bottom nav
                 return (
@@ -763,7 +763,7 @@ export const Layout: React.FC<LayoutProps> = ({
                       onChangeView(item.path);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl transition-all relative"
+                    className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all relative"
                   >
                     {isActive && (
                       <motion.div
@@ -788,7 +788,7 @@ export const Layout: React.FC<LayoutProps> = ({
               {/* More Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl transition-all relative"
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all relative"
               >
                 {isMobileMenuOpen && (
                   <motion.div
