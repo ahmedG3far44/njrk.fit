@@ -69,7 +69,9 @@ router.get('/', authMiddleware, async (req, res, next) => {
         // 🥗 MEALS
         // ---------------------------
         if (nutritionPlan) {
-            const dayIndex = getDayIndexFromStart(new Date(nutritionPlan.date), date);
+            const planStart = new Date(nutritionPlan.date);
+            planStart.setHours(0, 0, 0, 0);
+            const dayIndex = getDayIndexFromStart(planStart, date);
             const targetDayLabel = `Day ${dayIndex}`;
 
             const mealsForDay = nutritionPlan.meals.filter(

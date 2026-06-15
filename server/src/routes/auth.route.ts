@@ -219,11 +219,12 @@ router.post(
   validate(registerSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password, name } = req.body;
+      const { email, password, name, language } = req.body;
       const result = await authService.registerUser("email", {
         email,
         password,
         name,
+        language,
       });
 
       if (!result.success) {
@@ -365,6 +366,7 @@ interface IOnboardingRequest {
   userGoal: Goal;
   targetWeight: number;
   fitnessGoal: string;
+  language?: 'en' | 'ar';
 }
 const onboardingSchema = z.object({
   age: z
@@ -406,6 +408,7 @@ const onboardingSchema = z.object({
   targetWeight: z.number(),
   fitnessGoal: z.string(),
   goalDate: z.string().optional(),
+  language: z.enum(['en', 'ar']).default('en'),
 });
 
 export type TOnboarding = z.infer<typeof onboardingSchema>;

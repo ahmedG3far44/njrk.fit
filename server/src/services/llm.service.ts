@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { encode } from "@toon-format/toon";
+import { env } from "../configs/env";
 import {
   calculateBMR,
   calculateTDEE,
@@ -71,13 +72,17 @@ const extractJSON = (text: string): any => {
 
   try {
     return JSON.parse(text);
-  } catch {}
+  } catch (e) {
+    console.error("extractJSON: direct parse failed:", (e as Error)?.message?.slice(0, 100));
+  }
 
   const match = text.match(/```json([\s\S]*?)```/i);
   if (match) {
     try {
       return JSON.parse(match[1]);
-    } catch {}
+    } catch (e) {
+      console.error("extractJSON: code block parse failed:", (e as Error)?.message?.slice(0, 100));
+    }
   }
 
   const first = text.indexOf("{");
@@ -86,13 +91,39 @@ const extractJSON = (text: string): any => {
     const sliced = text.slice(first, last + 1);
     try {
       return JSON.parse(sliced);
-    } catch {}
+    } catch (e) {
+      console.error("extractJSON: brace slice parse failed:", (e as Error)?.message?.slice(0, 100));
+    }
   }
 
+  // Log a preview of the raw LLM response for debugging
+  console.error("extractJSON: all parse strategies failed. Raw response preview:", text.slice(0, 500));
   throw new Error("Failed to extract valid JSON from LLM");
 };
 
 const MAX_RETRIES = 2;
+
+function schemaToExample(schema: z.ZodSchema): string {
+  const inner = (s: z.ZodTypeAny): any => {
+    if (s instanceof z.ZodString) return "";
+    if (s instanceof z.ZodNumber) return 0;
+    if (s instanceof z.ZodBoolean) return false;
+    if (s instanceof z.ZodArray) return [(s._def as any).type].map(inner);
+    if (s instanceof z.ZodEnum) return (s._def as any).values[0];
+    if (s instanceof z.ZodDefault) return inner((s._def as any).innerType);
+    if (s instanceof z.ZodObject) {
+      const obj: any = {};
+      for (const [k, v] of Object.entries(s.shape)) {
+        obj[k] = inner(v as z.ZodTypeAny);
+      }
+      return obj;
+    }
+    if (s instanceof z.ZodOptional) return inner((s._def as any).innerType);
+    if (s instanceof z.ZodNullable) return inner((s._def as any).innerType);
+    return null;
+  };
+  return JSON.stringify(inner(schema), null, 2);
+}
 
 const callLLMWithRecovery = async <T>(
   prompt: string,
@@ -103,14 +134,25 @@ const callLLMWithRecovery = async <T>(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const raw = await callOpenRouter(prompt);
-      const parsed = extractJSON(raw!);
-      const normalized = normalizeLLMOutput(parsed);
-      const data = schema.parse(normalized);
-      if (contextValidator) contextValidator(data);
-      return data;
-    } catch (err: any) {
-      lastError = err;
-      prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schema.toString()}`;
+      
+      // Successfully got response from OpenRouter, now try parsing and validating
+      try {
+        const parsed = extractJSON(raw!);
+        const normalized = normalizeLLMOutput(parsed);
+        const data = schema.parse(normalized);
+        if (contextValidator) contextValidator(data);
+        return data;
+      } catch (validationErr: any) {
+        lastError = validationErr;
+        const isArabic = /[\u0600-\u06FF]/.test(prompt);
+        const schemaStr = schemaToExample(schema);
+        prompt = isArabic
+          ? `الرد السابق لم يكن JSON صالحاً أو لم يطابق المخطط.\nالخطأ:\n${validationErr.message}\nقم بإصلاحه وأرجع JSON صالح فقط مطابقاً لهذا المخطط:\n${schemaStr}\n\n⚠️ مهم: مفاتيح JSON كلها بالإنجليزية. فقط القيم (النصوص) تكون بالعربية.`
+          : `The previous response was invalid JSON or didn't match schema.\nERROR:\n${validationErr.message}\nFix it and return ONLY valid JSON matching this schema:\n${schemaStr}`;
+      }
+    } catch (apiErr: any) {
+      // API / network error from OpenRouter (e.g. 401, 403, 429, etc.) - throw immediately
+      throw apiErr;
     }
   }
   throw lastError;
@@ -140,7 +182,9 @@ const generateWorkoutPlanPrompt = (
   training_days: number,
   training_program: string,
   duration: number = 60,
+  language: 'en' | 'ar' = 'en',
 ): string => {
+  const isArabic = language === 'ar';
   const activityLevel = user.activityLevel || "moderate";
 
   const toonContext = encode({
@@ -156,7 +200,72 @@ const generateWorkoutPlanPrompt = (
     },
   });
 
-  return `
+  const langPrompt = isArabic ? `
+أنت مدرب لياقة بدنية محترف. قم بإنشاء خطة تمرين أسبوعية منظمة.
+
+السياق (TOON):
+${toonContext}
+
+قواعد تقسيم البرنامج:
+1. "push_pull_legs": دفع (صدر، كتف، ترايسبس)، سحب (ظهر، بايسيبس)، أرجل
+2. "upper_lower": تبادل بين الجزء العلوي والسفلي
+3. "anterior_posterior": أمامي (صدر، كواد، كتف، بطن) وخلفي (ظهر، هامسترينغ، غلوتس، كاف، ترايسبس)
+4. "arnold_split": صدر/ظهر، كتف/ذراعين، أرجل
+5. "full_body": كل يوم تمرين لكامل الجسم
+
+قيود صارمة (يجب اتباعها بدقة):
+- عدد الأيام الإجمالي في الخطة: 7 أيام (من Monday إلى Sunday)
+- يجب أن يكون هناك بالضبط ${training_days} أيام تدريب. الأيام المتبقية (${7 - training_days} أيام) يجب تصنيفها كأيام تعافي "Recovery".
+- أيام التعافي يجب أن تحتوي على: "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, "exercises": [] (مصفوفة فارغة).
+- مدة كل جلسة تدريب نشطة يجب أن تكون بالضبط: ${duration} دقيقة.
+- يجب أن تكون قيمة "dayOfWeek" باللغة الإنجليزية بالضبط (من "Monday" إلى "Sunday") لكي يتم عرضها بشكل صحيح في التطبيق.
+- "type" لجلسات التدريب يجب أن تكون بالإنجليزية بالضبط ومطابقة للمخطط: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery".
+
+⚠️ قواعد تسمية التمارين (مهمة جداً للمطابقة مع قاعدة البيانات):
+1. استخدم فقط المصطلحات القياسية والمفردة باللغة الإنجليزية (مثال: استخدم "Squat" وليس "Squats"، واستخدم "Lunge" وليس "Lunges"، واستخدم "Push up" وليس "Push-ups").
+2. تجنب الأسماء المعقدة أو الوصفية الطويلة. استخدم المصطلحات الدقيقة باللغة الإنجليزية مثل:
+   - "Squat"
+   - "Push-up"
+   - "Push up"
+   - "Lunge"
+   - "Deadlift"
+   - "Calf raise"
+   - "Glute bridge"
+   - "Dumbbell row"
+   - "Bent over row"
+   - "Dumbbell press"
+   - "Overhead press"
+   - "Bicep curl"
+   - "Triceps extension"
+   - "Plank"
+   - "High knees"
+   - "Mountain climber"
+   - "Burpee"
+   - "Dumbbell step-up"
+   - "Jumping jack"
+   - "Crunch"
+   - "Sit up"
+3. تأكد من أن حالة الأحرف نظيفة ومطابقة للقائمة أعلاه. لا تخترع أسماء تمارين جديدة.
+- أسماء جلسات التمرين فقط تكون بالعربية.
+
+⚠️ مهم جداً: مفاتيح JSON كلها بالإنجليزية. فقط قيم النصوص المحددة (مثل name لجلسة التمرين) تكون بالعربية.
+
+أخرج JSON فقط:
+{
+  "sessions": [
+    {
+      "dayOfWeek": "Monday",
+      "name": "تمرين القوة - دفع",
+      "type": "Strength",
+      "durationMin": ${duration},
+      "estimatedCaloriesBurn": 420,
+      "exercises": [
+        {"name": "Bench Press", "sets": 4, "reps": "8-10"}
+      ]
+    }
+  ]
+}
+` : `
 You are a professional fitness coach. Generate a structured weekly workout plan.
 
 CONTEXT (TOON):
@@ -177,30 +286,30 @@ CONSTRAINTS (STRICT — MUST FOLLOW):
 - Each active training session duration MUST be exactly: ${duration} minutes.
 - Distribute training days logically across the week (e.g. for a 3-day split: Monday, Wednesday, Friday active; other days recovery).
 - EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING):
-  1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
-  2. AVOID complex descriptive names. Use exact terms from our standard database whenever possible:
-     - "Squat"
-     - "Push-up"
-     - "Push up"
-     - "Lunge"
-     - "Deadlift"
-     - "Calf raise"
-     - "Glute bridge"
-     - "Dumbbell row"
-     - "Bent over row"
-     - "Dumbbell press"
-     - "Overhead press"
-     - "Bicep curl"
-     - "Triceps extension"
-     - "Plank"
-     - "High knees"
-     - "Mountain climber"
-     - "Burpee"
-     - "Dumbbell step-up"
-     - "Jumping jack"
-     - "Crunch"
-     - "Sit up"
-  3. Ensure capitalization is clean and matches the above list. Do NOT invent name variations.
+   1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
+   2. AVOID complex descriptive names. Use exact terms from our standard database whenever possible:
+      - "Squat"
+      - "Push-up"
+      - "Push up"
+      - "Lunge"
+      - "Deadlift"
+      - "Calf raise"
+      - "Glute bridge"
+      - "Dumbbell row"
+      - "Bent over row"
+      - "Dumbbell press"
+      - "Overhead press"
+      - "Bicep curl"
+      - "Triceps extension"
+      - "Plank"
+      - "High knees"
+      - "Mountain climber"
+      - "Burpee"
+      - "Dumbbell step-up"
+      - "Jumping jack"
+      - "Crunch"
+      - "Sit up"
+   3. Ensure capitalization is clean and matches the above list. Do NOT invent name variations.
 
 OUTPUT REQUIREMENTS:
 - Always return exactly 7 sessions (one per day, Monday through Sunday)
@@ -235,6 +344,8 @@ OUTPUT VALID JSON ONLY:
   ]
 }
 `;
+
+  return langPrompt;
 };
 
 const generateMealPlanPrompt = (
@@ -243,7 +354,9 @@ const generateMealPlanPrompt = (
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
+  language: 'en' | 'ar' = 'en',
 ): string => {
+  const isArabic = language === 'ar';
   const bmr = calculateBMR(user);
   const tdee = calculateTDEE(user, bmr);
   const dailyCalories = adjustCaloriesForGoal(tdee, user.goal);
@@ -283,7 +396,69 @@ const generateMealPlanPrompt = (
     },
   });
 
-  return `
+  const langPrompt = isArabic ? `
+أنت خبير تغذية محترف. قم بإنشاء خطة وجبات مخصصة لمدة ${daysToGenerate} أيام.
+
+سياق المستخدم (TOON):
+${toonContext}
+
+قواعد صارمة (يجب اتباعها — بدون استثناءات):
+
+⚠️ هام جداً — عدد العناصر (أولوية قصوى):
+   - قم بتوليد ${totalItemsCount} عنصر بالضبط (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
+   - يجب أن تغطي الخطة الأيام التالية بالضبط: ${repeatMealsEveryDay ? "اليوم 1 فقط" : "من اليوم 1 إلى اليوم 7"}
+   - استخدم "mealType": "meal" للوجبات و "mealType": "snack" للوجبات الخفيفة
+   - هذه القاعدة تلغي جميع القواعد الأخرى.
+
+1. السعرات والمغذيات:
+   - كل يوم يجب أن يصل إلى ~${calories} سعرة حرارية (±50)
+   - وزع السعرات على ${totalItemsPerDay} عنصر في اليوم
+   - الوجبات: 70-80% من السعرات، الوجبات الخفيفة: 20-30%
+   - ضبط المغذيات حسب الهدف
+
+2. الحساسية (هام):
+   - لا تستخدم أبداً أي مكون موجود في قائمة الحساسية
+
+3. القواعد الدينية (هام):
+   - إذا كان الدين = "muslim": يمنع منعاً باتاً لحم الخنزير والكحول وأي مكونات غير حلال
+   - إذا كان الدين = "christian" AND الصيام = true: يمنع كل المنتجات الحيوانية، يجب أن تكون الوجبات نباتية 100%
+
+4. جودة الطعام والتنسيق المختصر:
+   - استخدم وجبات واقعية ومناسبة ثقافياً للعالم العربي
+   - قم بتسمية الوجبات والمكونات والتعليمات باللغة العربية
+   ${repeatMealsEveryDay ? "- بما أن تكرار الوجبات يومياً مفعل، قم بإخراج اليوم 1 فقط." : "- قم بتنويع الوجبات طوال الأسبوع. كل يوم يجب أن يكون مختلفاً."}
+   - قائمة المكونات: 4-8 للوجبة، 1-3 للوجبة الخفيفة
+   - التعليمات: 3 خطوات قصيرة كحد أقصى
+
+5. الهيكل الزمني:
+   - الإفطار → "08:00 صباحاً"
+   - الغداء → "12:30 مساءً"
+   - العشاء → "07:00 مساءً"
+   ${snacksCount > 0 ? `- الوجبات الخفيفة → "10:30 صباحاً", "03:30 مساءً"` : ""}
+
+⚠️ تذكير — عدد العناصر بالضبط:
+- ${totalItemsCount} عنصر (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
+
+يجب أن تكون أسماء الوجبات والمكونات والتعليمات باللغة العربية.
+
+⚠️ مهم جداً: مفاتيح JSON يجب أن تكون بالإنجليزية — لا تترجم "calories" أو "protein" أو "carbs" أو "fats" أو "mealType" أو "day" أو "name" أو "time" أو "macros" أو "ingredients" أو "instructions" إلى العربية. فقط القيم (النصوص داخل المفاتيح) تكون بالعربية.
+
+أخرج JSON فقط — بدون نص إضافي:
+{
+  "meals": [
+    {
+      "day": "اليوم 1",
+      "name": "اسم الوجبة",
+      "time": "08:00 صباحاً",
+      "mealType": "meal",
+      "macros": { "calories": 0, "protein": 0, "carbs": 0, "fats": 0 },
+      "ingredients": [ { "name": "المكون", "quantity": 100, "unit": "g" } ],
+      "instructions": ["الخطوة 1", "الخطوة 2"]
+    }
+  ],
+  "targetMacros": { "calories": ${calories}, "protein": ${protein}, "carbs": ${carbs}, "fats": ${fats} }
+}
+` : `
 You are a professional nutritionist. Generate a personalized ${daysToGenerate}-day meal plan.
 
 USER CONTEXT (TOON):
@@ -364,6 +539,8 @@ OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
   }
 }
 `;
+
+  return langPrompt;
 };
 
 export const generateMealPlan = async (
@@ -372,6 +549,7 @@ export const generateMealPlan = async (
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
+  language: 'en' | 'ar' = 'en',
 ): Promise<MealPlanResponse> => {
   const prompt = generateMealPlanPrompt(
     user,
@@ -379,6 +557,7 @@ export const generateMealPlan = async (
     snacksCount,
     favoriteFoods,
     repeatMealsEveryDay,
+    language,
   );
 
   const daysToGenerate = repeatMealsEveryDay ? 1 : 7;
@@ -411,7 +590,7 @@ export const generateMealPlan = async (
       for (const m of day1Meals) {
         expandedMeals.push({
           ...m,
-          day: `Day ${d}`,
+          day: language === 'ar' ? `اليوم ${d}` : `Day ${d}`,
         });
       }
     }
@@ -426,12 +605,14 @@ export const generateWorkoutPlan = async (
   trainingProgram: string = "full_body",
   trainingDays: number = 3,
   duration: number = 60,
+  language: 'en' | 'ar' = 'en',
 ): Promise<WorkoutPlanResponse> => {
   const prompt = generateWorkoutPlanPrompt(
     user,
     trainingDays,
     trainingProgram,
     duration,
+    language,
   );
 
   return callLLMWithRecovery(prompt, workoutPlanResponseSchema);
@@ -441,8 +622,30 @@ export const refineMeal = async (
   currentMeal: Meal,
   refinementPrompt: string,
   user: UserContext,
+  language: 'en' | 'ar' = 'en',
 ): Promise<MealPlanRefineResponse> => {
-  const prompt = `
+  const isArabic = language === 'ar';
+  const prompt = isArabic ? `
+أعد JSON صالح فقط.
+
+⚠️ مهم: مفاتيح JSON كلها بالإنجليزية (calories, protein, carbs, fats, mealType, day, name, time, macros, ingredients, instructions). لا تترجم المفاتيح. فقط القيم (النصوص) تكون بالعربية.
+
+المخطط:
+${mealSchema.toString()}
+
+القواعد:
+- حافظ على نفس السعرات بالضبط
+- حافظ على المغذيات ضمن ±5%
+- احترم القيود والحساسية
+
+الوجبة (TOON):
+${encode(currentMeal)}
+
+طلب المستخدم:
+${refinementPrompt}
+
+أخرج أسماء الوجبات والمكونات باللغة العربية.
+` : `
 Return ONLY valid JSON.
 
 Schema:
@@ -466,8 +669,36 @@ ${refinementPrompt}
 export const regenerateMeal = async (
   meal: Meal,
   user: UserContext,
+  language: 'en' | 'ar' = 'en',
 ): Promise<MealPlanRefineResponse> => {
-  const prompt = `
+  const isArabic = language === 'ar';
+  const prompt = isArabic ? `
+أنت خبير تغذية بالذكاء الاصطناعي.
+
+مهمتك هي إعادة توليد الوجبة المقدمة باستخدام مكونات مختلفة مع الحفاظ على الملف الغذائي واحترام القيود الغذائية للمستخدم.
+
+أعد JSON صالح فقط.
+
+⚠️ مهم: مفاتيح JSON كلها بالإنجليزية (calories, protein, carbs, fats, mealType, day, name, time, macros, ingredients, instructions). لا تترجم المفاتيح. فقط القيم (النصوص) تكون بالعربية.
+
+المخطط:
+${mealSchema.toString()}
+
+قواعد صارمة:
+1. توليد نسخة جديدة من الوجبة بمكونات مختلفة
+2. الحفاظ على السعرات الحرارية الإجمالية قدر الإمكان (±3%)
+3. الحفاظ على البروتين والكربوهيدرات والدهون ضمن ±5%
+4. احترام جميع الحساسية والقيود الغذائية والدينية
+5. أسماء الوجبات والمكونات والتعليمات باللغة العربية
+
+سياق المستخدم:
+الحساسية: ${user.allergies?.join(", ") || "لا يوجد"}
+الدين: ${user.religion || "لا يوجد"}
+الصيام: ${Boolean(user.isFasting)}
+
+الوجبة الأصلية (TOON):
+${encode(meal)}
+` : `
 You are a professional nutritionist AI.
 
 Your task is to regenerate the provided meal using DIFFERENT ingredients while preserving the nutritional profile and respecting the user's dietary constraints.
@@ -524,17 +755,17 @@ ${encode(meal)}
 // - google/gemma-4-26b-a4b-it:free
 // - qwen/qwen3-vl-32b-instruct
 // - qwen/qwen3-embedding-4b
-
 // - qwen/qwen3-vl-32b-instruct
 // - z-ai/glm-4.5-air:free
 // - qwen/qwen3-next-80b-a3b-instruct:free
 // - qwen/qwen3-coder:free
+// - deepseek/deepseek-v4-flash
 
 const callOpenRouter = async (prompt: string) => {
   console.log("LLM Prompt:", prompt);
 
   const completion = await openrouter.chat.completions.create({
-    model: "qwen/qwen3-vl-32b-instruct",
+    model: env.LLM_MODEL,
     max_tokens: 12000,
     temperature: 0.2, // reduce randomness
     messages: [
@@ -547,11 +778,16 @@ const callOpenRouter = async (prompt: string) => {
     ],
   });
   for (const choice of completion.choices) {
+    console.log(choice.message.content)
+
+
     if (!choice.message?.content) {
       throw new Error("LLM did not return any content");
     }
     const content = choice.message.content.trim();
     console.log("LLM Raw Response:", content);
   }
+
+
   return completion.choices[0]?.message?.content ?? null;
 };

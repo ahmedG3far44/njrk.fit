@@ -40,6 +40,7 @@ export interface UserContext {
   mealsCount?: number;
   snacksCount?: number;
   favoriteFoods?: string[];
+  language?: 'en' | 'ar';
 }
 
 // ----------------------------------------------------------------------------

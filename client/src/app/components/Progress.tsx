@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AreaChart,
   Area,
@@ -50,6 +51,7 @@ interface WeightEntry {
 }
 
 export const Progress: React.FC = () => {
+  const { t } = useTranslation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [currentWeight, setCurrentWeight] = useState("");
   const [aiFeeling, setAiFeeling] = useState("");
@@ -86,8 +88,8 @@ export const Progress: React.FC = () => {
     null,
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<"7days" | "30days" | "7weeks">(
-    "7weeks",
+  const [timeframe, setTimeframe] = useState<'7days' | '30days' | '7weeks'>(
+    '7weeks',
   );
   const [streakDays, setStreakDays] = useState(0);
   const [avgProtein, setAvgProtein] = useState(0);
@@ -216,7 +218,7 @@ export const Progress: React.FC = () => {
   };
 
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTimeframe(e.target.value as "7days" | "30days" | "7weeks");
+    setTimeframe(e.target.value as '7days' | '30days' | '7weeks');
   };
 
   return (
@@ -224,10 +226,10 @@ export const Progress: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
-            Your Progress
+            {t("progress.title")}
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm">
-            Track your journey to a healthier you.
+            {t("progress.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3 sm:items-end">
@@ -239,7 +241,7 @@ export const Progress: React.FC = () => {
               className="flex items-center gap-1.5 text-nowrap text-xs sm:text-sm rounded-lg sm:rounded-xl font-bold py-2 px-3.5 bg-green-700 text-white cursor-pointer hover:opacity-90 transition-all w-fit"
             >
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Update My Stats
+              {t("progress.updateStats")}
             </motion.button>
           ) : (
             <div className="relative group w-fit">
@@ -250,13 +252,13 @@ export const Progress: React.FC = () => {
                 className="flex items-center gap-1.5 bg-slate-300 text-slate-500 px-3.5 py-2 rounded-lg sm:rounded-xl font-bold cursor-not-allowed text-xs sm:text-sm"
               >
                 <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Update My Stats
+                {t("progress.updateStats")}
               </motion.button>
               {canUpdateInfo && (
-                <div className="absolute right-0 top-full mt-2 px-3.5 py-2.5 bg-slate-800 text-white text-xs rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute end-0 top-full mt-2 px-3.5 py-2.5 bg-slate-800 text-white text-xs rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
-                    {canUpdateInfo.message}
+                    {t("progress.progressTooltip")}
                   </div>
                 </div>
               )}
@@ -271,7 +273,7 @@ export const Progress: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed h-full w-full left-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed h-full w-full start-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
             onClick={(e) =>
               e.target === e.currentTarget && setShowUpdateModal(false)
             }
@@ -292,10 +294,10 @@ export const Progress: React.FC = () => {
                     <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">
-                    Stats Updated!
+                    {t("progress.statsUpdated")}
                   </h3>
                   <p className="text-slate-500 text-xs sm:text-sm">
-                    Your AI plan is being recalibrated based on your update.
+                    {t("progress.statsUpdatedDesc")}
                   </p>
                 </motion.div>
               ) : (
@@ -303,10 +305,10 @@ export const Progress: React.FC = () => {
                   <div className="bg-gradient-to-r from-slate-900 to-green-900 p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
                     <div>
                       <h3 className="font-bold text-white text-base sm:text-lg">
-                        Update My Stats
+                        {t("progress.updateStatsTitle")}
                       </h3>
                       <p className="text-slate-400 text-xs sm:text-sm">
-                        Log your current state for the AI to recalibrate
+                        {t("progress.updateStatsSubtitle")}
                       </p>
                     </div>
                     <button
@@ -321,14 +323,13 @@ export const Progress: React.FC = () => {
                     {/* Current Weight */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Current
-                        Weight (kg)
+                        <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t("progress.currentWeight")}
                       </label>
                       <input
                         type="number"
                         value={currentWeight}
                         onChange={(e) => setCurrentWeight(e.target.value)}
-                        placeholder="e.g. 76.5"
+                        placeholder={t("progress.weightPlaceholder")}
                         className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm transition-all bg-white"
                         step="0.1"
                       />
@@ -337,15 +338,14 @@ export const Progress: React.FC = () => {
                     {/* AI Feeling */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Tell the AI
-                        How You Feel
+                        <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t("progress.tellAiHowYouFeel")}
                       </label>
                       <div className="relative">
                         <textarea
                           value={aiFeeling}
                           onChange={(e) => setAiFeeling(e.target.value)}
                           rows={3}
-                          placeholder='e.g. "I feel more energetic but my muscles hurt after leg day. I think I need more recovery time..."'
+                          placeholder={t("progress.feelingPlaceholder")}
                           className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm resize-none transition-all pr-10"
                         />
                         <Sparkles className="absolute right-2.5 bottom-2.5 w-3.5 h-3.5 text-green-400" />
@@ -368,11 +368,11 @@ export const Progress: React.FC = () => {
                             }}
                             className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full"
                           />{" "}
-                          Updating your plan...
+                          {t("progress.updatingPlan")}
                         </>
                       ) : (
                         <>
-                          <Send className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> Submit Update
+                          <Send className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> {t("progress.submitUpdate")}
                         </>
                       )}
                     </button>
@@ -387,7 +387,7 @@ export const Progress: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weight Chart */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">Weight Trend (kg)</h3>
+          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">{t("progress.weightTrend")}</h3>
           <div className="h-[200px] sm:h-[240px] w-full min-w-0">
             {weightData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -443,8 +443,8 @@ export const Progress: React.FC = () => {
               <div className="flex items-center justify-center h-full text-slate-400">
                 <div className="text-center">
                   <TrendingUp className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
-                  <p className="font-medium text-xs sm:text-sm">No weight data yet</p>
-                  <p className="text-[10px] sm:text-sm">Update your stats to see trends</p>
+                  <p className="font-medium text-xs sm:text-sm">{t("progress.noWeightData")}</p>
+                  <p className="text-[10px] sm:text-sm">{t("progress.updateToSeeTrends")}</p>
                 </div>
               </div>
             )}
@@ -453,7 +453,7 @@ export const Progress: React.FC = () => {
 
         {/* Activity Chart */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">Daily Steps</h3>
+          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">{t("progress.dailySteps")}</h3>
           <div className="h-[200px] sm:h-[240px] w-full min-w-0">
             {isGoogleUser &&
             googleFitData?.connected &&
@@ -512,8 +512,8 @@ export const Progress: React.FC = () => {
               <div className="flex items-center justify-center h-full text-slate-400">
                 <div className="text-center">
                   <Smartphone className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
-                  <p className="font-medium text-xs sm:text-sm">No step data from Google Fit</p>
-                  <p className="text-[10px] sm:text-sm">Sync your device and try again</p>
+                  <p className="font-medium text-xs sm:text-sm">{t("progress.noStepData")}</p>
+                  <p className="text-[10px] sm:text-sm">{t("progress.syncDevice")}</p>
                 </div>
               </div>
             ) : isGoogleUser ? (
@@ -522,9 +522,9 @@ export const Progress: React.FC = () => {
                   <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 flex-shrink-0">
                     <Footprints className="w-5 h-5 sm:w-7 sm:h-7 text-green-700" />
                   </div>
-                  <p className="font-medium text-xs sm:text-sm text-slate-700">Track Your Steps</p>
+                  <p className="font-medium text-xs sm:text-sm text-slate-700">{t("progress.trackYourSteps")}</p>
                   <p className="text-[10px] sm:text-xs text-slate-400">
-                    Connect Google Fit to see your daily steps
+                    {t("progress.connectGoogleFit")}
                   </p>
                 </div>
                 <motion.a
@@ -533,7 +533,7 @@ export const Progress: React.FC = () => {
                   href={`${import.meta.env.VITE_API_BASE_URL || ""}/auth/google/fit-connect`}
                   className="inline-flex items-center gap-1.5 bg-gradient-to-r from-green-800 to-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl font-bold shadow-md shadow-green-200 hover:opacity-90 transition-all text-xs sm:text-sm"
                 >
-                  <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Connect Google Fit
+                  <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t("progress.connectGoogleFitButton")}
                 </motion.a>
               </div>
             ) : (
@@ -545,7 +545,7 @@ export const Progress: React.FC = () => {
                   <div className="text-xl sm:text-3xl font-black text-slate-900 leading-none">
                     {(user?.estimatedSteps || 5000).toLocaleString()}
                   </div>
-                  <div className="text-slate-500 text-[10px] sm:text-sm mt-1">Daily Steps Goal</div>
+                  <div className="text-slate-500 text-[10px] sm:text-sm mt-1">{t("progress.dailyStepsGoal")}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xs px-2">
                   <div className="bg-green-50 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
@@ -553,7 +553,7 @@ export const Progress: React.FC = () => {
                       {(user?.estimatedSteps || 5000).toLocaleString()}
                     </div>
                     <div className="text-[8px] sm:text-[10px] text-slate-500">
-                      Daily Steps
+                      {t("progress.dailySteps")}
                     </div>
                   </div>
                   <div className="bg-amber-50 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
@@ -563,12 +563,12 @@ export const Progress: React.FC = () => {
                       ).toLocaleString()}
                     </div>
                     <div className="text-[8px] sm:text-[10px] text-slate-500">
-                      Total Steps ({getGoalDurationDays()}d)
+                      {t("progress.totalSteps")} ({getGoalDurationDays()}d)
                     </div>
                   </div>
                 </div>
                 <p className="text-[9px] sm:text-xs text-slate-400 mt-2.5 sm:mt-3 flex items-center gap-1">
-                  <Smartphone className="w-3 h-3" /> Sign in with Google to track real steps
+                  <Smartphone className="w-3 h-3" /> {t("progress.signInForSteps")}
                 </p>
               </div>
             )}
@@ -579,26 +579,26 @@ export const Progress: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
         {[
           {
-            label: "Total Workouts",
+            label: t('progress.totalWorkouts'),
             val: String(totalWorkouts),
             icon: <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
             change:
               totalWorkouts === 0
-                ? "No workouts completed"
+                ? t("progress.noWorkouts")
                 : totalWorkouts > 0
-                  ? `+${totalWorkouts} this week`
-                  : `${totalWorkouts} this week`,
+                  ? `+${totalWorkouts} ${t("progress.thisWeek")}`
+                  : `${totalWorkouts} ${t("progress.thisWeek")}`,
             changeColor: "text-green-500",
             bg: "bg-green-100",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
           {
-            label: "Weight Lost",
+            label: t('progress.weightLost'),
             val: `${weightLost > 0 ? weightLost : 0} kg`,
             icon: <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
             change:
               weightLost === 0
-                ? "No change"
+                ? t("progress.noChange")
                 : weightLost > 0
                   ? `-${weightLost} kg`
                   : `+${Math.abs(weightLost)} kg`,
@@ -613,42 +613,42 @@ export const Progress: React.FC = () => {
           },
           isGoogleUser && googleFitData?.connected
             ? {
-                label: "Avg. Steps",
+                label: t('progress.avgSteps'),
                 val: `${googleFitData.avgSteps.toLocaleString()}`,
                 icon: <Footprints className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
-                change: "+5% this week",
+                change: t('progress.stepsOnTrack'),
                 changeColor: "text-green-500",
-                note: "Your steps are on track!",
+                note: t('progress.stepsOnTrack'),
                 bg: "bg-green-100",
                 changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
               }
             : {
-                label: "Daily Goal",
+                label: t('progress.dailyGoal'),
                 val: `${(user?.estimatedSteps || 5000).toLocaleString()}`,
                 icon: <Target className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
-                change: "On track",
-                note: "Your steps are on track!",
+                change: t('progress.onTrack'),
+                note: t('progress.stepsOnTrack'),
                 changeColor: "text-green-500",
                 bg: "bg-green-100",
                 changeIcon: <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
               },
           {
-            label: "Avg. Protein",
+            label: t('progress.avgProtein'),
             val: `${avgProtein > 0 ? avgProtein : 0}g`,
             icon: <BeefIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
-            change: "10g above avg",
+            change: t('progress.aboveAvg'),
             changeColor: "text-green-500",
-            note: "Keep it up!",
+            note: t('progress.keepItUp'),
             bg: "bg-green-100",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
           {
-            label: "Daily Streaks",
+            label: t('progress.dailyStreaks'),
             val: String(streakDays),
             icon: <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
-            change: `+${streakDays} day`,
+            change: `+${streakDays} ${t("progress.day")}`,
             changeColor: "text-green-500",
-            note: "Keep it up!",
+            note: t('progress.keepItUp'),
             bg: "bg-green-100",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
@@ -677,7 +677,7 @@ export const Progress: React.FC = () => {
                     className={`flex items-center gap-1 ${stat.changeColor} font-bold text-[10px] sm:text-xs`}
                   >
                     {stat.changeIcon}
-                    <span className="truncate">{stat.change === 0 ? "No change" : stat.change}</span>
+                    <span className="truncate">{stat.change === 0 ? t("progress.noChange") : stat.change}</span>
                   </div>
                   {stat.note && (
                     <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 sm:mt-1.5 leading-normal">{stat.note}</p>

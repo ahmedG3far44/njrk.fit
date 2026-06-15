@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   Minus,
-  RefreshCw,
   Clock,
   Flame,
   Info,
@@ -58,8 +58,6 @@ interface MealCardProps {
   activeProfileId: string;
   canInteract: boolean;
   onViewRecipe: () => void;
-  onSwap: () => void;
-  swappingMeal: string | null;
 }
 
 const MealCard: React.FC<MealCardProps> = ({
@@ -71,130 +69,113 @@ const MealCard: React.FC<MealCardProps> = ({
   activeProfileId,
   canInteract,
   onViewRecipe,
-  onSwap,
-  swappingMeal,
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{
-      delay: index * 0.06,
-      duration: 0.25,
-      ease: [0.23, 1, 0.32, 1],
-    }}
-    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden mb-4"
-  >
-    <div className="p-5 flex flex-col justify-between">
-      <div>
-        <div className="flex justify-between items-start mb-2">
-          <div className="cursor-pointer" onClick={onViewRecipe}>
-            <h3 className="text-lg font-bold text-slate-900 group-hover:text-green-700 transition-colors">
-              {meal.name}
-            </h3>
-            <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" /> {meal.time || "Any time"}
-              </div>
-              {meal.mealType === "snack" && (
-                <div className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-bold">
-                  Snack
+}) => {
+  const { t } = useTranslation();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: index * 0.06,
+        duration: 0.25,
+        ease: [0.23, 1, 0.32, 1],
+      }}
+      className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden mb-4"
+    >
+      <div className="p-5 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-2">
+            <div className="cursor-pointer" onClick={onViewRecipe}>
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-green-700 transition-colors">
+                {meal.name}
+              </h3>
+              <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" /> {meal.time || t("nutrition.anyTime")}
                 </div>
-              )}
-              <div className="flex items-center gap-1">
-                <Flame className="w-4 h-4 text-orange-500" />{" "}
-                {meal.macros?.calories || 0} kcal
-              </div>
-              {isFamilyMode && activeProfileId !== "me" && (
-                <div className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-bold">
-                  <img
-                    src={activeUser.avatarUrl}
-                    alt={activeUser.name}
-                    className="w-4 h-4 rounded-full"
-                  />
-                  {activeUser.name}
+                {meal.mealType === "snack" && (
+                  <div className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-bold">
+                    {t("nutrition.snack")}
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <Flame className="w-4 h-4 text-orange-500" />{" "}
+                  {meal.macros?.calories || 0} {t("nutrition.kcal")}
                 </div>
-              )}
+                {isFamilyMode && activeProfileId !== "me" && (
+                  <div className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-bold">
+                    <img
+                      src={activeUser.avatarUrl}
+                      alt={activeUser.name}
+                      className="w-4 h-4 rounded-full"
+                    />
+                    {activeUser.name}
+                  </div>
+                )}
+              </div>
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[
+              {
+                label: t('nutrition.protein'),
+                val: `${meal.macros?.protein || 0}g`,
+                percent: targetMacros.protein
+                  ? Math.round(
+                      ((meal.macros?.protein || 0) / targetMacros.protein) * 100,
+                    )
+                  : 0,
+              },
+              {
+                label: t('nutrition.carbs'),
+                val: `${meal.macros?.carbs || 0}g`,
+                percent: targetMacros.carbs
+                  ? Math.round(
+                      ((meal.macros?.carbs || 0) / targetMacros.carbs) * 100,
+                    )
+                  : 0,
+              },
+              {
+                label: t('nutrition.fats'),
+                val: `${meal.macros?.fats || 0}g`,
+                percent: targetMacros.fats
+                  ? Math.round(
+                      ((meal.macros?.fats || 0) / targetMacros.fats) * 100,
+                    )
+                  : 0,
+              },
+            ].map((nut) => (
+              <div
+                key={nut.label}
+                className="px-3 py-1 bg-slate-50 rounded-lg text-xs font-medium text-slate-600"
+              >
+                {nut.label}: {nut.val} ({nut.percent}%)
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            {
-              label: "Protein",
-              val: `${meal.macros?.protein || 0}g`,
-              percent: targetMacros.protein
-                ? Math.round(
-                    ((meal.macros?.protein || 0) / targetMacros.protein) * 100,
-                  )
-                : 0,
-            },
-            {
-              label: "Carbs",
-              val: `${meal.macros?.carbs || 0}g`,
-              percent: targetMacros.carbs
-                ? Math.round(
-                    ((meal.macros?.carbs || 0) / targetMacros.carbs) * 100,
-                  )
-                : 0,
-            },
-            {
-              label: "Fats",
-              val: `${meal.macros?.fats || 0}g`,
-              percent: targetMacros.fats
-                ? Math.round(
-                    ((meal.macros?.fats || 0) / targetMacros.fats) * 100,
-                  )
-                : 0,
-            },
-          ].map((nut) => (
-            <div
-              key={nut.label}
-              className="px-3 py-1 bg-slate-50 rounded-lg text-xs font-medium text-slate-600"
-            >
-              {nut.label}: {nut.val} ({nut.percent}%)
-            </div>
-          ))}
+        <div className="flex items-center gap-2 mt-4">
+          <button
+            onClick={onViewRecipe}
+            disabled={!canInteract}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${
+              canInteract
+                ? "text-slate-600 bg-slate-50 hover:bg-slate-100"
+                : "text-slate-400 bg-slate-100 cursor-not-allowed"
+            }`}
+          >
+            <Utensils className="w-3.5 h-3.5" /> {t("nutrition.viewRecipe")}
+          </button>
         </div>
       </div>
-
-      <div className="flex items-center gap-2 mt-4">
-        <button
-          onClick={onSwap}
-          disabled={!canInteract || swappingMeal === meal._id}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${
-            canInteract
-              ? "text-green-700 bg-green-50 hover:bg-green-100"
-              : "text-slate-400 bg-slate-100 cursor-not-allowed"
-          } ${swappingMeal === meal._id ? "opacity-60" : ""}`}
-        >
-          {swappingMeal === meal._id ? (
-            <>
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Swapping...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-3.5 h-3.5" /> Swap Meal
-            </>
-          )}
-        </button>
-        <button
-          onClick={onViewRecipe}
-          disabled={!canInteract}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${
-            canInteract
-              ? "text-slate-600 bg-slate-50 hover:bg-slate-100"
-              : "text-slate-400 bg-slate-100 cursor-not-allowed"
-          }`}
-        >
-          <Utensils className="w-3.5 h-3.5" /> View Recipe
-        </button>
-      </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 export const Nutrition: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
@@ -229,8 +210,6 @@ export const Nutrition: React.FC = () => {
   const [inviteStatus, setInviteStatus] = useState<
     Record<string, "idle" | "sending" | "sent" | "error">
   >({});
-
-  const [swappingMeal, setSwappingMeal] = useState<string | null>(null);
 
   const [replacementsLeft, setReplacementsLeft] = useState<number>(() => {
     const stored = localStorage.getItem(`replacements_left_${user?._id}`);
@@ -304,7 +283,7 @@ export const Nutrition: React.FC = () => {
     repeatMeals?: boolean;
   }) => {
     if (currentMeals.length > 0 && replacementsLeft <= 0) {
-      toast.error("No replacements or regenerations left today!");
+      toast.error(t("nutrition.replacementsLeft"));
       return;
     }
     setIsGenerating(true);
@@ -314,18 +293,21 @@ export const Nutrition: React.FC = () => {
         counts || {},
       );
       setNutritionPlan(data.plan);
-      toast.success("Meal plan generated successfully!");
+      setCurrentMeals(data.plan.meals || []);
+      setTargetMacros(data.plan.targetMacros);
+      setPlanDate(data.plan.date || null);
+      toast.success(t("nutrition.mealPlanGenerated"));
       if (currentMeals.length > 0) {
         const updated = replacementsLeft - 1;
         setReplacementsLeft(updated);
         localStorage.setItem(`replacements_left_${user?._id}`, String(updated));
       }
-      await fetchMeals(
+      fetchMeals(
         viewMode,
         activeProfileId !== "me" ? activeProfileId : undefined,
       );
     } catch (error) {
-      toast.error("Failed to generate meal plan. Please try again.");
+      toast.error(t("nutrition.generateFailed"));
       console.error("Generate plan error:", error);
     } finally {
       setIsGenerating(false);
@@ -422,7 +404,7 @@ export const Nutrition: React.FC = () => {
     try {
       await api.post("/family/invite", { targetUserId });
       setInviteStatus((prev) => ({ ...prev, [targetUserId]: "sent" }));
-      toast.success("Invitation sent!");
+      toast.success(t("nutrition.invitationSent"));
       setTimeout(() => {
         setShowInviteModal(false);
         setInviteStatus({});
@@ -431,7 +413,7 @@ export const Nutrition: React.FC = () => {
       }, 2000);
     } catch (error) {
       setInviteStatus((prev) => ({ ...prev, [targetUserId]: "error" }));
-      toast.error("Failed to send invitation. Please try again.");
+      toast.error(t("nutrition.sendFailed"));
     }
   };
 
@@ -496,7 +478,7 @@ export const Nutrition: React.FC = () => {
     if (new Date() >= unlockDate) return { canGenerate: true, message: null };
     return {
       canGenerate: false,
-      message: `New plan available on ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      message: t("nutrition.generationLocked") + ` ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
     };
   })();
 
@@ -525,10 +507,10 @@ export const Nutrition: React.FC = () => {
   const foundMember = familyMembers.find((m) => m.id === activeProfileId);
   const activeUser =
     activeProfileId === "me"
-      ? { id: "me", name: "You", avatarUrl: "" }
+      ? { id: "me", name: t('nutrition.you'), avatarUrl: "" }
       : {
           id: foundMember?.id || "me",
-          name: foundMember?.name || "You",
+          name: foundMember?.name || t('nutrition.you'),
           avatarUrl: foundMember?.avatarUrl || "",
         };
 
@@ -623,7 +605,7 @@ export const Nutrition: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed min-h-screen w-full left-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed min-h-screen w-full start-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) =>
             e.target === e.currentTarget && setShowInviteModal(false)
           }
@@ -637,10 +619,10 @@ export const Nutrition: React.FC = () => {
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">
-                  Add Family Member
+                  {t("nutrition.addFamilyMember")}
                 </h3>
                 <p className="text-slate-500 text-sm">
-                  Search by username or email
+                  {t("nutrition.searchFamilyMember")}
                 </p>
               </div>
               <button
@@ -663,7 +645,7 @@ export const Nutrition: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  placeholder="Search by username or email..."
+                  placeholder={t("nutrition.searchPlaceholder")}
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                 />
               </div>
@@ -672,7 +654,7 @@ export const Nutrition: React.FC = () => {
                 {isSearching ? (
                   <div className="text-center py-8 text-slate-400">
                     <div className="w-6 h-6 border-2 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-sm">Searching...</p>
+                    <p className="text-sm">{t("nutrition.searching")}</p>
                   </div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((user) => (
@@ -701,7 +683,7 @@ export const Nutrition: React.FC = () => {
                       </div>
                       {inviteStatus[user.id] === "sent" ? (
                         <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 px-3 py-1.5 rounded-xl">
-                          <Check className="w-3 h-3" /> Sent!
+                          <Check className="w-3 h-3" /> {t("nutrition.sent")}
                         </div>
                       ) : (
                         <button
@@ -710,8 +692,8 @@ export const Nutrition: React.FC = () => {
                           className="text-xs bg-green-700 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-green-800 transition-colors disabled:opacity-50"
                         >
                           {inviteStatus[user.id] === "sending"
-                            ? "Sending..."
-                            : "Invite"}
+                            ? t("nutrition.sending")
+                            : t("nutrition.invite")}
                         </button>
                       )}
                     </div>
@@ -719,13 +701,13 @@ export const Nutrition: React.FC = () => {
                 ) : searchQuery.length >= 2 ? (
                   <div className="text-center py-8 text-slate-400">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No user found for "{searchQuery}"</p>
+                    <p className="text-sm">{t("nutrition.noUserFound")} "{searchQuery}"</p>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-slate-400">
                     <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">
-                      Type at least 2 characters to search
+                      {t("nutrition.typeToSearch")}
                     </p>
                   </div>
                 )}
@@ -738,7 +720,7 @@ export const Nutrition: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed min-h-screen w-full left-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed min-h-screen w-full start-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) =>
             e.target === e.currentTarget && setShowGenerateModal(false)
           }
@@ -753,10 +735,10 @@ export const Nutrition: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-white text-lg">
-                    Generate Meal Plan
+                    {t("nutrition.generateModalTitle")}
                   </h3>
                   <p className="text-slate-400 text-sm">
-                    Customize your plan preferences
+                    {t("nutrition.generateModalSubtitle")}
                   </p>
                 </div>
                 <button
@@ -772,7 +754,7 @@ export const Nutrition: React.FC = () => {
               {/* Meals Counter */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                  Number of Meals
+                  {t("nutrition.numberOfMeals")}
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -802,7 +784,7 @@ export const Nutrition: React.FC = () => {
               {/* Snacks Counter */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                  Number of Snacks
+                  {t("nutrition.numberOfSnacks")}
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -832,7 +814,7 @@ export const Nutrition: React.FC = () => {
               {/* Favorite Foods */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                  Favorite Foods
+                  {t("nutrition.favoriteFoods")}
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {favoriteFoods.map((food) => (
@@ -855,11 +837,11 @@ export const Nutrition: React.FC = () => {
                   value={foodInput}
                   onChange={(e) => setFoodInput(e.target.value)}
                   onKeyDown={handleFoodKeyDown}
-                  placeholder="Type a food and press Enter..."
+                  placeholder={t("nutrition.foodInputPlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                 />
                 <p className="text-xs text-slate-400 mt-1">
-                  Press Enter or comma to add
+                  {t("nutrition.pressEnterToAdd")}
                 </p>
               </div>
 
@@ -867,11 +849,10 @@ export const Nutrition: React.FC = () => {
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <div>
                   <label className="text-sm font-bold text-slate-900 block">
-                    Repeat Same Meals Every Day
+                    {t("nutrition.repeatMeals")}
                   </label>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Use the exact same 3-4 meals every day of the week, or keep
-                    them different every day.
+                    {t("nutrition.repeatMealsDesc")}
                   </p>
                 </div>
                 <button
@@ -880,7 +861,7 @@ export const Nutrition: React.FC = () => {
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${repeatMeals ? "bg-green-600" : "bg-slate-200"}`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${repeatMeals ? "translate-x-5" : "translate-x-0"}`}
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${repeatMeals ? "ltr:translate-x-5 rtl:-translate-x-5" : "ltr:translate-x-0 rtl:translate-x-0"}`}
                   />
                 </button>
               </div>
@@ -889,7 +870,7 @@ export const Nutrition: React.FC = () => {
                 onClick={handleGenerateWithConfig}
                 className="w-full py-4 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-5 h-5" /> Generate Plan
+                <Sparkles className="w-5 h-5" /> {t("nutrition.generatePlanButton")}
               </button>
             </div>
           </motion.div>
@@ -900,10 +881,10 @@ export const Nutrition: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Nutrition Plan
+              {t("nutrition.title")}
             </h1>
             <p className="text-slate-500 text-sm">
-              AI-optimized meal plans for your goals.
+              {t("nutrition.subtitle")}
             </p>
           </div>
 
@@ -925,7 +906,7 @@ export const Nutrition: React.FC = () => {
                         <User className="w-4 h-4" />
                       )}
                       <span className="hidden sm:inline">
-                        {isFamilyMode ? "Family Plan" : "Solo Mode"}
+                        {isFamilyMode ? t('nutrition.familyPlan') : t('nutrition.soloMode')}
                       </span>
                     </button>
                   )}
@@ -936,14 +917,14 @@ export const Nutrition: React.FC = () => {
                       className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "today" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
                     >
                       <Clock className="w-3.5 h-3.5" />{" "}
-                      <span className="hidden sm:inline">Today</span>
+                      <span className="hidden sm:inline">{t('nutrition.today')}</span>
                     </button>
                     <button
                       onClick={() => handleViewModeChange("week")}
                       className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "week" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
                     >
                       <CalendarDays className="w-3.5 h-3.5" />{" "}
-                      <span className="hidden sm:inline">Full Week</span>
+                      <span className="hidden sm:inline">{t('nutrition.fullWeek')}</span>
                     </button>
                   </div>
                 </>
@@ -958,7 +939,7 @@ export const Nutrition: React.FC = () => {
                   onClick={() => {
                     if (currentMeals.length > 0 && replacementsLeft <= 0) {
                       toast.error(
-                        "No replacements or regenerations left today!",
+                        t("nutrition.replacementsLeft"),
                       );
                       return;
                     }
@@ -978,13 +959,13 @@ export const Nutrition: React.FC = () => {
                         }}
                         className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                       />
-                      <span>Generating...</span>
+                      <span>{t('nutrition.generating')}</span>
                     </>
                   ) : (
                     <>
                       <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                       <Sparkles className="w-4 h-4" />
-                      Generate {viewMode === "today" ? "Today" : "Full Week"}
+                      {t('nutrition.generate')} {viewMode === 'today' ? t('nutrition.today') : t('nutrition.fullWeek')}
                     </>
                   )}
                 </motion.button>
@@ -997,10 +978,10 @@ export const Nutrition: React.FC = () => {
                     className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
                   >
                     <Lock className="w-4 h-4" />
-                    Generate {viewMode === "today" ? "Today" : "Full Week"}
+                    {t('nutrition.generate')} {viewMode === 'today' ? t('nutrition.today') : t('nutrition.fullWeek')}
                   </motion.button>
                   {generationLock.message && (
-                    <div className="absolute right-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    <div className="absolute end-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                       <div className="flex items-center gap-2">
                         <CalendarDays className="w-4 h-4" />
                         {generationLock.message}
@@ -1017,10 +998,10 @@ export const Nutrition: React.FC = () => {
                   }
                   disabled={generationLock.canGenerate}
                   className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
-                  title="Export PDF"
+                  title={t("nutrition.exportPdfTitle")}
                 >
                   <FileDown className="w-4 h-4" />
-                  <span className="hidden sm:inline">PDF</span>
+                  <span className="hidden sm:inline">{t("nutrition.pdf")}</span>
                 </button>
               )}
             </div>
@@ -1041,23 +1022,23 @@ export const Nutrition: React.FC = () => {
                   {/* "You" Profile Button */}
                   <button
                     onClick={() => handleProfileChange("me")}
-                    className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${
-                      activeProfileId === "me"
-                        ? "border-green-600 bg-green-50 ring-2 ring-green-200"
-                        : "border-slate-200 hover:bg-slate-50 bg-white"
-                    }`}
+                      className={`shrink-0 flex items-center gap-2 sm:gap-3 ps-2 pe-3 sm:pe-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${
+                       activeProfileId === "me"
+                          ? "border-green-600 bg-green-50 ring-2 ring-green-200"
+                          : "border-slate-200 hover:bg-slate-50 bg-white"
+                      }`}
                   >
                     <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-100 flex items-center justify-center">
                       <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-700" />
                     </div>
-                    <div className="text-left">
+                    <div className="text-start">
                       <div
                         className={`font-bold text-xs sm:text-sm ${activeProfileId === "me" ? "text-slate-900" : "text-slate-600"}`}
                       >
                         You
                       </div>
                       <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
-                        {totals.calories} kcal
+                        {totals.calories} {t("nutrition.kcal")}
                       </div>
                     </div>
                   </button>
@@ -1067,7 +1048,7 @@ export const Nutrition: React.FC = () => {
                     <button
                       key={member.id}
                       onClick={() => handleProfileChange(member.id, member)}
-                      className={`shrink-0 flex items-center gap-2 sm:gap-3 pl-2 pr-3 sm:pr-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${
+                      className={`shrink-0 flex items-center gap-2 sm:gap-3 ps-2 pe-3 sm:pe-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${
                         activeProfileId === member.id
                           ? "border-green-600 bg-green-50 ring-2 ring-green-200"
                           : "border-slate-200 hover:bg-slate-50 bg-white"
@@ -1084,14 +1065,14 @@ export const Nutrition: React.FC = () => {
                           <User className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
                         </div>
                       )}
-                      <div className="text-left">
+                      <div className="text-start">
                         <div
                           className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? "text-slate-900" : "text-slate-600"}`}
                         >
                           {member.name}
                         </div>
                         <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
-                          {member.calories} kcal
+                          {member.calories} {t("nutrition.kcal")}
                         </div>
                       </div>
                     </button>
@@ -1128,28 +1109,28 @@ export const Nutrition: React.FC = () => {
               >
                 {[
                   {
-                    label: "Calories",
+                    label: t('nutrition.calories'),
                     current: totals.calories,
                     target: targetMacros.calories,
-                    unit: "kcal",
+                    unit: t('nutrition.kcal'),
                     color: "bg-orange-500",
                   },
                   {
-                    label: "Protein",
+                    label: t('nutrition.protein'),
                     current: totals.protein,
                     target: targetMacros.protein,
                     unit: "g",
                     color: "bg-blue-500",
                   },
                   {
-                    label: "Carbs",
+                    label: t('nutrition.carbs'),
                     current: totals.carbs,
                     target: targetMacros.carbs,
                     unit: "g",
                     color: "bg-green-600",
                   },
                   {
-                    label: "Fats",
+                    label: t('nutrition.fats'),
                     current: totals.fats,
                     target: targetMacros.fats,
                     unit: "g",
@@ -1179,7 +1160,7 @@ export const Nutrition: React.FC = () => {
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
                         {getCalories(macro.label.toLowerCase(), macro.current)}{" "}
-                        kcal
+                        {t("nutrition.kcal")}
                       </div>
                     </div>
                   );
@@ -1191,7 +1172,7 @@ export const Nutrition: React.FC = () => {
               {isLoadingMeals ? (
                 <div className="text-center py-12 text-slate-400">
                   <div className="w-8 h-8 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3" />
-                  <p className="font-medium">Loading meals...</p>
+                  <p className="font-medium">{t('nutrition.loadingMeals')}</p>
                 </div>
               ) : currentMeals.length > 0 ? (
                 <>
@@ -1299,14 +1280,6 @@ export const Nutrition: React.FC = () => {
                                           onViewRecipe={() =>
                                             setSelectedMeal(meal)
                                           }
-                                          onSwap={() => {
-                                            setSwappingMeal(meal._id);
-                                            setTimeout(
-                                              () => setSwappingMeal(null),
-                                              1500,
-                                            );
-                                          }}
-                                          swappingMeal={swappingMeal}
                                         />
                                       ))}
                                     </div>
@@ -1319,7 +1292,7 @@ export const Nutrition: React.FC = () => {
                                   <div className="flex items-center gap-3 my-4">
                                     <div className="h-px flex-1 bg-slate-200" />
                                     <span className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full">
-                                      Other Meals
+                                      {t("nutrition.otherMeals")}
                                     </span>
                                     <div className="h-px flex-1 bg-slate-200" />
                                   </div>
@@ -1335,14 +1308,6 @@ export const Nutrition: React.FC = () => {
                                     activeProfileId={activeProfileId}
                                     canInteract={isOwnProfile}
                                     onViewRecipe={() => setSelectedMeal(meal)}
-                                    onSwap={() => {
-                                      setSwappingMeal(meal._id);
-                                      setTimeout(
-                                        () => setSwappingMeal(null),
-                                        1500,
-                                      );
-                                    }}
-                                    swappingMeal={swappingMeal}
                                   />
                                 ))}
                               </>
@@ -1364,11 +1329,6 @@ export const Nutrition: React.FC = () => {
                         activeProfileId={activeProfileId}
                         canInteract={isOwnProfile}
                         onViewRecipe={() => setSelectedMeal(meal)}
-                        onSwap={() => {
-                          setSwappingMeal(meal._id);
-                          setTimeout(() => setSwappingMeal(null), 1500);
-                        }}
-                        swappingMeal={swappingMeal}
                       />
                     ))}
                 </>
@@ -1389,12 +1349,12 @@ export const Nutrition: React.FC = () => {
                   </div>
 
                   <p className="font-bold text-2xl text-white">
-                    No meal plan yet
+                    {t("nutrition.noPlanTitle")}
                   </p>
 
                   <p className="text-sm text-white/70 max-w-xs leading-relaxed">
-                    Get a personalized meal plan tailored to your goals,
-                    schedule, and dietary preferences.
+                    {t('nutrition.noPlanDesc')}
+                    
                   </p>
 
                   <motion.button
@@ -1406,11 +1366,11 @@ export const Nutrition: React.FC = () => {
                     style={{ color: "#145c30" }}
                   >
                     {isGenerating ? (
-                      <>Generating...</>
+                      <>{t('nutrition.generating')}</>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4" />
-                        <span>Build My AI Plan</span>
+                        <span>{t('nutrition.buildMyPlan')}</span>
                         <span>→</span>
                       </>
                     )}

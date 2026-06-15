@@ -116,6 +116,28 @@ export const unblockUser = async (id: string) => {
   };
 };
 
+export const updateUser = async (id: string, data: { language?: 'en' | 'ar' }) => {
+  const user = await User.findById(id);
+  if (!user) return { success: false, message: 'User not found' };
+
+  if (data.language) {
+    user.language = data.language;
+  }
+
+  await user.save();
+
+  return {
+    success: true,
+    message: 'User updated successfully',
+    user: {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      language: user.language,
+    },
+  };
+};
+
 export const deleteUser = async (id: string) => {
   const user = await User.findById(id);
   if (!user) return { success: false, message: 'User not found' };

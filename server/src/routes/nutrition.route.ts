@@ -45,7 +45,7 @@ router.post(
       }
 
       const existingPlan = await NutritionPlan.findOne({ userId: user._id }).sort({ createdAt: -1 });
-      if (existingPlan) {
+      if (existingPlan && existingPlan.meals && existingPlan.meals.length > 0) {
         const weekEnd = new Date(existingPlan.date);
         weekEnd.setDate(weekEnd.getDate() + 7);
         if (new Date() < weekEnd) {
@@ -76,6 +76,7 @@ router.post(
         mealsCount: req.body.mealsCount,
         snacksCount: req.body.snacksCount,
         favoriteFoods: req.body.favoriteFoods,
+        language: user.language || 'en',
       };
 
       const plan = await generateMealPlan(
@@ -84,6 +85,7 @@ router.post(
         req.body.snacksCount,
         req.body.favoriteFoods,
         repeatMeals,
+        user.language || 'en',
       );
 
       const startDate = req.body.startDate
@@ -160,12 +162,14 @@ router.post(
         activityLevel: user.activityLevel,
         fitnessGoals: user.fitnessGoals,
         dietaryRestrictions: user.dietaryRestrictions,
+        language: user.language || 'en',
       };
 
       const refinedMeal = await refineMeal(
         currentMeal,
         refinement,
         userContext,
+        user.language || 'en',
       );
 
       const isRepeat = !!user.preferences?.repeatMealsEveryDay;
@@ -255,9 +259,10 @@ router.post(
         activityLevel: user.activityLevel,
         fitnessGoals: user.fitnessGoals,
         dietaryRestrictions: user.dietaryRestrictions,
+        language: user.language || 'en',
       };
 
-      const regeneratedMeal = await regenerateMeal(currentMeal, userContext);
+      const regeneratedMeal = await regenerateMeal(currentMeal, userContext, user.language || 'en');
 
       const isRepeat = !!user.preferences?.repeatMealsEveryDay;
 
@@ -330,49 +335,35 @@ router.get(
         }
         userId = targetUserId;
       }
-      const date = new Date();
-      let currentDay = "Day 1";
-      switch (date.getDay()) {
-        case 0:
-          currentDay = "Day 1";
-          break;
-        case 1:
-          currentDay = "Day 2";
-          break;
-        case 2:
-          currentDay = "Day 3";
-          break;
-        case 3:
-          currentDay = "Day 4";
-          break;
-        case 4:
-          currentDay = "Day 5";
-          break;
-        case 5:
-          currentDay = "Day 6";
-          break;
-        case 6:
-          currentDay = "Day 7";
-          break;
-      }
-
       const nutritionPlan = await NutritionPlan.findOne({
         userId,
       });
 
-      let meals = [];
-
-      if (filterDate === "today") {
-        meals =
-          nutritionPlan?.meals?.filter((meal) => meal.day === currentDay) || [];
-      } else {
-        meals = nutritionPlan?.meals || [];
-      }
-
       if (!nutritionPlan) {
         return res
           .status(404)
-          .json({ error: "No nutrition plan found for this date" });
+          .json({ error: "No nutrition plan found" });
+      }
+
+      let meals = [];
+
+      if (filterDate === "today") {
+        // Calculate day index from plan's start date (not day-of-week)
+        const planStart = new Date(nutritionPlan.date);
+        planStart.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diff = Math.floor(
+          (today.getTime() - planStart.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        const dayIndex = diff + 1;
+        const currentDayEN = `Day ${dayIndex}`;
+        const currentDayAR = `اليوم ${dayIndex}`;
+
+        meals =
+          nutritionPlan.meals.filter((meal) => meal.day === currentDayEN || meal.day === currentDayAR) || [];
+      } else {
+        meals = nutritionPlan.meals || [];
       }
 
       if (!meals || meals.length === 0) {

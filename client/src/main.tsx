@@ -2,6 +2,7 @@
 import { AuthProvider } from './app/context/AuthProvider';
 import { Toaster } from './app/components/ui/sonner';
 import './styles/index.css';
+import './app/i18n/i18n';
 
 import App from './app/App';
 

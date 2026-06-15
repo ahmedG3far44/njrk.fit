@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 import { groceryService, GroceryItem } from "../services/groceryService";
 
 const API_URL =
@@ -30,6 +31,8 @@ export const GroceryList: React.FC = () => {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set(),
   );
+
+  const { t } = useTranslation();
 
   const categories = [
     "Proteins",
@@ -49,6 +52,16 @@ export const GroceryList: React.FC = () => {
     Fruits: "🍎",
     Spices: "🧂",
     Other: "🫙",
+  };
+
+  const categoryLabels: Record<string, string> = {
+    Proteins: t('grocery.categoryProteins'),
+    Vegetables: t('grocery.categoryVegetables'),
+    Dairy: t('grocery.categoryDairy'),
+    Grains: t('grocery.categoryGrains'),
+    Fruits: t('grocery.categoryFruits'),
+    Spices: t('grocery.categorySpices'),
+    Other: t('grocery.categoryOther'),
   };
 
   useEffect(() => {
@@ -76,10 +89,10 @@ export const GroceryList: React.FC = () => {
         isFamily: isFamilyMode,
       });
       setItems(response.items);
-      toast.success(`Grocery list synced for ${syncDuration} days!`);
+      toast.success(`${t('grocery.synced')} ${syncDuration} days!`);
     } catch (error) {
       console.error("Failed to sync grocery list:", error);
-      toast.error("Failed to sync grocery list. Please try again.");
+      toast.error(t('grocery.syncFailed'));
     } finally {
       setRefreshing(false);
     }
@@ -108,7 +121,7 @@ export const GroceryList: React.FC = () => {
           i.name === item.name ? { ...i, checked: !newCheckedState } : i,
         ),
       );
-      toast.error("Failed to update item. Please try again.");
+      toast.error(t('grocery.itemUpdateFailed'));
     }
   };
 
@@ -132,10 +145,10 @@ export const GroceryList: React.FC = () => {
       await groceryService.addItem({ name: newItem });
       await fetchGroceryList();
       setNewItem("");
-      toast.success("Item added successfully!");
+      toast.success(t('grocery.itemAdded'));
     } catch (error) {
       console.error("Failed to add item:", error);
-      toast.error("Failed to add item. Please try again.");
+      toast.error(t('grocery.itemAddFailed'));
     }
   };
 
@@ -177,7 +190,7 @@ export const GroceryList: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed w-full min-h-screen left-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed w-full min-h-screen start-0 top-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowSyncModal(false)}
           >
             <motion.div
@@ -191,10 +204,10 @@ export const GroceryList: React.FC = () => {
               <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">
-                    Sync from Plan
+                    {t('grocery.syncModalTitle')}
                   </h3>
                   <p className="text-slate-500 text-sm">
-                    Generate grocery list from your meal plan
+                    {t('grocery.syncModalSubtitle')}
                   </p>
                 </div>
                 <button
@@ -207,8 +220,8 @@ export const GroceryList: React.FC = () => {
 
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Duration
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    {t('grocery.duration')}
                   </label>
                   <div className="relative">
                     <select
@@ -218,16 +231,16 @@ export const GroceryList: React.FC = () => {
                       }
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm appearance-none bg-white"
                     >
-                      <option value={7}>7 Days (Week)</option>
-                      <option value={30}>30 Days (Month)</option>
+                      <option value={7}>{t('grocery.days7')}</option>
+                      <option value={30}>{t('grocery.days30')}</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Family Mode
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    {t('grocery.familyMode')}
                   </label>
                   <button
                     onClick={() => setIsFamilyMode(!isFamilyMode)}
@@ -245,8 +258,8 @@ export const GroceryList: React.FC = () => {
                       )}
                       <span className="font-medium text-slate-700">
                         {isFamilyMode
-                          ? "Include Family Members"
-                          : "My List Only"}
+                          ? t('grocery.includeFamily')
+                          : t('grocery.myListOnly')}
                       </span>
                     </div>
                     <div
@@ -269,12 +282,12 @@ export const GroceryList: React.FC = () => {
                   {refreshing ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Syncing...
+                      {t('grocery.syncing')}
                     </>
                   ) : (
                     <>
                       <RefreshCw className="w-5 h-5" />
-                      Sync Grocery List
+                      {t('grocery.syncButton')}
                     </>
                   )}
                 </button>
@@ -287,11 +300,11 @@ export const GroceryList: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Grocery List</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{t('grocery.title')}</h1>
           <p className="text-slate-500 mt-1">
             {isFamilyMode
-              ? "Auto-aggregated from nutrition plans."
-              : "Your personal shopping list for this week."}
+              ? t('grocery.descFamily')
+              : t('grocery.descPersonal')}
           </p>
         </div>
 
@@ -305,7 +318,7 @@ export const GroceryList: React.FC = () => {
             ) : (
               <User className="w-4 h-4" />
             )}
-            {isFamilyMode ? "Family List" : "My List"}
+            {isFamilyMode ? t('grocery.familyList') : t('grocery.myList')}
           </button>
 
           <button
@@ -316,7 +329,7 @@ export const GroceryList: React.FC = () => {
             <RefreshCw
               className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`}
             />
-            Sync from Plan
+            {t('grocery.syncFromPlan')}
           </button>
 
           <div className="flex gap-2 pl-2 ml-1">
@@ -324,10 +337,10 @@ export const GroceryList: React.FC = () => {
               onClick={handleExportPdf}
               disabled={items.length === 0}
               className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
-              title="Export PDF"
+              title={t('grocery.exportPdfTitle')}
             >
               <FileDown className="w-4 h-4" />
-              <span className="hidden sm:inline">PDF</span>
+              <span className="hidden sm:inline">{t('grocery.pdf')}</span>
             </button>
           </div>
         </div>
@@ -337,10 +350,10 @@ export const GroceryList: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="font-semibold text-slate-700 text-sm">
-            Shopping Progress
+            {t('grocery.shoppingProgress')}
           </span>
           <span className="text-sm font-bold text-slate-900">
-            {checkedCount}/{items.length} items
+            {checkedCount}/{items.length} {t('grocery.items')}
           </span>
         </div>
         <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -352,8 +365,8 @@ export const GroceryList: React.FC = () => {
           />
         </div>
         <div className="flex justify-between mt-2 text-xs text-slate-400">
-          <span>{progress}% complete</span>
-          <span>{items.length - checkedCount} remaining</span>
+          <span>{progress}{t('grocery.percentComplete')}</span>
+          <span>{items.length - checkedCount} {t('grocery.remaining')}</span>
         </div>
       </div>
 
@@ -364,7 +377,7 @@ export const GroceryList: React.FC = () => {
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addItem()}
-          placeholder="Add extra item..."
+          placeholder={t('grocery.addItem')}
           className="flex-1 px-4 py-2 outline-none text-slate-700 placeholder:text-slate-400 text-sm"
         />
         <button
@@ -379,7 +392,7 @@ export const GroceryList: React.FC = () => {
       {loading ? (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
           <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
-          <p className="text-slate-500">Loading grocery list...</p>
+          <p className="text-slate-500">{t('grocery.loading')}</p>
         </div>
       ) : Object.keys(groupedItems).length > 0 ? (
         <div className="space-y-5">
@@ -407,7 +420,7 @@ export const GroceryList: React.FC = () => {
                     <span className="text-lg">
                       {categoryEmoji[category] || "📦"}
                     </span>
-                    <h3 className="font-bold text-slate-700">{category}</h3>
+                    <h3 className="font-bold text-slate-700">{categoryLabels[category] || category}</h3>
                   </div>
                   <span className="text-xs font-bold text-slate-400 bg-white px-2.5 py-1 rounded-lg border border-slate-100">
                     {categoryItems.filter((i) => i.checked).length}/
@@ -475,9 +488,9 @@ export const GroceryList: React.FC = () => {
       ) : (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center text-slate-400">
           <Plus className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No items in your list</p>
+          <p className="font-medium">{t('grocery.noItemsTitle')}</p>
           <p className="text-sm">
-            Generate a nutrition plan or add items manually
+            {t('grocery.noItemsDesc')}
           </p>
         </div>
       )}

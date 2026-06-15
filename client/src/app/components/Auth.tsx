@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Mail, Lock, User, Chrome } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthProvider';
@@ -23,6 +24,7 @@ interface FormErrors {
 }
 
 export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = 'login' }) => {
+  const { t } = useTranslation();
   const [view, setView] = useState<'login' | 'register'>(initialView);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -45,22 +47,22 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
 
     if (view === 'register') {
       if (!formData.name.trim()) {
-        newErrors.name = 'Name is required';
+        newErrors.name = t('auth.nameRequired');
       } else if (formData.name.length > 100) {
-        newErrors.name = 'Name must be less than 100 characters';
+        newErrors.name = t('auth.nameMaxLength');
       }
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('auth.emailRequired');
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('auth.invalidEmail');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('auth.passwordRequired');
     } else if (view === 'register' && formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = t('auth.passwordLength');
     }
 
     setErrors(newErrors);
@@ -78,7 +80,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
     try {
       if (view === 'login') {
         await login({ email: formData.email, password: formData.password });
-        toast.success('Welcome back!');
+        toast.success(t('auth.loginSuccess'));
         onLogin();
       } else {
         const { needsOnboarding } = await register({
@@ -86,7 +88,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           password: formData.password,
           name: formData.name
         });
-        toast.success('Account created successfully!');
+        toast.success(t('auth.registerSuccess'));
         if (needsOnboarding) {
           onRegister();
         } else {
@@ -95,10 +97,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
       }
     } catch (error: unknown) {
       const err = error as { status?: number; response?: { message?: string } };
-      const message = err.response?.message || 'Something went wrong. Please try again.';
+      const message = err.response?.message || t('auth.genericError');
 
       if (err.status === 401) {
-        setErrors({ password: 'Invalid email or password' });
+        setErrors({ password: t('auth.invalidCredentials') });
       } else if (err.status === 400) {
         setErrors({ email: message });
       } else {
@@ -129,25 +131,25 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           </div>
 
           <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
-            {view === 'login' ? 'Welcome Back' : 'Create Account'}
+            {view === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
           <p className="text-center text-slate-500 mb-8">
             {view === 'login'
-              ? 'Enter your details to access your plan.'
-              : 'Start your personalized health journey today.'}
+              ? t('auth.loginSubtitle')
+              : t('auth.registerSubtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {view === 'register' && (
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Full Name</label>
+                <label className="text-sm font-bold text-slate-700">{t('auth.name')}</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => updateField('name', e.target.value)}
-                    placeholder="John Doe"
+                    placeholder={t('auth.namePlaceholder')}
                     className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-600 outline-none transition-all ${errors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
                       }`}
                   />
@@ -159,14 +161,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Email Address</label>
+              <label className="text-sm font-bold text-slate-700">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
-                  placeholder="hello@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
                     }`}
                 />
@@ -177,14 +179,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Password</label>
+              <label className="text-sm font-bold text-slate-700">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('auth.passwordPlaceholder')}
                   className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
                     }`}
                 />
@@ -195,13 +197,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             </div>
 
             {view === 'login' && (
-              <div className="text-right">
+              <div className="text-end">
                 <button
                   type="button"
                   className="text-sm text-green-700 font-medium hover:underline"
-                  onClick={() => toast.info('Password reset feature coming soon')}
+                  onClick={() => toast.info(t('auth.passwordResetComingSoon'))}
                 >
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             )}
@@ -217,7 +219,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
               ) : (
                 <>
-                  {view === 'login' ? 'Sign In' : 'Create Account'}
+                  {view === 'login' ? t('auth.signIn') : t('auth.createAccount')}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -230,7 +232,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">Or continue with</span>
+                <span className="px-2 bg-white text-slate-500">{t('auth.orContinueWith')}</span>
               </div>
             </div>
 
@@ -241,14 +243,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
                 className="group flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 active:scale-[0.98] cursor-pointer"
               >
                 <Chrome className="h-5 w-5 text-gray-500 transition-colors group-hover:text-gray-700" />
-                <span>Continue with Google</span>
+                <span>{t('auth.googleLogin')}</span>
               </button>
             </div>
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-slate-500">
-              {view === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              {view === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
               <button
                 type="button"
                 onClick={() => {
@@ -258,7 +260,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
                 }}
                 className="text-green-800 font-bold hover:underline cursor-pointer"
               >
-                {view === 'login' ? 'Sign up' : 'Log in'}
+                {view === 'login' ? t('auth.signUp') : t('auth.login')}
               </button>
             </p>
           </div>

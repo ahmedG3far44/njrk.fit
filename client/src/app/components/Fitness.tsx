@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Play,
   Clock,
@@ -27,6 +28,7 @@ import {
   Exercise,
 } from "../services/fitnessService";
 import { FitnessPlanLoader } from "./GeneratingLoaders";
+import FitnessModal from "./FitnessModal";
 
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api" || "/api";
@@ -54,34 +56,6 @@ interface WeeklySession {
   session?: Workout;
 }
 
-const PROGRAM_SPLIT_OPTIONS = [
-  {
-    value: "push_pull_legs",
-    label: "Push Pull Legs (PPL)",
-    desc: "Alternate Push (chest/shoulders/triceps), Pull (back/biceps), and Legs (quads/hamstrings/glutes).",
-  },
-  {
-    value: "upper_lower",
-    label: "Upper / Lower",
-    desc: "Alternate between Upper Body and Lower Body training days.",
-  },
-  {
-    value: "anterior_posterior",
-    label: "Anterior / Posterior",
-    desc: "Alternate Anterior (front body muscles) and Posterior (back body muscles).",
-  },
-  {
-    value: "arnold_split",
-    label: "Arnold Split",
-    desc: "Split by Chest/Back, Shoulders/Arms, and Legs.",
-  },
-  {
-    value: "full_body",
-    label: "Full Body",
-    desc: "Train your entire body every session.",
-  },
-];
-
 const STORAGE_KEY = "njerka_fitness_preferences";
 
 interface SavedPreferences {
@@ -96,6 +70,7 @@ interface SavedPreferences {
 }
 
 export const Fitness: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showStyleModal, setShowStyleModal] = useState(false);
   const [planView, setPlanView] = useState<"daily" | "weekly">("daily");
@@ -131,7 +106,7 @@ export const Fitness: React.FC = () => {
   const [weeklySessions, setWeeklySessions] = useState<WeeklySession[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
 
-  const activeFilter = "All";
+  const activeFilter = t("fitness.filterAll");
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -215,7 +190,7 @@ export const Fitness: React.FC = () => {
             const session = sessions.find((s) => s.dayOfWeek === day);
             return {
               day: day.substring(0, 3),
-              title: session?.title || "Rest Day",
+              title: session?.title || t("fitness.restDay"),
               type: session?.type || "Rest",
               duration: session?.duration || "0 min",
               done: session?.isCompleted || false,
@@ -282,10 +257,10 @@ export const Fitness: React.FC = () => {
       // Fetch the plan
       await fetchWorkoutPlan(planView);
 
-      toast.success("Workout plan generated successfully!");
+      toast.success(t("fitness.planGenerated"));
     } catch (error) {
       console.error("Failed to generate plan:", error);
-      toast.error("Failed to generate workout plan");
+      toast.error(t("fitness.generateFailed"));
     } finally {
       setIsGenerating(false);
     }
@@ -381,7 +356,7 @@ export const Fitness: React.FC = () => {
               );
               return {
                 day: day.substring(0, 3),
-                title: session?.title || "Rest Day",
+                title: session?.title || t("fitness.restDay"),
                 type: session?.type || "Rest",
                 duration: session?.duration || "0 min",
                 done: session?.isCompleted || false,
@@ -395,8 +370,8 @@ export const Fitness: React.FC = () => {
       if (!isPartialCompletion) {
         toast.success(
           currentCompleted
-            ? "Marked as incomplete"
-            : "Great job! Session completed! +50 points",
+            ? t("fitness.markedAsIncomplete")
+            : t("fitness.sessionCompletePoints"),
         );
       }
     } catch (error: any) {
@@ -407,8 +382,8 @@ export const Fitness: React.FC = () => {
       if (!hasExercises && !isPartialCompletion) {
         toast.success(
           currentCompleted
-            ? "Marked as incomplete"
-            : "Great job! Session completed! +50 points",
+            ? t("fitness.markedAsIncomplete")
+            : t("fitness.sessionCompletePoints"),
         );
         return;
       }
@@ -473,12 +448,12 @@ export const Fitness: React.FC = () => {
     if (new Date() >= unlockDate) return { canGenerate: true, message: null };
     return {
       canGenerate: false,
-      message: `New plan available on ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      message: t("fitness.generationLocked") + ` ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
     };
   })();
 
   const filteredUpcoming =
-    activeFilter === "All"
+    activeFilter === t("fitness.filterAll")
       ? weeklySessions.filter((s) => s.session)
       : weeklySessions.filter((s) => s.session && s.type === activeFilter);
 
@@ -487,151 +462,19 @@ export const Fitness: React.FC = () => {
       {/* Generate Plan Modal */}
       <AnimatePresence>
         {showStyleModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed w-full h-full top-0 left-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="bg-white w-full h-full sm:max-w-md sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col"
-            >
-              <div className="bg-gradient-to-br from-green-900 to-green-700 p-4 sm:p-6 text-white text-center relative overflow-hidden flex-shrink-0">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.12),transparent_70%)]" />
-                <motion.div
-                  animate={{ rotate: [0, 5, -5, 0] }}
-                  transition={{ repeat: Infinity, duration: 4 }}
-                  className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 relative z-10 shadow-lg"
-                >
-                  <Target className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-                </motion.div>
-                <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2 relative z-10">
-                  Generate Your Workout Plan
-                </h2>
-                <p className="text-green-200 text-xs sm:text-sm relative z-10">
-                  Customize your fitness plan with your preferences
-                </p>
-                <button
-                  onClick={() => setShowStyleModal(false)}
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-lg sm:rounded-xl transition-colors z-10"
-                >
-                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                </button>
-              </div>
-
-              <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
-                {/* Training Days */}
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
-                    Training Days per Week
-                  </label>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <input
-                      type="range"
-                      min="1"
-                      max="7"
-                      value={trainingDays}
-                      onChange={(e) => setTrainingDays(Number(e.target.value))}
-                      className="flex-1 h-1.5 sm:h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                    />
-                    <span className="text-base sm:text-lg font-bold text-green-700 w-6 sm:w-8 text-center">
-                      {trainingDays}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Duration */}
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
-                    Session Duration (minutes)
-                  </label>
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <input
-                      type="range"
-                      min="15"
-                      max="120"
-                      step="5"
-                      value={duration}
-                      onChange={(e) => setDuration(Number(e.target.value))}
-                      className="flex-1 h-1.5 sm:h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                    />
-                    <span className="text-base sm:text-lg font-bold text-green-700 w-10 sm:w-12 text-center">
-                      {duration}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Training Program Split */}
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
-                    Training Program Split
-                  </label>
-                  <div className="flex flex-col gap-1.5 sm:gap-2 max-h-none sm:max-h-[220px] overflow-visible sm:overflow-y-auto pr-1">
-                    {PROGRAM_SPLIT_OPTIONS.map((program) => (
-                      <button
-                        key={program.value}
-                        type="button"
-                        onClick={() => setTrainingProgram(program.value as any)}
-                        className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-left transition-all border flex flex-col gap-0.5 sm:gap-1 ${
-                          trainingProgram === program.value
-                            ? "bg-green-50 border-green-500 text-green-900 shadow-sm shadow-green-50"
-                            : "bg-white border-slate-200 text-slate-700 hover:border-green-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-bold text-xs sm:text-sm">
-                            {program.label}
-                          </span>
-                          {trainingProgram === program.value && (
-                            <CheckCircle2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-green-600 flex-shrink-0" />
-                          )}
-                        </div>
-                        <span className="text-[11px] sm:text-xs text-slate-500 leading-normal sm:leading-snug">
-                          {program.desc}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Start Date */}
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
-                    Start Date (optional)
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-slate-100 flex-shrink-0">
-                  <button
-                    onClick={() => setShowStyleModal(false)}
-                    className="flex-1 py-2 sm:py-2.5 border border-slate-200 rounded-lg sm:rounded-xl font-semibold text-slate-500 hover:bg-slate-50 transition-colors text-xs sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleGeneratePlan}
-                    disabled={isGenerating}
-                    className="flex-1 py-2 sm:py-2.5 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-lg sm:rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-1.5 sm:gap-2 shadow-md sm:shadow-lg shadow-green-200 text-xs sm:text-sm"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    Generate Plan
-                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <FitnessModal
+            onClose={() => setShowStyleModal(false)}
+            trainingDays={trainingDays}
+            setTrainingDays={setTrainingDays}
+            duration={duration}
+            setDuration={setDuration}
+            trainingProgram={trainingProgram}
+            setTrainingProgram={setTrainingProgram}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            isGenerating={isGenerating}
+            onGenerate={handleGeneratePlan}
+          />
         )}
       </AnimatePresence>
 
@@ -642,7 +485,7 @@ export const Fitness: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed w-full h-full top-0 left-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed w-full h-full top-0 start-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -685,18 +528,18 @@ export const Fitness: React.FC = () => {
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-4 sm:mb-6">
                   {[
                     {
-                      label: "Duration",
+                      label: t('fitness.duration'),
                       value: selectedWorkout.duration,
                       icon: Clock,
                     },
                     {
-                      label: "Exercises",
-                      value: `${selectedWorkout.exercises?.length || 0} moves`,
+                      label: t('fitness.exercises'),
+                      value: `${selectedWorkout.exercises?.length || 0} ${t('fitness.exerciseCount')}`,
                       icon: Dumbbell,
                     },
                     {
-                      label: "Est. Burn",
-                      value: `${selectedWorkout.calories || 0} kcal`,
+                      label: t('fitness.estBurn'),
+                      value: `${selectedWorkout.calories || 0} ${t('fitness.caloriesWithUnit')}`,
                       icon: Flame,
                     },
                   ].map((s) => (
@@ -714,11 +557,10 @@ export const Fitness: React.FC = () => {
                 </div>
 
                 <h3 className="font-bold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                  <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" /> Routine
-                  Breakdown
+                  <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" /> {t('fitness.routineBreakdown')}
                   {completedExercises.size > 0 && (
-                    <span className="ml-2 text-[10px] sm:text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      {completedExercises.size} selected
+                    <span className="ms-2 text-[10px] sm:text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      {completedExercises.size} {t("fitness.selected")}
                     </span>
                   )}
                 </h3>
@@ -781,7 +623,7 @@ export const Fitness: React.FC = () => {
                                   setShowGifModal(true);
                                 }}
                                 className="p-1 sm:p-1.5 bg-green-100 hover:bg-green-200 rounded-lg transition-colors flex-shrink-0"
-                                title="View exercise GIF"
+                                title={t("fitness.viewExerciseGif")}
                               >
                                 <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />
                               </button>
@@ -794,7 +636,7 @@ export const Fitness: React.FC = () => {
                               >
                                 {ex.sets}
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">Sets</span>
+                              <span className="text-[9px] sm:text-[10px]">{t("fitness.sets")}</span>
                             </div>
                             <div className="w-px bg-slate-200" />
                             <div className="flex flex-col items-center">
@@ -803,14 +645,14 @@ export const Fitness: React.FC = () => {
                               >
                                 {ex.reps}
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">Reps</span>
+                              <span className="text-[9px] sm:text-[10px]">{t("fitness.reps")}</span>
                             </div>
                             <div className="w-px bg-slate-200" />
                             <div className="flex flex-col items-center">
                               <span className="text-orange-500 text-xs sm:text-base font-black">
                                 {ex.restSeconds || 60}s
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">Rest</span>
+                              <span className="text-[9px] sm:text-[10px]">{t("fitness.rest")}</span>
                             </div>
                           </div>
                         </motion.div>
@@ -830,7 +672,7 @@ export const Fitness: React.FC = () => {
                   const isToday = selectedWorkout.dayOfWeek === today;
                   const isNotTodayMessage = !isToday && (
                     <p className="text-[10px] sm:text-xs text-slate-400 mt-2 sm:mt-3 text-center">
-                      You can only complete workouts scheduled for today (
+                      {t("fitness.youCanOnlyCompleteToday")} (
                       {today})
                     </p>
                   );
@@ -859,9 +701,8 @@ export const Fitness: React.FC = () => {
                                   : "bg-slate-300 cursor-not-allowed shadow-none"
                               }`}
                             >
-                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> Complete{" "}
-                              {completedExercises.size} Exercise
-                              {completedExercises.size > 1 ? "s" : ""}
+                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> {t("fitness.completeExercises")}{" "}
+                              {completedExercises.size} {completedExercises.size > 1 ? t("fitness.completePlural") : t("fitness.completeSingle")}
                             </motion.button>
                           )}
                           <motion.button
@@ -878,8 +719,7 @@ export const Fitness: React.FC = () => {
                                 : "bg-slate-300 cursor-not-allowed shadow-none"
                             }`}
                           >
-                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Mark
-                            Session Complete
+                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> {t("fitness.markSessionComplete")}
                           </motion.button>
                         </div>
                       )}
@@ -900,7 +740,7 @@ export const Fitness: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed w-full min-h-screen top-0 left-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4"
+            className="fixed w-full min-h-screen top-0 start-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4"
             onClick={() => setShowGifModal(false)}
           >
             <motion.div
@@ -925,7 +765,7 @@ export const Fitness: React.FC = () => {
                 {gifLoading && (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-                    <span className="text-sm text-slate-400">Loading...</span>
+                    <span className="text-sm text-slate-400">{t("fitness.loadingGif")}</span>
                   </div>
                 )}
                 {gifError && (
@@ -933,7 +773,7 @@ export const Fitness: React.FC = () => {
                     <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center">
                       <Play className="w-8 h-8 text-slate-400" />
                     </div>
-                    <span className="text-sm">Image not available</span>
+                    <span className="text-sm">{t("fitness.imageNotAvailable")}</span>
                   </div>
                 )}
                 <img
@@ -996,7 +836,7 @@ export const Fitness: React.FC = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <Sparkles className="w-4 h-4" />
-                  {hasPlan ? "Regenerate Plan" : "Generate AI Plan"}
+                  {hasPlan ? t('fitness.regeneratePlan') : t('fitness.generateAIPlan')}
                 </motion.button>
               </>
             ) : (
@@ -1008,10 +848,10 @@ export const Fitness: React.FC = () => {
                   className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Lock className="w-4 h-4" />
-                  {hasPlan ? "Regenerate Plan" : "Generate AI Plan"}
+                  {hasPlan ? t('fitness.regeneratePlan') : t('fitness.generateAIPlan')}
                 </motion.button>
                 {generationLock.message && (
-                  <div className="absolute right-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  <div className="absolute end-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       {generationLock.message}
@@ -1028,10 +868,10 @@ export const Fitness: React.FC = () => {
                 }
                 disabled={!hasPlan}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Export PDF"
+                title={t("fitness.exportPdfTitle")}
               >
                 <FileDown className="w-4 h-4" />
-                <span className="hidden sm:inline">PDF</span>
+                <span className="hidden sm:inline">{t("fitness.pdf")}</span>
               </button>
             )}
           </div>
@@ -1057,7 +897,7 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {completedSessions} / {totalSessions}
                   </div>
-                  <div className="text-xs text-slate-500">Sessions Done</div>
+                  <div className="text-xs text-slate-500">{t("fitness.sessionsDone")}</div>
                 </div>
               </motion.div>
               <motion.div
@@ -1077,7 +917,7 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {totalCalories.toLocaleString()}
                   </div>
-                  <div className="text-xs text-slate-500">Calories Burned</div>
+                  <div className="text-xs text-slate-500">{t("fitness.caloriesBurned")}</div>
                 </div>
               </motion.div>
               <motion.div
@@ -1097,7 +937,7 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {totalMinutes} min
                   </div>
-                  <div className="text-xs text-slate-500">Active Minutes</div>
+                  <div className="text-xs text-slate-500">{t("fitness.activeMinutes")}</div>
                 </div>
               </motion.div>
             </div>
@@ -1107,7 +947,7 @@ export const Fitness: React.FC = () => {
           {loading ? (
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
               <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
-              <p className="text-slate-500">Loading your workout plan...</p>
+              <p className="text-slate-500">{t("fitness.loadingPlan")}</p>
             </div>
           ) : !hasPlan ? (
             <motion.div
@@ -1115,8 +955,8 @@ export const Fitness: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-green-700 p-6 sm:p-10 text-white text-center mt-8 sm:mt-12 md:mt-20"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
+              <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none" />
+              <div className="absolute bottom-0 start-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ms-10 -mb-10 pointer-events-none" />
 
               <div className="relative z-10">
                 <motion.div
@@ -1131,11 +971,10 @@ export const Fitness: React.FC = () => {
                   <Target className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
                 </motion.div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3">
-                  No Fitness Plan Yet
+                  {t("fitness.noPlanTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm md:text-base text-green-200 mb-6 sm:mb-8 max-w-xs sm:max-w-md mx-auto leading-relaxed">
-                  Generate a personalized workout plan tailored to your
-                  schedule, equipment, and fitness goals.
+                  {t("fitness.noPlanDesc")}
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -1144,7 +983,7 @@ export const Fitness: React.FC = () => {
                   className="cursor-pointer bg-white text-green-800 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg flex items-center gap-2.5 sm:gap-3 mx-auto hover:bg-green-50 transition-colors shadow-xl"
                 >
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Build My AI Plan
+                  {t("fitness.buildMyPlan")}
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               </div>
@@ -1174,7 +1013,7 @@ export const Fitness: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-700">
                           <img
                             src={"/gym.jpg"}
-                            alt="Fitness"
+                            alt={t("fitness.title")}
                             className="object-cover opacity-60"
                           />
                         </div>
@@ -1189,7 +1028,7 @@ export const Fitness: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
+                        <div className="absolute bottom-0 start-0 end-0 p-4 sm:p-8">
                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 text-white text-xs font-bold rounded-lg mb-4">
                             {todayWorkout.isCompleted ? (
                               <>
@@ -1216,17 +1055,16 @@ export const Fitness: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-yellow-400" />{" "}
-                              {todayWorkout.calories} kcal
+                              {todayWorkout.calories} {t("fitness.caloriesWithUnit")}
                             </div>
                             <div className="flex items-center gap-2">
                               <Dumbbell className="w-4 h-4 opacity-70" />{" "}
-                              {todayWorkout.exercises?.length || 0} exercises
+                              {todayWorkout.exercises?.length || 0} {t("fitness.exercises")}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <button className="bg-white text-slate-900 px-4 py-2 sm:px-7 sm:py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors shadow-lg text-sm sm:text-xs sm:font-semibold">
-                              <Play className="w-4 h-4 fill-current" /> View
-                              Routine
+                              <Play className="w-4 h-4 fill-current" /> {t("fitness.viewRoutine")}
                             </button>
                             {!todayWorkout.isCompleted && (
                               <button
@@ -1243,7 +1081,7 @@ export const Fitness: React.FC = () => {
                                 {completingId === todayWorkout._id ? (
                                   <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
-                                  "Mark Complete"
+                                  t("fitness.markComplete")
                                 )}
                               </button>
                             )}
@@ -1254,9 +1092,9 @@ export const Fitness: React.FC = () => {
                       <div className="relative h-48 rounded-3xl overflow-hidden bg-slate-100 flex items-center justify-center">
                         <div className="text-center text-slate-400">
                           <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                          <p className="font-medium">
-                            No workout scheduled for today
-                          </p>
+                            <p className="font-medium">
+                              {t("fitness.noWorkoutToday")}
+                            </p>
                         </div>
                       </div>
                     )}
@@ -1266,18 +1104,17 @@ export const Fitness: React.FC = () => {
                       <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                         <div className="flex items-center justify-between mb-5">
                           <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-green-700" /> This
-                            Week
+                            <Calendar className="w-5 h-5 text-green-700" /> {t("fitness.thisWeek")}
                           </h3>
                         </div>
 
                         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 sm:scrollbar-hide">
                           {[
-                            "All",
-                            "Strength",
-                            "Cardio",
-                            "Yoga",
-                            "Recovery",
+                            t("fitness.filterAll"),
+                            t("fitness.filterStrength"),
+                            t("fitness.filterCardio"),
+                            t("fitness.filterYoga"),
+                            t("fitness.filterRecovery"),
                           ].map((f) => (
                             <button
                               key={f}
@@ -1337,7 +1174,7 @@ export const Fitness: React.FC = () => {
                                 </div>
                               </div>
                               <button className="p-2 text-slate-300 group-hover:text-green-600 transition-colors">
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-5 h-5 rtl:rotate-180" />
                               </button>
                             </motion.div>
                           ))}
@@ -1346,8 +1183,8 @@ export const Fitness: React.FC = () => {
 
                       {/* Weekly Goal Card */}
                       <div className="bg-gradient-to-br from-green-800 to-green-700 p-6 rounded-3xl text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-green-600/40 rounded-full blur-xl -ml-5 -mb-5" />
+                        <div className="absolute top-0 end-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -me-8 -mt-8" />
+                        <div className="absolute bottom-0 start-0 w-20 h-20 bg-green-600/40 rounded-full blur-xl -ms-5 -mb-5" />
 
                         <h3 className="font-bold mb-1 relative z-10">
                           Weekly Goal
@@ -1361,7 +1198,7 @@ export const Fitness: React.FC = () => {
                             {completedSessions}
                           </span>
                           <span className="text-xl opacity-70 mb-1">
-                            / {totalSessions} sessions
+                            / {totalSessions} {t("fitness.totalSessions")}
                           </span>
                         </div>
 
@@ -1520,15 +1357,15 @@ export const Fitness: React.FC = () => {
                                   {completingId === session.session._id ? (
                                     <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                                   ) : isToday ? (
-                                    "Mark Done"
+                                    t("fitness.markDone")
                                   ) : (
-                                    "Not Today"
+                                    t("fitness.notToday")
                                   )}
                                 </button>
                               );
                             })()}
                           <button className="p-1 sm:p-2 text-slate-300 group-hover:text-green-500 transition-colors flex-shrink-0">
-                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 rtl:rotate-180" />
                           </button>
                         </motion.div>
                       ))}

@@ -49,24 +49,24 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
         {/* Scanner Overlay */}
         <div className="absolute inset-0 flex items-center justify-center p-8">
           <div className="w-full aspect-square max-w-sm border-2 border-white/50 rounded-3xl relative">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-xl" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-xl" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-xl" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-xl" />
+            <div className="absolute top-0 start-0 w-8 h-8 border-t-4 border-s-4 border-white rounded-ss-xl" />
+            <div className="absolute top-0 end-0 w-8 h-8 border-t-4 border-e-4 border-white rounded-se-xl" />
+            <div className="absolute bottom-0 start-0 w-8 h-8 border-b-4 border-s-4 border-white rounded-es-xl" />
+            <div className="absolute bottom-0 end-0 w-8 h-8 border-b-4 border-e-4 border-white rounded-ee-xl" />
             
             {scanning && (
               <motion.div 
                 initial={{ top: 0 }}
                 animate={{ top: "100%" }}
                 transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                className="absolute left-0 right-0 h-1 bg-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)]"
+                className="absolute start-0 end-0 h-1 bg-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)]"
               />
             )}
           </div>
         </div>
 
         {/* Hints */}
-        <div className="absolute bottom-8 left-0 right-0 text-center text-white/80 text-sm bg-black/40 py-2">
+        <div className="absolute bottom-8 start-0 end-0 text-center text-white/80 text-sm bg-black/40 py-2">
           Center food in frame for AI detection
         </div>
       </div>
@@ -88,10 +88,10 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
           <motion.div 
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-10"
+            className="absolute bottom-0 start-0 end-0 bg-white rounded-t-3xl p-6 z-10"
           >
             {/* Streak Feedback */}
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 animate-bounce">
+            <div className="absolute -top-12 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 animate-bounce">
               <Flame className="w-4 h-4 fill-current" /> Streak Saved!
             </div>
 

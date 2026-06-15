@@ -7,7 +7,9 @@ import {
   CheckCircle,
   Trash2,
   UserX,
+  Pencil,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { adminApi } from '../lib/adminApi';
 import { SkeletonTable } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
@@ -59,6 +61,9 @@ export const AdminUsersPage = () => {
   const [actionType, setActionType] = useState<'block' | 'unblock' | 'delete' | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [blockReason, setBlockReason] = useState('');
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editLanguage, setEditLanguage] = useState<'en' | 'ar'>('en');
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -107,6 +112,20 @@ export const AdminUsersPage = () => {
       setError('Action failed');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleEditLanguage = async () => {
+    if (!editUser) return;
+    setEditLoading(true);
+    try {
+      await adminApi.patch(`/admin/users/${editUser._id}`, { language: editLanguage });
+      setEditUser(null);
+      fetchUsers();
+    } catch {
+      setError('Failed to update language');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -231,6 +250,13 @@ export const AdminUsersPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { setEditUser(user); setEditLanguage(user.language || 'en'); }}
+                          className="p-1.5 rounded-lg text-dust hover:bg-forest-floor hover:text-forest-canopy transition-colors"
+                          title="Edit Language"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                         {user.isBlocked ? (
                           <button
                             onClick={() => { setActionUser(user); setActionType('unblock'); }}
@@ -297,6 +323,13 @@ export const AdminUsersPage = () => {
                     <span className="text-xs text-gravel">{new Date(user.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex gap-1">
+                    <button
+                      onClick={() => { setEditUser(user); setEditLanguage(user.language || 'en'); }}
+                      className="p-2 rounded-lg text-dust hover:bg-stone transition-colors"
+                      title="Edit Language"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     {user.isBlocked ? (
                       <button
                         onClick={async () => {
@@ -390,6 +423,68 @@ export const AdminUsersPage = () => {
         loading={actionLoading}
         icon={<Trash2 className="w-6 h-6 text-ember" />}
       />
+
+      {/* Edit Language Modal */}
+      <AnimatePresence>
+        {editUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            onClick={() => setEditUser(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-peak-white rounded-container p-6 max-w-sm w-full shadow-modal"
+            >
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 bg-forest-floor">
+                <Pencil className="w-6 h-6 text-forest-canopy" />
+              </div>
+              <h3 className="text-heading text-summit-black text-center mb-2">Edit User Language</h3>
+              <p className="text-body text-trail-gray text-center mb-4">
+                Change the app language for <strong>{editUser.name}</strong>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-trail-gray mb-1.5">Language</label>
+                <select
+                  value={editLanguage}
+                  onChange={e => setEditLanguage(e.target.value as 'en' | 'ar')}
+                  className="w-full h-10 px-3 rounded-field bg-pebble border border-limestone text-sm text-summit-black focus:outline-none focus:ring-2 focus:ring-forest-mist"
+                >
+                  <option value="en">English</option>
+                  <option value="ar">Arabic</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditUser(null)}
+                  disabled={editLoading}
+                  className="flex-1 py-2.5 rounded-button border border-limestone font-semibold text-trail-gray text-sm hover:bg-stone transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditLanguage}
+                  disabled={editLoading}
+                  className="flex-1 py-2.5 rounded-button font-bold text-sm bg-forest-canopy text-peak-white hover:bg-forest-deep transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {editLoading && (
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

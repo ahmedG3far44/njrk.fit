@@ -1,9 +1,35 @@
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
+import path from 'path';
 import { IWeeklyFitnessPlan } from '../models/fitness.model';
 import { IGroceryList } from '../models/groceryList.model';
 import { INutritionPlan } from '../models/nutrition.model';
 import { IUser } from '../models/user.model';
+
+// ─── Arabic Support ───────────────────────────────────────────────────────────
+
+const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
+
+const ARABIC_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+function hasArabic(text: string): boolean {
+  return ARABIC_REGEX.test(text);
+}
+
+function hasUnicode(text: string): boolean {
+  return /[^\x00-\x7F]/.test(text);
+}
+
+function pickFont(text: string, style: 'regular' | 'bold' | 'oblique' = 'regular'): string {
+  if (hasUnicode(text)) {
+    return style === 'bold' ? 'Cairo-Bold' : 'Cairo';
+  }
+  switch (style) {
+    case 'bold': return 'Helvetica-Bold';
+    case 'oblique': return 'Helvetica-Oblique';
+    default: return 'Helvetica';
+  }
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -57,6 +83,9 @@ export const generatePDF = (
         Creator: 'Njerka.fit Platform',
       },
     });
+
+    doc.registerFont('Cairo', path.join(FONTS_DIR, 'Cairo-Regular.ttf'));
+    doc.registerFont('Cairo-Bold', path.join(FONTS_DIR, 'Cairo-Bold.ttf'));
 
     const chunks: Buffer[] = [];
     const stream = new PassThrough();
@@ -134,13 +163,16 @@ function drawHeader(
       align: 'right',
     });
 
-  doc.font('Helvetica')
+  const userInfo = `${user.name}  |  ${user.email}`;
+  const isAr = hasArabic(userInfo);
+  doc.font(pickFont(userInfo))
     .fontSize(9)
     .fillColor(BRAND.accent)
-    .text(`${user.name}  |  ${user.email}`, PAGE.margins.left, 72, {
+    .text(userInfo, PAGE.margins.left, 72, {
       width: CONTENT_WIDTH,
       align: 'right',
-    });
+      direction: isAr ? 'rtl' : 'ltr',
+    } as any);
 
   doc.y = 118;
 }
@@ -230,10 +262,15 @@ function drawDivider(doc: PDFKit.PDFDocument, color = BRAND.accent, yOffset = 0)
 
 function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
   ensureSpace(doc, 30);
-  doc.font('Helvetica-Bold')
+  const isAr = hasArabic(title);
+  doc.font(pickFont(title, 'bold'))
     .fontSize(13)
     .fillColor(BRAND.primary)
-    .text(title, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
+    .text(title, PAGE.margins.left, doc.y, {
+      width: CONTENT_WIDTH,
+      align: isAr ? 'right' : 'left',
+      direction: isAr ? 'rtl' : 'ltr',
+    } as any);
   doc.moveDown(0.2);
   drawDivider(doc, BRAND.secondary);
 }
@@ -241,10 +278,16 @@ function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
 function drawNotes(doc: PDFKit.PDFDocument, notes: string) {
   ensureSpace(doc, 40);
   doc.moveDown(0.5);
-  doc.font('Helvetica-Oblique')
+  const noteText = `Notes: ${notes}`;
+  const isAr = hasArabic(noteText);
+  doc.font(pickFont(noteText, 'oblique'))
     .fontSize(9)
     .fillColor(BRAND.muted)
-    .text(`Notes: ${notes}`, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
+    .text(noteText, PAGE.margins.left, doc.y, {
+      width: CONTENT_WIDTH,
+      align: isAr ? 'right' : 'left',
+      direction: isAr ? 'rtl' : 'ltr',
+    } as any);
   doc.moveDown(0.5);
 }
 
@@ -290,10 +333,11 @@ function drawTable(
       .restore();
 
     columns.forEach((col) => {
-      doc.font('Helvetica-Bold')
+      const headerText = col.header || '';
+      doc.font(pickFont(headerText, 'bold'))
         .fontSize(9)
         .fillColor(BRAND.white)
-        .text(col.header, x + 5, hdrY + 7, {
+        .text(headerText, x + 5, hdrY + 7, {
           width: col.width - 10,
           align: col.align ?? 'left',
           lineBreak: false,
@@ -318,7 +362,7 @@ function drawTable(
       const col = columns[ci];
       if (!col) return;
       const lines = Math.ceil(
-        doc.font('Helvetica').fontSize(8).widthOfString(String(cell ?? '')) /
+        doc.font(pickFont(String(cell ?? ''))).fontSize(8).widthOfString(String(cell ?? '')) /
         (col.width - 12),
       );
       if (lines > maxLines) maxLines = lines;
@@ -352,14 +396,18 @@ function drawTable(
     row.forEach((cell, ci) => {
       const col = columns[ci];
       if (!col) return;
-      doc.font('Helvetica')
+      const cellText = String(cell ?? '-');
+      const isAr = hasArabic(cellText);
+      const cellAlign = isAr && col.align === 'left' ? 'right' : col.align ?? 'left';
+      doc.font(pickFont(cellText))
         .fontSize(8.5)
         .fillColor(BRAND.text)
-        .text(String(cell ?? '-'), x + 5, actualY + 6, {
+        .text(cellText, x + 5, actualY + 6, {
           width: col.width - 10,
-          align: col.align ?? 'left',
+          align: cellAlign,
+          direction: isAr ? 'rtl' : 'ltr',
           height: cellHeight - 8,
-        });
+        } as any);
       x += col.width;
     });
 
@@ -372,10 +420,11 @@ function drawTable(
 // ─── Grocery Body ─────────────────────────────────────────────────────────────
 
 function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
-  doc.font('Helvetica')
+  const genText = `Generated on: ${new Date().toLocaleDateString()}`;
+  doc.font(pickFont(genText))
     .fontSize(9)
     .fillColor(BRAND.muted)
-    .text(`Generated on: ${new Date().toLocaleDateString()}`, PAGE.margins.left, doc.y, {
+    .text(genText, PAGE.margins.left, doc.y, {
       width: CONTENT_WIDTH,
       align: 'right',
     });
@@ -393,7 +442,7 @@ function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
       { header: 'Item', width: 250 },
       { header: 'Quantity', width: 80, align: 'center' },
       { header: 'Unit', width: 80, align: 'center' },
-      { header: '✓', width: 85, align: 'center' },
+      { header: '\u2713', width: 85, align: 'center' },
     ];
 
     const rows = items.map((item) => [
@@ -410,15 +459,13 @@ function drawGroceryBody(doc: PDFKit.PDFDocument, data: IGroceryList) {
 // ─── Meal Plan Body ───────────────────────────────────────────────────────────
 
 function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
-  doc.font('Helvetica')
+  const dateText = `Date: ${new Date(data.date).toLocaleDateString()}  |  Daily Target: ${data.targetMacros?.calories ?? 0} kcal`;
+  doc.font(pickFont(dateText))
     .fontSize(9)
     .fillColor(BRAND.muted)
-    .text(
-      `Date: ${new Date(data.date).toLocaleDateString()}  |  Daily Target: ${data.targetMacros?.calories ?? 0} kcal`,
-      PAGE.margins.left,
-      doc.y,
-      { width: CONTENT_WIDTH, align: 'right' },
-    );
+    .text(dateText, PAGE.margins.left, doc.y, {
+      width: CONTENT_WIDTH, align: 'right',
+    });
   doc.moveDown(0.5);
 
   const mealsByDay = data.meals.reduce<Record<string, typeof data.meals>>((acc, meal) => {
@@ -439,10 +486,16 @@ function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
 
       ensureSpace(doc, 28);
 
-      doc.font('Helvetica-Bold')
+      const mealNameText = `${meal.name} (${meal.time})`;
+      const isMealAr = hasArabic(mealNameText);
+      doc.font(pickFont(mealNameText, 'bold'))
         .fontSize(10)
         .fillColor(BRAND.primary)
-        .text(`${meal.name} (${meal.time})`, PAGE.margins.left, doc.y, { width: CONTENT_WIDTH });
+        .text(mealNameText, PAGE.margins.left, doc.y, {
+          width: CONTENT_WIDTH,
+          align: isMealAr ? 'right' : 'left',
+          direction: isMealAr ? 'rtl' : 'ltr',
+        } as any);
 
       doc.font('Helvetica')
         .fontSize(8.5)
@@ -464,10 +517,15 @@ function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
         meal.ingredients.forEach((ing) => {
           ensureSpace(doc, 12);
           const label = `  \u2022 ${ing.name}${ing.quantity ? ' - ' + ing.quantity : ''}${ing.unit ? ' ' + ing.unit : ''}`;
-          doc.font('Helvetica')
+          const isIngAr = hasArabic(label);
+          doc.font(pickFont(label))
             .fontSize(8.5)
             .fillColor(BRAND.text)
-            .text(label, PAGE.margins.left + 20, doc.y, { width: CONTENT_WIDTH - 20 });
+            .text(label, PAGE.margins.left + 20, doc.y, {
+              width: CONTENT_WIDTH - 20,
+              align: isIngAr ? 'right' : 'left',
+              direction: isIngAr ? 'rtl' : 'ltr',
+            } as any);
         });
       }
 
@@ -492,15 +550,13 @@ function drawMealBody(doc: PDFKit.PDFDocument, data: INutritionPlan) {
 // ─── Workout Body ─────────────────────────────────────────────────────────────
 
 function drawWorkoutBody(doc: PDFKit.PDFDocument, data: IWeeklyFitnessPlan) {
-  doc.font('Helvetica')
+  const weekText = `Week: ${new Date(data.startDate).toLocaleDateString()} - ${new Date(data.endDate).toLocaleDateString()}`;
+  doc.font(pickFont(weekText))
     .fontSize(9)
     .fillColor(BRAND.muted)
-    .text(
-      `Week: ${new Date(data.startDate).toLocaleDateString()} - ${new Date(data.endDate).toLocaleDateString()}`,
-      PAGE.margins.left,
-      doc.y,
-      { width: CONTENT_WIDTH, align: 'right' },
-    );
+    .text(weekText, PAGE.margins.left, doc.y, {
+      width: CONTENT_WIDTH, align: 'right',
+    });
   doc.moveDown(0.5);
 
   data.sessions.forEach((session) => {

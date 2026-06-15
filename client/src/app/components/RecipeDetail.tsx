@@ -4,6 +4,7 @@ import { X, Clock, Flame, ChefHat, PlayCircle, Heart, RefreshCw, Sparkles, Send 
 import { motion, AnimatePresence } from 'framer-motion';
 import { MealItem, nutritionService } from '../services/nutritionService';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 
 interface RecipeDetailProps {
@@ -89,6 +90,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [regenerated, setRegenerated] = useState(false);
   const [liked, setLiked] = useState(false);
+  const { t } = useTranslation();
 
   const [currentRecipe, setCurrentRecipe] = useState<RecipeDetailProps["recipe"]>(recipe);
 
@@ -181,7 +183,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
 
   const handleRefine = async () => {
     if (replacementsLeft <= 0) {
-      toast.error('No replacements or refinements left today!');
+      toast.error(t('recipeDetail.noRefinementsLeft'));
       return;
     }
     if (!aiInstruction.trim()) return;
@@ -192,10 +194,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
       setCurrentRecipe(response.meal);
       onMealRefined?.(response.meal);
       setAiInstruction('');
-      toast.success('Recipe refined successfully!');
+      toast.success(t('recipeDetail.refineSuccess'));
     } catch (error) {
       console.error('Failed to refine recipe:', error);
-      toast.error('Failed to refine recipe. Please try again.');
+      toast.error(t('recipeDetail.refineFailed'));
     } finally {
       setRegenerated(true);
       setIsRegenerating(false);
@@ -210,10 +212,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
       const response = await nutritionService.replace(mealId);
       setCurrentRecipe(response.meal);
       onReplaced?.(response.meal);
-      toast.success('Recipe regenerated successfully!');
+      toast.success(t('recipeDetail.replaceSuccess'));
     } catch (error) {
       console.error('Failed to regenerate recipe:', error);
-      toast.error('Failed to regenerate recipe. Please try again.');
+      toast.error(t('recipeDetail.replaceFailed'));
     } finally {
       setRegenerated(true);
       setIsRegenerating(false);
@@ -221,30 +223,29 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
   };
 
   const suggestions = [
-    'Make it under 15 mins',
-    'I don\'t have eggs today',
-    'Make it dairy-free',
-    'Higher protein version',
-    'I prefer spicy food',
+    t('recipeDetail.suggestion15mins'),
+    t('recipeDetail.suggestionNoEggs'),
+    t('recipeDetail.suggestionDairyFree'),
+    t('recipeDetail.suggestionHighProtein'),
+    t('recipeDetail.suggestionSpicy'),
   ];
 
   return (
-    <div className="fixed z-50 w-full min-h-screen left-0 top-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
+    <div className="fixed z-50 w-full min-h-screen start-0 top-0 flex items-start justify-center bg-black/40 backdrop-blur-sm p-0">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full h-screen sm:h-auto lg:w-3/4 overflow-hidden shadow-2xl"
+        className="w-full h-screen overflow-y-auto shadow-2xl"
       >
-        <button
-          onClick={onClose}
-          className="absolute md:top-4 md:right-4 top-2 right-2 z-20 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full transition-colors backdrop-blur-md"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col md:flex-row min-h-full">
           {/* Image Side */}
-          <div className="md:w-1/2 relative h-[400px] md:h-auto min-h-[300px]">
+          <div className="md:w-1/2 relative h-[250px] sm:h-[400px] md:min-h-screen">
+            <button
+              onClick={onClose}
+              className="absolute top-4 end-4 z-30 bg-white/90 text-slate-700 p-2 rounded-full shadow-sm hover:bg-white transition-all backdrop-blur-sm"
+            >
+              <X className="w-6 h-6" />
+            </button>
             <AnimatePresence mode="wait">
               {isRegenerating ? (
                 <motion.div
@@ -260,9 +261,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                     className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full mb-6"
                   />
                   <Sparkles className="w-8 h-8 text-yellow-300 mb-3" />
-                  <p className="font-bold text-xl">Regenerating...</p>
+                  <p className="font-bold text-xl">{t('recipeDetail.regenerating')}</p>
                   <p className="text-green-200 text-sm mt-2 text-center px-8">
-                    AI is crafting your customized meal
+                    {t('recipeDetail.aiCrafting')}
                   </p>
                 </motion.div>
               ) : (
@@ -283,11 +284,11 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 text-white">
                     {regenerated && (
                       <div className="inline-flex items-center gap-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 w-fit">
-                        <Sparkles className="w-3 h-3" /> AI Regenerated
+                        <Sparkles className="w-3 h-3" /> {t('recipeDetail.aiRegenerated')}
                       </div>
                     )}
                     <div className="inline-block px-3 py-1 bg-green-500 rounded-lg text-xs font-bold mb-4 w-fit">
-                      HEALTHY CHOICE
+                      {t('recipeDetail.healthyChoice')}
                     </div>
                     <h2 className="text-3xl font-bold mb-4">{data.name}</h2>
                     <div className="flex gap-6 text-sm font-medium">
@@ -305,14 +306,14 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
           </div>
 
           {/* Content Side */}
-          <div className="md:w-1/2 overflow-y-auto bg-white max-h-[90vh]">
-            <div className="p-8">
+          <div className="md:w-1/2 md:overflow-y-auto bg-white">
+            <div className="p-5 sm:p-8">
               {/* Macros */}
               <div className="flex gap-3 mb-6">
                 {[
-                  { label: 'Protein', val: data.protein, color: 'bg-blue-50 text-blue-700' },
-                  { label: 'Carbs', val: data.carbs, color: 'bg-green-50 text-green-700' },
-                  { label: 'Fat', val: data.fat, color: 'bg-orange-50 text-orange-700' },
+                  { label: t('recipeDetail.protein'), val: data.protein, color: 'bg-blue-50 text-blue-700' },
+                  { label: t('recipeDetail.carbs'), val: data.carbs, color: 'bg-green-50 text-green-700' },
+                  { label: t('recipeDetail.fat'), val: data.fat, color: 'bg-orange-50 text-orange-700' },
                 ].map((nut) => (
                   <div key={nut.label} className={`flex-1 p-3 rounded-xl text-center ${nut.color}`}>
                     <div className="font-bold text-lg">{nut.val}</div>
@@ -325,7 +326,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                 {/* Ingredients */}
                 <div>
                   <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <ChefHat className="w-5 h-5 text-green-700" /> Ingredients
+                    <ChefHat className="w-5 h-5 text-green-700" /> {t('recipeDetail.ingredients')}
                   </h3>
                   <ul className="grid grid-cols-2 gap-2">
                     {data?.ingredients?.map((ing: MealItem, i: number) => (
@@ -340,7 +341,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                 {/* Instructions */}
                 <div>
                   <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <PlayCircle className="w-5 h-5 text-green-700" /> Instructions
+                    <PlayCircle className="w-5 h-5 text-green-700" /> {t('recipeDetail.instructions')}
                   </h3>
                   <div className="space-y-3">
                     {data.steps.map((step: string, i: number) => (
@@ -357,9 +358,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                 {canRefine && (
                 <div className="border-t border-slate-100 pt-6">
                   <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-green-600" /> Refine with AI
+                    <Sparkles className="w-5 h-5 text-green-600" /> {t('recipeDetail.refineWithAI')}
                   </h3>
-                  <p className="text-xs text-slate-400 mb-3">Give the AI specific instructions to regenerate this meal</p>
+                  <p className="text-xs text-slate-400 mb-3">{t('recipeDetail.refineSubtext')}</p>
 
                   {/* Quick Suggestions */}
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -382,7 +383,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       onChange={e => setAiInstruction(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleRefine()}
                       disabled={replacementsLeft <= 0 || isRegenerating}
-                      placeholder={replacementsLeft <= 0 ? 'No refinements left today' : 'e.g. Make it vegan and under 400 calories...'}
+                      placeholder={replacementsLeft <= 0 ? t('recipeDetail.refinePlaceholderLocked') : t('recipeDetail.refinePlaceholder')}
                       className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                     <button
@@ -396,7 +397,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
 
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-slate-400">
-                      Replacements / Refinements left: <strong>{replacementsLeft}</strong>/3
+                      {t('recipeDetail.replacementsLeft')} <strong>{replacementsLeft}</strong>/3
                     </span>
                   </div>
 
@@ -406,7 +407,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                     className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm cursor-pointer"
                   >
                     <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
-                    {replacementsLeft <= 0 ? 'No Tries Left' : 'Regenerate this Meal (AI Surprise)'}
+                    {replacementsLeft <= 0 ? t('recipeDetail.noTriesLeft') : t('recipeDetail.regenerateMeal')}
                   </button>
                 </div>
                 )}

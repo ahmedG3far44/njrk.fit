@@ -224,6 +224,11 @@ html {
   font-size: var(--font-size);
 }
 
+html[lang="ar"] body,
+html[lang="ar"] {
+  font-family: 'Cairo', sans-serif;
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
