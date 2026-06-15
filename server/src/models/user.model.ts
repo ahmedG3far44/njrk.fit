@@ -68,6 +68,11 @@ export interface IUser extends Document {
   isBlocked?: boolean;
   blockedAt?: Date;
   blockedReason?: string;
+  isEmailVerified: boolean;
+emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -147,6 +152,18 @@ const UserSchema = new Schema<IUser>({
   isBlocked: { type: Boolean, default: false },
   blockedAt: { type: Date },
   blockedReason: { type: String },
+  isEmailVerified: { type: Boolean, default: false },
+emailVerificationToken: { type: String },
+emailVerificationExpires: { type: Date },
+
+resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 // UserSchema.index({ email: 1 }, { unique: true });

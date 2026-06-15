@@ -1,7 +1,7 @@
 import { env } from "../configs/env";
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   host: env.EMAIL_HOST,
   port: Number(env.EMAIL_PORT),
   secure: false,

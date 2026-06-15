@@ -110,16 +110,40 @@ const callLLMWithRecovery = async <T>(
       return data;
     } catch (err: any) {
       lastError = err;
-      prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schema.toString()}`;
+      const schemaDescription = JSON.stringify(schema.toJSONSchema(), null, 2);
+      prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schemaDescription}`;
     }
   }
   throw lastError;
 };
 
+const dayNameMap: Record<string, string> = {
+  monday: "Day 1", mon: "Day 1",
+  tuesday: "Day 2", tue: "Day 2",
+  wednesday: "Day 3", wed: "Day 3",
+  thursday: "Day 4", thu: "Day 4",
+  friday: "Day 5", fri: "Day 5",
+  saturday: "Day 6", sat: "Day 6",
+  sunday: "Day 7", sun: "Day 7",
+};
+
+const normalizeDay = (day: string, index: number, itemsPerDay: number): string => {
+  if (!day) return `Day ${Math.floor(index / itemsPerDay) + 1}`;
+  const lower = day.trim().toLowerCase();
+  if (dayNameMap[lower]) return dayNameMap[lower];
+  const match = day.match(/^day\s*(\d+)$/i);
+  if (match) return `Day ${match[1]}`;
+  const num = parseInt(day);
+  if (num >= 1 && num <= 7) return `Day ${num}`;
+  return `Day ${Math.floor(index / itemsPerDay) + 1}`;
+};
+
 const normalizeLLMOutput = (data: any) => {
   if (data?.meals) {
-    data.meals = data.meals.map((meal: any) => ({
+    const itemsPerDay = data.meals.length > 7 ? Math.round(data.meals.length / 7) : 3;
+    data.meals = data.meals.map((meal: any, idx: number) => ({
       ...meal,
+      day: normalizeDay(meal?.day, idx, itemsPerDay),
       ingredients: meal.ingredients?.map((ing: any) =>
         typeof ing === "string" ? { name: ing, quantity: "" } : ing,
       ),

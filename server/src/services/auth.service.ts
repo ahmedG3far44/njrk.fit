@@ -2,6 +2,9 @@ import { env } from '../configs/env';
 import { jwtUtils } from '../utils/jwt';
 import { TOnboarding } from '../routes/auth.route';
 import { calculateUserHealthTargets } from '../utils/calculations';
+import crypto from 'crypto';
+import { sendEmail, transporter } from '../services/email.service'; // تأكد من مسار الاستيراد
+
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -94,6 +97,8 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         stripeSubscriptionId: undefined as string | undefined,
     };
 
+    let verificationToken = '';
+
     switch (provider) {
         case 'google':
             newUser = {
@@ -108,17 +113,23 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
             };
             break;
         case 'email':
-            newUser = {
-                name,
-                email: email.toLowerCase(),
-                passwordHash: await hashPassword(password as string),
-                avatarUrl: placeholder,
-                subscription: {
-                    ...baseSubscription,
-                    status: "trialing",
-                },
-            };
-            break;
+    // توليد توكن عشوائي
+            verificationToken = crypto.randomBytes(32).toString('hex');
+            const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    
+             newUser = {
+             name,
+             email: email.toLowerCase(),
+             passwordHash: await hashPassword(password as string),
+             avatarUrl: placeholder,
+             emailVerificationToken: hashedToken,
+             emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // ينتهي بعد 24 ساعة
+             subscription: {
+                ...baseSubscription,
+                status: "trialing",
+        },
+    };
+    break;
         default:
             newUser = {
                 name,
@@ -137,6 +148,29 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
 
 
     const user = await User.create(newUser);
+
+    if (provider === 'email') {
+        // انتبه: يفضل تحط رابط الفرونت اند حقك في ملف الـ env
+        const frontendUrl = env.CLIENT_URL || 'http://localhost:3000'; 
+        
+        // غير هذا السطر
+        // غير هذا السطر وخل الرابط يبدأ بـ CLIENT_URL
+        const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;  
+        
+        const emailHtml = `
+            <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
+                <h2>مرحباً بك يا ${user.name} 👋</h2>
+                <p>سعداء بانضمامك لنا! عشان تفعل حسابك وتبدأ تستخدم التطبيق، اضغط على الزر تحت:</p>
+                <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
+                <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
+            </div>
+        `;
+        
+        // نستخدم خدمتك اللي في email.service.ts
+        await sendEmail(emailHtml, user.email, 'توثيق حسابك الجديد');
+    }
+
+    
 
     const payload = {
         _id: user._id.toString(),
@@ -158,6 +192,78 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
     };
 };
 
+
+export const forgotPassword = async (email: string) => {
+  // 1. ندور على اليوزر
+  const user = await User.findOne({ email: email.toLowerCase() });
+  
+  // ملاحظة أمنية: حتى لو اليوزر مو موجود، نرجع نجاح عشان الهكرز ما يعرفون وش الإيميلات المسجلة عندنا
+  if (!user) {
+    return { success: true, message: 'إذا كان البريد الإلكتروني مسجلاً لدينا، سيصلك رابط التغيير' };
+  }
+
+  // 2. نولد توكن عشوائي طويل
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // 3. نحفظ التوكن في الداتا بيس ونعطيه صلاحية ساعة واحدة فقط
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = new Date(Date.now() + 3600000); // ساعة من الآن
+  await user.save();
+
+  // 4. نجهز الرابط اللي بيودي للفرونت اند
+  const resetUrl = `${env.CLIENT_URL}/reset-password/${resetToken}`;
+
+  // 5. نرسل الإيميل
+  const mailOptions = {
+    from: `"Njerka Team" <${env.EMAIL_USER}>`,
+    to: user.email,
+    subject: "إعادة تعيين كلمة المرور - Njerka",
+    html: `
+      <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+        <h2>إعادة تعيين كلمة المرور 🔒</h2>
+        <p>لقد استلمنا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
+        <p>اضغط على الزر أدناه لاختيار كلمة مرور جديدة:</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #047857; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">تغيير كلمة المرور</a>
+        <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة ساعة واحدة فقط. إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة.</p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+
+  return { success: true, message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' };
+};
+
+
+// تأكد إنك تستورد مكتبة التشفير إذا مو مستوردها فوق (غالباً bcrypt أو argon2 اللي تستخدمه بمشروعك)
+
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  // 1. ندور على اليوزر اللي عنده نفس التوكن، والتوكن حقه لسه ما انتهت صلاحيته
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() }, // $gt يعني أكبر من الوقت الحالي
+  });
+
+  if (!user) {
+    return { success: false, message: 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية' };
+  }
+
+  // 2. نشفر الباسورد الجديد (استخدم طريقة التشفير المعتمدة في مشروعك)
+  const salt = await bcrypt.genSalt(10);
+  user.passwordHash = await bcrypt.hash(newPassword, salt);
+
+  // 3. نمسح التوكنات القديمة عشان الرابط ما يشتغل مرة ثانية
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+
+  return { success: true, message: 'تم تغيير كلمة المرور بنجاح، يمكنك الآن تسجيل الدخول' };
+};
+
+
+
 export const loginUser = async (email: string, password: string) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || !user.passwordHash) {
@@ -168,6 +274,13 @@ export const loginUser = async (email: string, password: string) => {
     if (!isValid) {
         return { success: false, message: 'Invalid credentials' };
     }
+
+    // if (user.isEmailVerified === false) {
+    //     return { 
+    //         success: false, 
+    //         message: 'الرجاء توثيق بريدك الإلكتروني أولاً لتتمكن من تسجيل الدخول' 
+    //     };
+    // }
 
     const payload = {
         _id: user._id.toString(),
@@ -243,4 +356,28 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
 
 export const getUserByEmail = async (email: string) => {
     return await User.findOne({ email: email.toLowerCase() });
+};
+
+export const verifyEmailToken = async (token: string) => {
+    // تشفير التوكن اللي وصلنا عشان نقارنه باللي محفوظ في الداتا بيس
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: { $gt: Date.now() } // نتأكد إن التوكن ما انتهت صلاحيته
+    });
+
+    if (!user) {
+        return { success: false, message: 'الرمز غير صالح أو منتهي الصلاحية' };
+    }
+
+    // إذا التوكن صحيح، نحدث حالة اليوزر
+    // (تأكد إنك ضفت isEmailVerified في الـ IUser interface في ملف user.model.ts)
+    user.set('isEmailVerified', true);
+    user.set('emailVerificationToken', undefined);
+    user.set('emailVerificationExpires', undefined);
+    
+    await user.save();
+
+    return { success: true, message: 'تم توثيق الإيميل بنجاح' };
 };

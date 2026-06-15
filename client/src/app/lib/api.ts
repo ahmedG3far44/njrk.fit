@@ -10,12 +10,17 @@ interface ApiRequestOptions extends RequestInit {
 class ApiError extends Error {
   status: number;
   response: Response;
+  data?: any; // 👈 ضفنا هذي عشان نمسك بيانات الباك اند
 
-  constructor(response: Response) {
-    super(`API request failed with status ${response.status}`);
+  constructor(response: Response, data?: any) {
+    // 👈 هنا نقوله: خذ رسالة الباك اند، وإذا ما لقيت حط رسالتك القديمة
+    const message = data?.error || data?.message || `API request failed with status ${response.status}`;
+    
+    super(message);
     this.name = 'ApiError';
     this.status = response.status;
     this.response = response;
+    this.data = data;
   }
 }
 
@@ -120,9 +125,15 @@ export const api = {
         throw new ApiError(response);
       }
     }
-
-    if (!response.ok) {
-      throw new ApiError(response);
+if (!response.ok) {
+      let errorData;
+      try {
+        // ننسخ الرد ونحاول نقرأ الـ JSON اللي فيه
+        errorData = await response.clone().json();
+      } catch {
+        // إذا ما قدر يقرأه (مثلاً مو JSON)، يكمل طبيعي
+      }
+      throw new ApiError(response, errorData);
     }
 
     return parseResponse<T>(response);

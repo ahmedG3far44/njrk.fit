@@ -13,3 +13,5 @@ export { SubscriptionsPage } from './SubscriptionsPage';
 export { SettingsPage } from './SettingsPage';
 export { StreaksPage } from './StreaksPage';
 export { CommunityPage } from './CommunityPage';
+export { VerifyEmailPage } from './VerifyEmailPage';
+export { ResetPasswordPage } from './ResetPasswordPage';

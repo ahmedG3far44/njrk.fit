@@ -96,9 +96,38 @@ export const authMiddleware = async (
         error: "Session expired. Please log in again.",
         code: "SESSION_EXPIRED",
       });
+      
+
     }
   } catch (error) {
     console.error("Auth Middleware Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ميدل وير جديد للتأكد من أن الإيميل موثق
+export const requireVerifiedEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = (req as AuthRequest).user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await User.findById(userId);
+
+    // إذا اليوزر موجود بس إيميله مو موثق، نمنعه من الدخول
+    if (user && !user.isEmailVerified) {
+      return res.status(403).json({ error: "الرجاء توثيق بريدك الإلكتروني أولاً لتتمكن من المتابعة" });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Require Verified Email Error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
