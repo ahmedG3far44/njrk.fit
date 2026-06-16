@@ -8,6 +8,7 @@ import {
   InsightsPage,
   LandingPage,
   LoginPage,
+  VerifyEmailPage,
   NutritionPage,
   OnboardingPage,
   ProgressPage,
@@ -16,10 +17,14 @@ import {
   SettingsPage,
   StreaksPage,
   SubscriptionsPage,
-  CommunityPage
+  CommunityPage,
+  ResetPasswordPage,
+  
 } from "./pages";
 
+ 
 import NotFoundPage from "./pages/NotFoundPage";
+
 
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuthProvider";
 import { AdminLayout } from "./admin/components/AdminLayout";
@@ -93,9 +98,12 @@ const App = () => {
       <Routes>
         <Route index path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        
         <Route path="/register" element={<RegisterPage />} />
         
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<InsightsPage />} />

@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { z } from "zod";
 
 dotenv.config();
+console.log("==== EMAIL CHECK ====", process.env.EMAIL_USER);
 
 const envSchema = z.object({
   PORT: z.string().default(process.env.PORT || "8080"),

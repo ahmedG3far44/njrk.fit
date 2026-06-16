@@ -4,7 +4,7 @@ import { ArrowRight, Mail, Lock, User, Chrome } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
-
+import { api } from '../lib/api';
 import NjerkaLogo from './NjerkaLogo';
 
 
@@ -95,13 +95,25 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           onLogin();
         }
       }
-    } catch (error: unknown) {
-      const err = error as { status?: number; response?: { message?: string } };
-      const message = err.response?.message || t('auth.genericError');
+   } catch (error: any) {
+      // حطينا هذا السطر عشان لو ما ضبطت، تفتح الـ Console في المتصفح وتصور لي وش طلع لك بالضبط
+      console.log("Backend Error Object:", error); 
 
-      if (err.status === 401) {
-        setErrors({ password: t('auth.invalidCredentials') });
-      } else if (err.status === 400) {
+      // هنا بنحفر ورا الرسالة في كل الأماكن المحتملة اللي ممكن يكون api.ts خباها فيها!
+      const message = 
+        error.response?.data?.error || 
+        error.response?.error || 
+        error.data?.error || 
+        error.message || 
+        'Something went wrong. Please try again.';
+
+      const status = error.response?.status || error.status || 400;
+
+      // إذا الخطأ 401 (باسورد غلط) أو 400 (مشكلة توثيق أو غيره)
+      if (status === 401) {
+        setErrors({ password: 'Invalid email or password' });
+      } else if (status === 400 || message.includes('توثيق')) {
+        // بنعرض الرسالة الجاية من الباك اند تحت مربع الإيميل مباشرة
         setErrors({ email: message });
       } else {
         toast.error(message);
@@ -115,6 +127,30 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+
+  const handleForgotPassword = async () => {
+    // 1. نتأكد إن اليوزر كاتب إيميله في المربع
+    if (!formData.email.trim()) {
+      toast.error('الرجاء كتابة إيميلك في المربع أعلاه أولاً 👆');
+      setErrors({ email: 'مطلوب لإرسال رابط إعادة التعيين' });
+      return;
+    }
+
+    // 2. نرسل الطلب للباك اند
+    try {
+      // سوينا توست للتحميل عشان اليوزر يعرف إن فيه شيء جالس يصير
+      toast.info('جاري إرسال الرابط...'); 
+      
+      await api.post('/auth/forgot-password', { email: formData.email });
+      
+      toast.success('تم إرسال رابط تغيير كلمة المرور بنجاح! شيك إيميلك 🚀');
+    } catch (err: any) {
+      console.log(err);
+      const message = err.data?.error || err.message || 'حدث خطأ، يرجى المحاولة مرة أخرى';
+      toast.error(message);
     }
   };
 
@@ -199,12 +235,12 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             {view === 'login' && (
               <div className="text-end">
                 <button
-                  type="button"
+                   type="button"
                   className="text-sm text-green-700 font-medium hover:underline"
-                  onClick={() => toast.info(t('auth.passwordResetComingSoon'))}
-                >
-                  {t('auth.forgotPassword')}
-                </button>
+                  onClick={handleForgotPassword}
+                  >
+                       Forgot password?
+                      </button>
               </div>
             )}
 

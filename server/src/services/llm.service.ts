@@ -134,34 +134,47 @@ const callLLMWithRecovery = async <T>(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const raw = await callOpenRouter(prompt);
-      
-      // Successfully got response from OpenRouter, now try parsing and validating
-      try {
-        const parsed = extractJSON(raw!);
-        const normalized = normalizeLLMOutput(parsed);
-        const data = schema.parse(normalized);
-        if (contextValidator) contextValidator(data);
-        return data;
-      } catch (validationErr: any) {
-        lastError = validationErr;
-        const isArabic = /[\u0600-\u06FF]/.test(prompt);
-        const schemaStr = schemaToExample(schema);
-        prompt = isArabic
-          ? `الرد السابق لم يكن JSON صالحاً أو لم يطابق المخطط.\nالخطأ:\n${validationErr.message}\nقم بإصلاحه وأرجع JSON صالح فقط مطابقاً لهذا المخطط:\n${schemaStr}\n\n⚠️ مهم: مفاتيح JSON كلها بالإنجليزية. فقط القيم (النصوص) تكون بالعربية.`
-          : `The previous response was invalid JSON or didn't match schema.\nERROR:\n${validationErr.message}\nFix it and return ONLY valid JSON matching this schema:\n${schemaStr}`;
-      }
-    } catch (apiErr: any) {
-      // API / network error from OpenRouter (e.g. 401, 403, 429, etc.) - throw immediately
-      throw apiErr;
+      const parsed = extractJSON(raw!);
+      const normalized = normalizeLLMOutput(parsed);
+      const data = schema.parse(normalized);
+      if (contextValidator) contextValidator(data);
+      return data;
+    } catch (err: any) {
+      lastError = err;
+      const schemaDescription = JSON.stringify(schema.toJSONSchema(), null, 2);
+      prompt = `The previous response was invalid JSON or didn't match schema.\nERROR:\n${err.message}\nFix it and return ONLY valid JSON matching this schema:\n${schemaDescription}`;
     }
   }
   throw lastError;
 };
 
+const dayNameMap: Record<string, string> = {
+  monday: "Day 1", mon: "Day 1",
+  tuesday: "Day 2", tue: "Day 2",
+  wednesday: "Day 3", wed: "Day 3",
+  thursday: "Day 4", thu: "Day 4",
+  friday: "Day 5", fri: "Day 5",
+  saturday: "Day 6", sat: "Day 6",
+  sunday: "Day 7", sun: "Day 7",
+};
+
+const normalizeDay = (day: string, index: number, itemsPerDay: number): string => {
+  if (!day) return `Day ${Math.floor(index / itemsPerDay) + 1}`;
+  const lower = day.trim().toLowerCase();
+  if (dayNameMap[lower]) return dayNameMap[lower];
+  const match = day.match(/^day\s*(\d+)$/i);
+  if (match) return `Day ${match[1]}`;
+  const num = parseInt(day);
+  if (num >= 1 && num <= 7) return `Day ${num}`;
+  return `Day ${Math.floor(index / itemsPerDay) + 1}`;
+};
+
 const normalizeLLMOutput = (data: any) => {
   if (data?.meals) {
-    data.meals = data.meals.map((meal: any) => ({
+    const itemsPerDay = data.meals.length > 7 ? Math.round(data.meals.length / 7) : 3;
+    data.meals = data.meals.map((meal: any, idx: number) => ({
       ...meal,
+      day: normalizeDay(meal?.day, idx, itemsPerDay),
       ingredients: meal.ingredients?.map((ing: any) =>
         typeof ing === "string" ? { name: ing, quantity: "" } : ing,
       ),

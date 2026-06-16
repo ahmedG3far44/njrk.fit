@@ -247,6 +247,71 @@ router.post(
   },
 );
 
+router.get(
+  "/verify-email/:token",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      
+      // نستدعي الدالة اللي سويناها في auth.service.ts
+      const result = await authService.verifyEmailToken(token as string);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+
+      res.status(200).json({ message: result.message });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+router.post(
+  "/forgot-password",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "الرجاء إدخال البريد الإلكتروني" });
+      }
+
+      const result = await authService.forgotPassword(email);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+router.post(
+  "/reset-password/:token",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      const { password } = req.body;
+
+      if (!password || password.length < 8) {
+        return res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" });
+      }
+
+      const result = await authService.resetPassword(token as string, password);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
 router.post(
   "/login",
   validate(loginSchema),
