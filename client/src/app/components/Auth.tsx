@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
 import NjerkaLogo from './NjerkaLogo';
+import { Button } from './ui/button';
 
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080") as string;
@@ -244,22 +245,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
               </div>
             )}
 
-            <motion.button
-              whileHover={{ scale: isLoading ? 1 : 1.02 }}
-              whileTap={{ scale: isLoading ? 1 : 0.98 }}
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-green-800 to-green-700 text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-green-200 cursor-pointer"
-            >
-              {isLoading ? (
-                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-              ) : (
-                <>
-                  {view === 'login' ? t('auth.signIn') : t('auth.createAccount')}
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </motion.button>
+            <Button variant="primary" size="lg" loading={isLoading} className="w-full mt-6 shadow-lg shadow-green-200" type="submit">
+              {view === 'login' ? t('auth.signIn') : t('auth.createAccount')}
+              <ArrowRight className="w-5 h-5" />
+            </Button>
           </form>
 
           <div className="mt-8">
@@ -273,14 +262,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             </div>
 
             <div className="grid grid-cols-1 gap-4 mt-6">
-              <button
-                type="button"
-                onClick={() => window.location.href = `${API_BASE_URL}/auth/google`}
-                className="group flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1 active:scale-[0.98] cursor-pointer"
-              >
-                <Chrome className="h-5 w-5 text-gray-500 transition-colors group-hover:text-gray-700" />
+              <Button variant="secondary" className="w-full" type="button" onClick={() => window.location.href = `${API_BASE_URL}/auth/google`}>
+                <Chrome className="h-5 w-5 text-gray-500" />
                 <span>{t('auth.googleLogin')}</span>
-              </button>
+              </Button>
             </div>
           </div>
 

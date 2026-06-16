@@ -196,6 +196,7 @@
     "logoutTitle": "Log Out?",
     "logoutMessage": "You'll be returned to the landing page. Your data is always saved.",
     "logoutConfirm": "Log Out",
+    "cancel": "Cancel",
     "planLabel": "Plan",
     "planFree": "Free",
     "planPro": "Pro",

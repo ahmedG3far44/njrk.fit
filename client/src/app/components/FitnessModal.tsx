@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PROGRAM_SPLIT_OPTIONS } from "./FitnessProgramOptions";
+import { Button } from './ui/button';
 
 interface FitnessModalProps {
   onClose: () => void;
@@ -68,12 +69,9 @@ const FitnessModalInner = ({
           <p className="text-green-200 text-xs sm:text-sm relative z-10">
             {t("fitness.generateSubtitle")}
           </p>
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-lg sm:rounded-xl transition-colors z-10"
-          >
+          <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-3 right-3 z-10 bg-white/10 hover:bg-white/20">
             <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-          </button>
+          </Button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
@@ -125,15 +123,12 @@ const FitnessModalInner = ({
             </label>
             <div className="flex flex-col gap-1.5 sm:gap-2">
               {PROGRAM_SPLIT_OPTIONS(t).map((program) => (
-                <button
+                <Button
                   key={program.value}
-                  type="button"
+                  variant={trainingProgram === program.value ? 'primary' : 'ghost'}
+                  size="sm"
+                  className={`w-full text-start justify-start flex-col items-start gap-0.5 sm:gap-1 h-auto py-2.5 sm:py-3 border ${trainingProgram === program.value ? 'border-green-500' : 'border-slate-200'}`}
                   onClick={() => setTrainingProgram(program.value as any)}
-                  className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-start transition-all border flex flex-col gap-0.5 sm:gap-1 ${
-                    trainingProgram === program.value
-                      ? "bg-green-50 border-green-500 text-green-900 shadow-sm shadow-green-50"
-                      : "bg-white border-slate-200 text-slate-700 hover:border-green-300"
-                  }`}
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="font-bold text-xs sm:text-sm">
@@ -146,7 +141,7 @@ const FitnessModalInner = ({
                   <span className="text-[11px] sm:text-xs text-slate-500 leading-normal sm:leading-snug">
                     {program.desc}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -165,23 +160,14 @@ const FitnessModalInner = ({
           </div>
 
           <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-slate-100 flex-shrink-0">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 sm:py-2.5 border border-slate-200 rounded-lg sm:rounded-xl font-semibold text-slate-500 hover:bg-slate-50 transition-colors text-xs sm:text-sm"
-            >
+            <Button variant="secondary" size="default" className="flex-1" onClick={onClose}>
               {t("fitness.cancel")}
-            </button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onGenerate}
-              disabled={isGenerating}
-              className="flex-1 py-2 sm:py-2.5 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-lg sm:rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-1.5 sm:gap-2 shadow-md sm:shadow-lg shadow-green-200 text-xs sm:text-sm"
-            >
+            </Button>
+            <Button variant="primary" size="default" className="flex-1" loading={isGenerating} onClick={onGenerate}>
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t("fitness.generatePlan")}
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </motion.button>
+            </Button>
           </div>
         </div>
       </motion.div>

@@ -8,6 +8,7 @@ import { userService } from '../services/userService';
 import { subscriptionService } from '../services/subscriptionService';
 import { authService } from '../services/authService';
 import GoalProgressBar from './GoalProgressBar';
+import { Button } from './ui/button';
 
 export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const { user, logout, refreshUser, isGoogleUser } = useAuth();
@@ -183,18 +184,12 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                 {t('settings.logoutMessage')}
               </p>
               <div className="flex gap-2.5 sm:gap-3">
-                <button
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition-colors text-xs sm:text-sm"
-                >
+                <Button variant="secondary" size="default" className="flex-1" onClick={() => setShowLogoutConfirm(false)}>
                   {t('settings.cancel')}
-                </button>
-                <button
-                  onClick={() => { setShowLogoutConfirm(false); handleLogout(); }}
-                  className="flex-1 py-2 sm:py-3 rounded-lg sm:rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors text-xs sm:text-sm"
-                >
+                </Button>
+                <Button variant="destructive" size="default" className="flex-1" onClick={() => { setShowLogoutConfirm(false); handleLogout(); }}>
                   {t('settings.logoutConfirm')}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>
@@ -206,16 +201,10 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           <p className="text-slate-500 text-xs sm:text-sm">{t('settings.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={`p-2 px-3 sm:p-3 border rounded-xl sm:rounded-2xl transition-colors shadow-sm cursor-pointer flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold ${isEditMode
-              ? 'bg-green-600 border-green-600 text-white'
-              : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
-              }`}
-          >
+          <Button variant={isEditMode ? 'primary' : 'secondary'} size="sm" onClick={() => setIsEditMode(!isEditMode)}>
             <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{isEditMode ? t('settings.cancel') : t('settings.edit')}</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -286,18 +275,12 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               )}
             </div>
             {!isGoogleUser && !user?.isEmailVerified && (
-              <button
-                onClick={handleVerifyEmail}
-                disabled={isVerifyingEmail}
-                className="mt-1 flex items-center gap-1.5 text-xs text-green-700 font-semibold hover:text-green-800 transition-colors disabled:opacity-50"
-              >
-                {isVerifyingEmail ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
+              <Button variant="ghost" size="sm" loading={isVerifyingEmail} onClick={handleVerifyEmail} className="mt-1 text-green-700">
+                {!isVerifyingEmail && (
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 )}
                 {t('settings.verifyEmail')}
-              </button>
+              </Button>
             )}
           </div>
           <div className="space-y-1.5 sm:space-y-2">
@@ -359,18 +342,10 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         {/* Save Button - Only visible in edit mode */}
         {isEditMode && (
           <div className="flex justify-end pt-2">
-            <button
-              onClick={handleSaveProfile}
-              disabled={isSaving}
-              className="flex items-center gap-1.5 px-4 py-2 sm:px-6 sm:py-3 bg-green-700 text-white font-semibold rounded-lg sm:rounded-xl hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm w-full sm:w-auto justify-center"
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
+            <Button variant="primary" loading={isSaving} onClick={handleSaveProfile} className="w-full sm:w-auto">
+              <Save className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{isSaving ? t('settings.saving') : t('settings.saveChanges')}</span>
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -630,17 +605,9 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       </div>
 
       <div className="flex justify-end">
-        <button
-          onClick={handleSaveAll}
-          disabled={isSaving}
-          className="inline-flex items-center gap-1.5 bg-green-700 text-white px-5 py-2.5 sm:px-8 sm:py-3 rounded-lg sm:rounded-xl font-bold hover:bg-green-800 transition-colors disabled:opacity-50 text-xs sm:text-sm w-full sm:w-auto justify-center"
-        >
-          {isSaving ? (
-            <><Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> {t('settings.saving')}</>
-          ) : (
-            <><Save className="w-4 h-4 sm:w-5 sm:h-5" /> {t('settings.saveChanges')}</>
-          )}
-        </button>
+        <Button variant="primary" loading={isSaving} onClick={handleSaveAll} className="w-full sm:w-auto">
+          {isSaving ? t('settings.saving') : <><Save className="w-4 h-4 sm:w-5 sm:h-5" /> {t('settings.saveChanges')}</>}
+        </Button>
       </div>
 
       {/* Log Out Section */}
@@ -655,12 +622,9 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               <p className="text-[10px] sm:text-xs text-slate-500 truncate">{t('settings.logoutDesc')}</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowLogoutConfirm(true)}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm border border-red-100 flex-shrink-0"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setShowLogoutConfirm(true)} className="text-red-600 bg-red-50 hover:bg-red-100 border-red-100">
             Log Out
-          </button>
+          </Button>
         </div>
       </div>
     </div>

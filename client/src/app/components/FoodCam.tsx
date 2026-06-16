@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Camera, X, Check, Loader2, ScanLine, Flame } from 'lucide-react';
+import { Button } from './ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FoodCamProps {
@@ -29,9 +30,9 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
     <div className="fixed inset-0 bg-black z-[100] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 text-white">
-        <button onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="w-8 h-8" />
-        </button>
+        </Button>
         <span className="font-semibold">AI Food Scanner</span>
         <div className="w-8" />
       </div>
@@ -119,12 +120,12 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => { setCaptured(false); onClose(); }} className="flex-1 bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-800 transition-colors">
+              <Button variant="primary" size="default" className="flex-1" onClick={() => { setCaptured(false); onClose(); }}>
                 Log Meal
-              </button>
-              <button onClick={() => setCaptured(false)} className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold">
+              </Button>
+              <Button variant="ghost" size="default" className="flex-1" onClick={() => setCaptured(false)}>
                 Retake
-              </button>
+              </Button>
             </div>
           </motion.div>
         )}

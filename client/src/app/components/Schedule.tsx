@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, Utensils, Dumbbell, Calendar, ChevronLeft, Chevro
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { scheduleService, ScheduleItem } from '../services/scheduleService';
+import { Button } from './ui/button';
 
 const ItemTypes = {
   TIMELINE_ITEM: 'timelineItem',
@@ -117,17 +118,13 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                 <CheckCircle2 className="w-4 h-4" /> {t("schedule.done")}
               </div>
             ) : canComplete ? (
-              <button 
-                onClick={() => onMarkComplete(slot.id, slot.completed)}
-                disabled={completingId === slot.id}
-                className="text-sm font-bold text-green-700 hover:bg-green-50 px-3 py-1 rounded-lg transition-colors disabled:opacity-50"
-              >
+              <Button variant="ghost" size="sm" onClick={() => onMarkComplete(slot.id, slot.completed)} disabled={completingId === slot.id}>
                 {completingId === slot.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   t('schedule.markDone')
                 )}
-              </button>
+              </Button>
             ) : (
               <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
                 <Circle className="w-4 h-4" /> {t("schedule.future")}
@@ -345,25 +342,16 @@ export const Schedule: React.FC = () => {
           <p className="text-slate-500">{t("schedule.subtitle")}</p>
         </div>
         <div className="flex bg-white rounded-xl border border-slate-200 p-1">
-          <button 
-            onClick={() => navigateDate('prev')}
-            className="p-2 hover:bg-slate-50 rounded-lg text-slate-500"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigateDate('prev')}>
             {i18n.dir() === 'rtl' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
-          <button 
-            onClick={goToToday}
-            className="flex items-center gap-2 px-4 font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" onClick={goToToday} className="gap-2">
             <Calendar className="w-4 h-4" />
             <span>{formatDisplayDate()}</span>
-          </button>
-          <button 
-            onClick={() => navigateDate('next')}
-            className="p-2 hover:bg-slate-50 rounded-lg text-slate-500"
-          >
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => navigateDate('next')}>
             {i18n.dir() === 'rtl' ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -21,6 +21,7 @@ import { subscriptionService, SubscriptionStatus, CreateSubscriptionData } from 
 import { useAuth } from '../context/AuthProvider';
 import { useTranslation } from 'react-i18next';
 import SubscriptionCard from './SubscriptionCard';
+import { Button } from './ui/button';
 
 interface PlanFeature {
   text: string;
@@ -300,13 +301,10 @@ export const Subscription: React.FC = () => {
       <div className="max-w-md mx-auto text-center py-20">
         <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
         <p className="text-slate-600 font-medium mb-4">{error}</p>
-        <button
-          onClick={fetchSubscriptionStatus}
-          className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-800 transition-colors"
-        >
+        <Button variant="primary" onClick={fetchSubscriptionStatus}>
           <Loader2 className="w-4 h-4" />
           {t('common.tryAgain')}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -393,22 +391,16 @@ export const Subscription: React.FC = () => {
       {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-3">
         {user?.subscription?.subscriptionTier !== "BASIC" && (
-          <button
-            onClick={handleManageSubscription}
-            className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-800 transition-colors"
-          >
+          <Button variant="primary" onClick={handleManageSubscription}>
             <Settings className="w-4 h-4" />
             {t('subscriptions.manageStripe')}
-          </button>
+          </Button>
         )}
         {showCancelButton && !isCanceled && (
-          <button
-            onClick={() => setShowCancelDetails(v => !v)}
-            className="inline-flex items-center gap-2 border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold hover:bg-slate-50 transition-colors"
-          >
+          <Button variant="secondary" onClick={() => setShowCancelDetails(v => !v)}>
             <Pause className="w-4 h-4" />
             {t('subscriptions.cancelPlan')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -430,23 +422,12 @@ export const Subscription: React.FC = () => {
               </p>
               <p className="text-sm text-orange-700 mt-0.5">{t('subscriptions.keepAccessUntil')}</p>
               <div className="flex flex-wrap gap-3 mt-4">
-                <button
-                  onClick={handleCancelSubscription}
-                  disabled={canceling}
-                  className="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  {canceling ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> {t('subscriptions.processing')}</>
-                  ) : (
-                    <><Pause className="w-4 h-4" /> {t('subscriptions.yesCancel')}</>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowCancelDetails(false)}
-                  className="inline-flex items-center gap-2 border border-orange-300 text-orange-800 px-5 py-2.5 rounded-xl font-bold hover:bg-orange-100 transition-colors"
-                >
+                <Button variant="destructive" loading={canceling} onClick={handleCancelSubscription}>
+                  {canceling ? t('subscriptions.processing') : <><Pause className="w-4 h-4" /> {t('subscriptions.yesCancel')}</>}
+                </Button>
+                <Button variant="secondary" className="border-orange-300 text-orange-800 hover:bg-orange-100" onClick={() => setShowCancelDetails(false)}>
                   {t('subscriptions.keepMyPlan')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

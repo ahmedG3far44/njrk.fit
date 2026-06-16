@@ -40,6 +40,7 @@ import { gamificationService } from "../services/gamificationService";
 import { nutritionService } from "../services/nutritionService";
 import { fitnessService } from "../services/fitnessService";
 import { useAuth } from "../context/AuthProvider";
+import { Button } from "./ui/button";
 import {
   googleFitService,
   GoogleFitWeeklyStepsResponse,
@@ -234,26 +235,16 @@ export const Progress: React.FC = () => {
         </div>
         <div className="flex items-center gap-3 sm:items-end">
           {canUpdateInfo?.canUpdate ? (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowUpdateModal(true)}
-              className="flex items-center gap-1.5 text-nowrap text-xs sm:text-sm rounded-lg sm:rounded-xl font-bold py-2 px-3.5 bg-green-700 text-white cursor-pointer hover:opacity-90 transition-all w-fit"
-            >
+            <Button variant="primary" size="sm" onClick={() => setShowUpdateModal(true)}>
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t("progress.updateStats")}
-            </motion.button>
+            </Button>
           ) : (
             <div className="relative group w-fit">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                disabled
-                className="flex items-center gap-1.5 bg-slate-300 text-slate-500 px-3.5 py-2 rounded-lg sm:rounded-xl font-bold cursor-not-allowed text-xs sm:text-sm"
-              >
+              <Button variant="secondary" size="sm" disabled>
                 <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {t("progress.updateStats")}
-              </motion.button>
+              </Button>
               {canUpdateInfo && (
                 <div className="absolute end-0 top-full mt-2 px-3.5 py-2.5 bg-slate-800 text-white text-xs rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                   <div className="flex items-center gap-1.5">
@@ -311,12 +302,9 @@ export const Progress: React.FC = () => {
                         {t("progress.updateStatsSubtitle")}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setShowUpdateModal(false)}
-                      className="p-1.5 sm:p-2 text-slate-400 hover:text-white transition-colors"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => setShowUpdateModal(false)}>
                       <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
@@ -352,30 +340,15 @@ export const Progress: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={handleSubmit}
-                      disabled={(!currentWeight && !aiFeeling) || isSubmitting}
-                      className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-lg sm:rounded-xl font-bold disabled:opacity-40 hover:opacity-90 transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-                    >
+                    <Button variant="primary" size="lg" loading={isSubmitting} className="w-full" onClick={handleSubmit}>
                       {isSubmitting ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 1,
-                              ease: "linear",
-                            }}
-                            className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full"
-                          />{" "}
-                          {t("progress.updatingPlan")}
-                        </>
+                        t("progress.updatingPlan")
                       ) : (
                         <>
                           <Send className="w-3.5 h-3.5 sm:w-5 sm:h-5" /> {t("progress.submitUpdate")}
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </>
               )}

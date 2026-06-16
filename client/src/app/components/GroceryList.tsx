@@ -347,28 +347,30 @@ export const GroceryList: React.FC = () => {
       </div>
 
       {/* Progress */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-3">
-          <span className="font-semibold text-slate-700 text-sm">
-            {t('grocery.shoppingProgress')}
-          </span>
-          <span className="text-sm font-bold text-slate-900">
-            {checkedCount}/{items.length} {t('grocery.items')}
-          </span>
+      {items.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-semibold text-slate-700 text-sm">
+              {t('grocery.shoppingProgress')}
+            </span>
+            <span className="text-sm font-bold text-slate-900">
+              {checkedCount}/{items.length} {t('grocery.items')}
+            </span>
+          </div>
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-slate-400">
+            <span>{progress}{t('grocery.percentComplete')}</span>
+            <span>{items.length - checkedCount} {t('grocery.remaining')}</span>
+          </div>
         </div>
-        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        </div>
-        <div className="flex justify-between mt-2 text-xs text-slate-400">
-          <span>{progress}{t('grocery.percentComplete')}</span>
-          <span>{items.length - checkedCount} {t('grocery.remaining')}</span>
-        </div>
-      </div>
+      )}
 
       {/* Add Item */}
       <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex gap-2">

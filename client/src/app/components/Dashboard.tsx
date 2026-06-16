@@ -24,6 +24,7 @@ import { fitnessService } from "../services/fitnessService";
 import { gamificationService } from "../services/gamificationService";
 import { useTranslation } from "react-i18next";
 import GoalProgressBar from "./GoalProgressBar";
+import { Button } from "./ui/button";
 
 interface DashboardProps {
   user: any;
@@ -142,9 +143,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     nextReward: 0,
   });
 
-  const [aiTip, setAiTip] = useState({
-    content: t("dashboard.aiInsightContent"),
-  });
+  const aiTipContent = t("dashboard.aiInsightContent");
 
   const [loading, setLoading] = useState({
     nutrition: true,
@@ -844,7 +843,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* ── AI Insight ── */}
       <AnimatePresence>
-        {aiTipVisible && aiTip.content && (
+        {aiTipVisible && aiTipContent && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -867,15 +866,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
                 </div>
                 <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-                  {aiTip.content}
+                  {aiTipContent}
                 </p>
               </div>
-              <button
-                onClick={() => setAiTipVisible(false)}
-                className="text-white/40 hover:text-white/70 transition-colors p-1 flex-shrink-0"
-              >
+              <Button variant="ghost" size="icon" onClick={() => setAiTipVisible(false)} className="text-white/40 hover:text-white/70 flex-shrink-0">
                 <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex items-center gap-2.5 sm:gap-3 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/10 relative z-10">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Flame, ChefHat, PlayCircle, Heart, RefreshCw, Sparkles, Send } from 'lucide-react';
+import { Button } from './ui/button';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { MealItem, nutritionService } from '../services/nutritionService';
@@ -240,12 +241,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
         <div className="flex flex-col md:flex-row min-h-full">
           {/* Image Side */}
           <div className="md:w-1/2 relative h-[250px] sm:h-[400px] md:min-h-screen">
-            <button
-              onClick={onClose}
-              className="absolute top-4 end-4 z-30 bg-white/90 text-slate-700 p-2 rounded-full shadow-sm hover:bg-white transition-all backdrop-blur-sm"
-            >
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 end-4 z-30 bg-white/90 shadow-sm">
               <X className="w-6 h-6" />
-            </button>
+            </Button>
             <AnimatePresence mode="wait">
               {isRegenerating ? (
                 <motion.div
@@ -365,14 +363,15 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                   {/* Quick Suggestions */}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {suggestions.map(s => (
-                      <button
+                      <Button
                         key={s}
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setAiInstruction(s)}
                         disabled={replacementsLeft <= 0}
-                        className="text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all font-medium disabled:opacity-50 disabled:hover:bg-slate-50 disabled:hover:text-slate-600 disabled:hover:border-slate-200 disabled:cursor-not-allowed"
                       >
                         {s}
-                      </button>
+                      </Button>
                     ))}
                   </div>
 
@@ -386,13 +385,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       placeholder={replacementsLeft <= 0 ? t('recipeDetail.refinePlaceholderLocked') : t('recipeDetail.refinePlaceholder')}
                       className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
-                    <button
-                      onClick={handleRefine}
-                      disabled={!aiInstruction.trim() || isRegenerating || replacementsLeft <= 0}
-                      className="bg-gradient-to-r from-green-800 to-green-700 text-white p-3 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-                    >
+                    <Button variant="primary" size="icon" onClick={handleRefine} disabled={!aiInstruction.trim() || isRegenerating || replacementsLeft <= 0}>
                       <Send className="w-5 h-5" />
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="flex items-center justify-between mt-2">
@@ -401,14 +396,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                     </span>
                   </div>
 
-                  <button
-                    onClick={handleReplace}
-                    disabled={replacementsLeft <= 0 || isRegenerating}
-                    className="w-full mt-3 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-green-400 text-green-700 rounded-xl font-semibold hover:bg-green-50 transition-all disabled:opacity-50 text-sm cursor-pointer"
-                  >
+                  <Button variant="outline" size="default" className="w-full border-dashed" onClick={handleReplace} disabled={replacementsLeft <= 0 || isRegenerating}>
                     <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
                     {replacementsLeft <= 0 ? t('recipeDetail.noTriesLeft') : t('recipeDetail.regenerateMeal')}
-                  </button>
+                  </Button>
                 </div>
                 )}
               </div>

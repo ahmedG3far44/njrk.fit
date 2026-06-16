@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, MessageCircle, Trophy, Users, Medal, Search, TrendingUp, Flame, Loader2, X, Image, Send, Trash2, Maximize2 } from 'lucide-react';
+import { Button } from './ui/button';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -350,12 +351,14 @@ export const Social: React.FC = () => {
                 alt="Post"
                 className="w-full h-full object-contain rounded-2xl shadow-2xl"
               />
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setLightboxImage(null)}
-                className="absolute top-3 end-3 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                className="absolute top-3 end-3 bg-black/50 text-white"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </motion.div>
           </motion.div>
         )}
@@ -380,13 +383,14 @@ export const Social: React.FC = () => {
             >
               <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 flex items-center justify-between flex-shrink-0">
                 <h3 className="font-bold text-slate-900 text-base sm:text-lg">{t('community.createPost')}</h3>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowCreateModal(false)}
                   disabled={posting}
-                  className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-30"
                 >
-                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                </button>
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
               </div>
 
               <div className={`px-4 sm:px-6 pb-4 space-y-4 flex-1 overflow-y-auto ${posting ? 'pointer-events-none opacity-50' : ''}`}>
@@ -401,13 +405,15 @@ export const Social: React.FC = () => {
                 {mediaPreview && (
                   <div className="relative rounded-2xl overflow-hidden border border-slate-100">
                     <img src={mediaPreview} alt="Preview" className="w-full h-40 sm:h-48 object-cover" />
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={removeMedia}
                       disabled={posting}
-                      className="absolute top-2.5 right-2.5 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-colors disabled:opacity-30"
+                      className="absolute top-2.5 right-2.5 bg-black/50 text-white"
                     >
                       <X className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 )}
 
@@ -425,10 +431,12 @@ export const Social: React.FC = () => {
               </div>
 
               <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 flex-shrink-0">
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
                   onClick={handleCreatePost}
                   disabled={posting || !postContent.trim()}
-                  className="w-full bg-green-700 text-white py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                 >
                   {posting ? (
                     <>
@@ -441,7 +449,7 @@ export const Social: React.FC = () => {
                       {t('community.post')}
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>
@@ -451,18 +459,22 @@ export const Social: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl sm:text-3xl font-bold text-slate-900 leading-tight">{t('community.title')}</h1>
         <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveTab('feed')}
-            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeTab === 'feed' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`${activeTab === 'feed' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
           >
             {t('community.feed')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setActiveTab('leaderboard')}
-            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeTab === 'leaderboard' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`${activeTab === 'leaderboard' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
           >
             {t('community.leaderboard')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -488,12 +500,13 @@ export const Social: React.FC = () => {
                     <div className="font-mono text-[10px] sm:text-xs text-green-700">{user.username}</div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => handleInvite(user.username, 'team')}
-                      className="flex items-center gap-1 bg-green-700 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold hover:bg-green-800 transition-colors"
                     >
                       <Trophy className="w-3 h-3 flex-shrink-0" /> {t('community.inviteToTeam')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -523,12 +536,13 @@ export const Social: React.FC = () => {
                   readOnly
                   className="flex-1 bg-slate-50 rounded-lg sm:rounded-xl px-3 sm:px-4 outline-none focus:ring-2 focus:ring-green-100 transition-all text-xs sm:text-sm cursor-pointer"
                 />
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-green-700 text-white px-4 py-1.5 sm:px-6 rounded-lg sm:rounded-xl font-bold hover:bg-green-800 transition-colors text-xs sm:text-sm"
                 >
                   {t('community.post')}
-                </button>
+                </Button>
               </div>
 
               {/* Posts */}
@@ -560,12 +574,13 @@ export const Social: React.FC = () => {
                         </div>
                       </div>
                       {isPostOwner(post) && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDeletePost(post._id)}
-                          className="text-slate-400 hover:text-red-500 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -583,20 +598,24 @@ export const Social: React.FC = () => {
                     )}
 
                     <div className="flex items-center gap-4 sm:gap-6 pt-3 sm:pt-4 border-t border-slate-50">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleLike(post._id)}
-                        className={`flex items-center gap-1.5 sm:gap-2 transition-colors ${post.isLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}`}
+                        className={`${post.isLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}`}
                       >
                         <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${post.isLiked ? 'fill-current' : ''}`} />
                         <span className="text-xs sm:text-sm font-medium">{post.likeCount}</span>
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleComments(post._id)}
-                        className={`flex items-center gap-1.5 sm:gap-2 transition-colors ${expandedPostId === post._id ? 'text-green-600' : 'text-slate-500 hover:text-green-600'}`}
+                        className={`${expandedPostId === post._id ? 'text-green-600' : 'text-slate-500 hover:text-green-600'}`}
                       >
                         <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="text-xs sm:text-sm font-medium">{post.commentCount}</span>
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Comments Section */}
@@ -618,13 +637,14 @@ export const Social: React.FC = () => {
                               placeholder={t('community.commentPlaceholder')}
                               className="flex-1 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
                             />
-                            <button
+                            <Button
+                              variant="primary"
+                              size="icon"
                               onClick={() => handleAddComment(post._id)}
                               disabled={!newComment[post._id]?.trim()}
-                              className="bg-green-700 text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-green-800 disabled:opacity-50 transition-colors"
                             >
                               <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            </button>
+                            </Button>
                           </div>
 
                           {/* Comments List */}
@@ -649,12 +669,13 @@ export const Social: React.FC = () => {
                                         {comment.userId && typeof comment.userId === 'object' ? comment.userId.name || 'User' : 'User'}
                                       </span>
                                       {isCommentOwner(comment) && (
-                                        <button
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
                                           onClick={() => handleDeleteComment(post._id, comment._id)}
-                                          className="text-slate-400 hover:text-red-500 p-0.5"
                                         >
                                           <Trash2 className="w-3 h-3" />
-                                        </button>
+                                        </Button>
                                       )}
                                     </div>
                                     <p className="text-xs sm:text-sm text-slate-600 leading-normal">{comment.content}</p>
@@ -702,9 +723,9 @@ export const Social: React.FC = () => {
                 <div className="flex items-center justify-center h-8 sm:h-10 mb-4 sm:mb-5">
                   <span className="text-green-300 text-xs sm:text-sm">{t('community.noActiveTeam')}</span>
                 </div>
-                <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-colors">
+                <Button variant="secondary" size="sm" className="w-full">
                   {t('community.findATeam')}
-                </button>
+                </Button>
               </div>
 
               <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
@@ -730,17 +751,19 @@ export const Social: React.FC = () => {
                 {/* Scope Toggle */}
                 <div className="flex bg-green-800/30 p-1 rounded-lg sm:rounded-xl border border-white/10 w-fit mx-auto mt-3 sm:mt-4">
                   {(['global', 'family'] as const).map((s) => (
-                    <button
+                    <Button
                       key={s}
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setLeaderboardScope(s)}
-                      className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all capitalize ${
+                      className={`capitalize ${
                         leaderboardScope === s
                           ? 'bg-white text-green-800 shadow-sm'
                           : 'text-green-200 hover:text-white'
                       }`}
                     >
                       {s === 'family' ? t('community.family') : t('community.global')}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -780,12 +803,14 @@ export const Social: React.FC = () => {
                     className="w-full pl-9 pr-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none text-xs sm:text-sm"
                   />
                   {leaderboardSearch && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setLeaderboardSearch('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
                     >
                       <X className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

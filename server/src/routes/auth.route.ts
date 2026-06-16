@@ -252,14 +252,10 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.params;
-      
-      // نستدعي الدالة اللي سويناها في auth.service.ts
       const result = await authService.verifyEmailToken(token as string);
-
       if (!result.success) {
         return res.status(400).json({ error: result.message });
       }
-
       res.status(200).json({ message: result.message });
     } catch (error) {
       next(error);

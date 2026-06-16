@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { Button } from './ui/button';
 import { Sparkles, Check, CheckCircle2, Loader2, ChevronRight } from "lucide-react";
 import { ReactNode } from "react";
 import { useTranslation } from 'react-i18next';
@@ -80,16 +81,7 @@ export default function SubscriptionCard({
                 </ul>
 
                 {/* Action Button */}
-                <button
-                    onClick={() => onSubscribe(plan)}
-                    disabled={plan.isCurrent || subscribing}
-                    className={`w-full mt-auto py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm ${plan.isCurrent
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                            : plan.isPopular
-                                ? 'bg-green-700 text-white hover:bg-green-800'
-                                : 'border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                >
+                <Button variant={plan.isCurrent ? 'secondary' : plan.isPopular ? 'primary' : 'outline'} size="default" className="w-full" disabled={plan.isCurrent || subscribing} onClick={() => onSubscribe(plan)}>
                     {plan.isCurrent ? (
                         <>
                             <CheckCircle2 className="w-4 h-4" /> {t('subscriptions.currentPlan')}
@@ -104,7 +96,7 @@ export default function SubscriptionCard({
                             <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                         </>
                     )}
-                </button>
+                </Button>
             </div>
         </motion.div>
     );

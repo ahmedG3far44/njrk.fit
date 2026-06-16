@@ -1333,49 +1333,51 @@ export const Nutrition: React.FC = () => {
                     ))}
                 </>
               ) : (
-                <div
-                  className="w-full min-h-96 text-center  flex items-center flex-col justify-center gap-3 p-3 rounded-2xl  mb-3 text-white"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #1a6b3a 0%, #145c30 100%)",
-                  }}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-green-700 p-6 sm:p-10 text-white text-center"
                 >
-                  {/* Icon in rounded square */}
-                  <div
-                    className="flex items-center justify-center w-16 h-16 rounded-2xl mb-1"
-                    style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
-                  >
-                    <Utensils className="w-7 h-7 text-white opacity-80" />
+                  <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none" />
+                  <div className="absolute bottom-0 start-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ms-10 -mb-10 pointer-events-none" />
+
+                  <div className="relative z-10">
+                    <motion.div
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 3,
+                        ease: "easeInOut",
+                      }}
+                      className="w-14 h-14 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl"
+                    >
+                      <Utensils className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
+                    </motion.div>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3">
+                      {t("nutrition.noPlanTitle")}
+                    </h2>
+                    <p className="text-xs sm:text-sm md:text-base text-green-200 mb-6 sm:mb-8 max-w-xs sm:max-w-md mx-auto leading-relaxed">
+                      {t("nutrition.noPlanDesc")}
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setShowGenerateModal(true)}
+                      disabled={isGenerating}
+                      className="cursor-pointer bg-white text-green-800 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg flex items-center gap-2.5 sm:gap-3 mx-auto hover:bg-green-50 transition-colors shadow-xl disabled:opacity-50"
+                    >
+                      {isGenerating ? (
+                        <>{t("nutrition.generating")}</>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span>{t("nutrition.buildMyPlan")}</span>
+                          <span>→</span>
+                        </>
+                      )}
+                    </motion.button>
                   </div>
-
-                  <p className="font-bold text-2xl text-white">
-                    {t("nutrition.noPlanTitle")}
-                  </p>
-
-                  <p className="text-sm text-white/70 max-w-xs leading-relaxed">
-                    {t('nutrition.noPlanDesc')}
-                    
-                  </p>
-
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setShowGenerateModal(true)}
-                    disabled={isGenerating}
-                    className="flex cursor-pointer items-center gap-2 bg-white px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 relative overflow-hidden group mt-2"
-                    style={{ color: "#145c30" }}
-                  >
-                    {isGenerating ? (
-                      <>{t('nutrition.generating')}</>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        <span>{t('nutrition.buildMyPlan')}</span>
-                        <span>→</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
+                </motion.div>
               )}
             </div>
           </>

@@ -170,24 +170,26 @@ export const registerUser = async (
   await sendSubscriptionEmail(user.email, user.name);
 
   if (provider === "email") {
-    // انتبه: يفضل تحط رابط الفرونت اند حقك في ملف الـ env
-    const frontendUrl = env.CLIENT_URL || "http://localhost:3000";
-
-    // غير هذا السطر
-    // غير هذا السطر وخل الرابط يبدأ بـ CLIENT_URL
     const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;
 
-    const emailHtml = `
-            <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
-                <h2>مرحباً بك يا ${user.name} 👋</h2>
-                <p>سعداء بانضمامك لنا! عشان تفعل حسابك وتبدأ تستخدم التطبيق، اضغط على الزر تحت:</p>
-                <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
-                <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
-            </div>
-        `;
+    const isArabic = user.language === 'ar';
+    const emailHtml = isArabic ? `
+      <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
+        <h2>مرحباً بك يا ${user.name} 👋</h2>
+        <p>سعداء بانضمامك لنا! عشان تفعل حسابك وتبدأ تستخدم التطبيق، اضغط على الزر تحت:</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
+        <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
+      </div>
+    ` : `
+      <div style="font-family: Arial, sans-serif; text-align: center;">
+        <h2>Welcome, ${user.name}! 👋</h2>
+        <p>We're excited to have you! To activate your account and start using the app, click the button below:</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Verify Account</a>
+        <p style="color: #666; font-size: 12px;">This link is valid for 24 hours only.</p>
+      </div>
+    `;
 
-    // نستخدم خدمتك اللي في email.service.ts
-    await sendEmail(emailHtml, user.email, "توثيق حسابك الجديد");
+    await sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك الجديد" : "Verify Your New Account");
   }
 
   const payload = {
@@ -235,20 +237,31 @@ export const forgotPassword = async (email: string) => {
   // 4. نجهز الرابط اللي بيودي للفرونت اند
   const resetUrl = `${env.CLIENT_URL}/reset-password/${resetToken}`;
 
-  // 5. نرسل الإيميل
+  // 5. نرسل الإيميل بلغة المستخدم
+  const isArabic = user.language === 'ar';
+  const html = isArabic ? `
+    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; direction: rtl;">
+      <h2>إعادة تعيين كلمة المرور 🔒</h2>
+      <p>لقد استلمنا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
+      <p>اضغط على الزر أدناه لاختيار كلمة مرور جديدة:</p>
+      <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #047857; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">تغيير كلمة المرور</a>
+      <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة ساعة واحدة فقط. إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة.</p>
+    </div>
+  ` : `
+    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+      <h2>Reset Your Password 🔒</h2>
+      <p>We received a request to reset your password.</p>
+      <p>Click the button below to choose a new password:</p>
+      <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #047857; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset Password</a>
+      <p style="color: #666; font-size: 12px;">This link is valid for 1 hour only. If you didn't request this, you can safely ignore this email.</p>
+    </div>
+  `;
+
   const mailOptions = {
     from: `"Njerka Team" <${env.EMAIL_USER}>`,
     to: user.email,
-    subject: "إعادة تعيين كلمة المرور - Njerka",
-    html: `
-      <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
-        <h2>إعادة تعيين كلمة المرور 🔒</h2>
-        <p>لقد استلمنا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
-        <p>اضغط على الزر أدناه لاختيار كلمة مرور جديدة:</p>
-        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #047857; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">تغيير كلمة المرور</a>
-        <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة ساعة واحدة فقط. إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة.</p>
-      </div>
-    `,
+    subject: isArabic ? "إعادة تعيين كلمة المرور - Njerka" : "Reset Your Password - Njerka",
+    html,
   };
 
   await transporter.sendMail(mailOptions);
@@ -436,16 +449,24 @@ export const resendVerificationEmail = async (userId: string) => {
 
   const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;
 
-  const emailHtml = `
+  const isArabic = user.language === 'ar';
+  const emailHtml = isArabic ? `
     <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
       <h2>مرحباً بك يا ${user.name} 👋</h2>
       <p>لعلك طلبت إعادة إرسال رابط التوثيق. اضغط على الزر تحت عشان تفعل حسابك:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
       <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
     </div>
+  ` : `
+    <div style="font-family: Arial, sans-serif; text-align: center;">
+      <h2>Welcome, ${user.name}! 👋</h2>
+      <p>You requested a new verification link. Click the button below to activate your account:</p>
+      <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Verify Account</a>
+      <p style="color: #666; font-size: 12px;">This link is valid for 24 hours only.</p>
+    </div>
   `;
 
-  await sendEmail(emailHtml, user.email, "توثيق حسابك - Njerka");
+  await sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك - Njerka" : "Verify Your Email - Njerka");
 
   return { success: true, message: "تم إرسال رابط التوثيق إلى بريدك الإلكتروني" };
 };

@@ -144,21 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       syncLanguage(storedUser);
     }
 
-    // Then verify with backend
+    // Then verify with backend (parallel: user fetch + check-in)
     try {
-      const response = await api.get<MeResponse>('/users/me');
+      const [response] = await Promise.all([
+        api.get<MeResponse>('/users/me'),
+        gamificationService.checkIn().catch(() => {}),
+      ]);
       setUser(response.user);
       saveUserToStorage(response.user);
       syncLanguage(response.user);
-      
-      // Auto check-in on session load
-      try {
-        console.log("Auto check-in on session load");
-        const checkinResponse = await gamificationService.checkIn();
-        console.log("Auto check-in response:", checkinResponse);
-      } catch (checkInError) {
-        console.error('Auto check-in failed on session load:', checkInError);
-      }
     } catch {
       clearSession();
     } finally {
@@ -183,12 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveUserToStorage(response.user);
     syncLanguage(response.user);
     
-    // Auto check-in on login
-    try {
-      await gamificationService.checkIn();
-    } catch (checkInError) {
-      console.error('Auto check-in failed on login:', checkInError);
-    }
+    gamificationService.checkIn().catch(() => {});
     
     return { needsOnboarding: !response.user.onboardingCompleted };
   }, []);
@@ -199,12 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveUserToStorage(response.user);
     syncLanguage(response.user);
     
-    // Auto check-in on register (first check-in)
-    try {
-      await gamificationService.checkIn();
-    } catch (checkInError) {
-      console.error('Auto check-in failed on register:', checkInError);
-    }
+    gamificationService.checkIn().catch(() => {});
     
     return { needsOnboarding: !response.user.onboardingCompleted };
   }, []);

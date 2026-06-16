@@ -62,7 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Notification States
   const [showNotifications, setShowNotifications] = useState(false);
@@ -463,6 +463,16 @@ export const Layout: React.FC<LayoutProps> = ({
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => {
+                const newLang = i18n.language?.startsWith('ar') ? 'en' : 'ar';
+                i18n.changeLanguage(newLang);
+              }}
+              className="p-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              title={i18n.language?.startsWith('ar') ? 'English' : 'العربية'}
+            >
+              {i18n.language?.startsWith('ar') ? 'EN' : 'AR'}
+            </button>
+            <button
               onClick={() => setShowNotifications(true)}
               className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
@@ -486,18 +496,33 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
 
-        {/* Floating Bell Button for Desktop & Tablet */}
-        <button
-          onClick={() => setShowNotifications(true)}
-          className="hidden lg:flex absolute bottom-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
-        >
-          <Bell className="w-5 h-5 text-slate-600" />
-          {notifCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
-              {notifCount}
-            </span>
-          )}
-        </button>
+        {/* Floating Buttons for Desktop & Tablet */}
+        <div className="hidden lg:flex absolute bottom-6 end-10 z-40 items-center gap-2 flex-col">
+          {/* Language Toggle */}
+          <button
+            onClick={() => {
+              const newLang = i18n.language?.startsWith('ar') ? 'en' : 'ar';
+              i18n.changeLanguage(newLang);
+            }}
+            className="flex items-center justify-center w-11 h-11 p-0 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 text-xs font-bold text-slate-600"
+            title={i18n.language?.startsWith('ar') ? 'English' : 'العربية'}
+          >
+            {i18n.language?.startsWith('ar') ? 'EN' : 'AR'}
+          </button>
+
+          {/* Notification Bell */}
+          <button
+            onClick={() => setShowNotifications(true)}
+            className="relative flex items-center justify-center w-11 h-11 p-0 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+          >
+            <Bell className="w-5 h-5 text-slate-600" />
+            {notifCount > 0 && (
+              <span className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                {notifCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* Notification Sidebar */}
         <AnimatePresence>

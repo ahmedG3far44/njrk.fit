@@ -14,6 +14,7 @@ import {
   Star,
   Loader2,
 } from "lucide-react";
+import { Button } from './ui/button';
 
 import {
   gamificationService,
@@ -143,13 +144,10 @@ export const StreakRewards: React.FC = () => {
             {t('streaks.subtitle')}
           </p>
         </div>
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl font-bold hover:bg-green-100 transition-colors w-full sm:w-auto"
-        >
+        <Button variant="outline" size="default" onClick={handleShare}>
           <Share2 className="w-5 h-5" />
           {t('streaks.shareStreak')}
-        </button>
+        </Button>
       </div>
 
       {loading && (
@@ -462,9 +460,9 @@ export const StreakRewards: React.FC = () => {
                     )}
 
                     {milestone.unlocked && (
-                      <button className="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-green-800 transition-colors">
+                      <Button variant="primary" size="sm">
                         {t('streaks.claim')}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
