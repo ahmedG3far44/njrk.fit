@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { subscriptionService, SubscriptionStatus, CreateSubscriptionData } from '../services/subscriptionService';
 import { useAuth } from '../context/AuthProvider';
+import { useTranslation } from 'react-i18next';
 import SubscriptionCard from './SubscriptionCard';
 
 interface PlanFeature {
@@ -43,30 +44,31 @@ function StatusBadge({ status, cancelAtPeriodEnd, currentPeriodEnd }: {
   cancelAtPeriodEnd?: boolean;
   currentPeriodEnd?: string;
 }) {
+  const { t } = useTranslation();
   const config: Record<string, { bg: string; text: string; icon: React.ReactNode; label: string }> = {
     active: {
       bg: 'bg-green-100', text: 'text-green-700',
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: 'Active',
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: t('subscriptions.statusActive'),
     },
     past_due: {
       bg: 'bg-orange-100', text: 'text-orange-700',
-      icon: <AlertCircle className="w-3.5 h-3.5" />, label: 'Past Due',
+      icon: <AlertCircle className="w-3.5 h-3.5" />, label: t('subscriptions.statusPastDue'),
     },
     canceled: {
       bg: 'bg-red-100', text: 'text-red-700',
-      icon: <XCircle className="w-3.5 h-3.5" />, label: 'Canceled',
+      icon: <XCircle className="w-3.5 h-3.5" />, label: t('subscriptions.statusCanceled'),
     },
     trialing: {
       bg: 'bg-blue-100', text: 'text-blue-700',
-      icon: <Clock className="w-3.5 h-3.5" />, label: 'Trial',
+      icon: <Clock className="w-3.5 h-3.5" />, label: t('subscriptions.statusTrial'),
     },
     incomplete: {
       bg: 'bg-slate-100', text: 'text-slate-700',
-      icon: <Clock className="w-3.5 h-3.5" />, label: 'Incomplete',
+      icon: <Clock className="w-3.5 h-3.5" />, label: t('subscriptions.statusIncomplete'),
     },
     none: {
       bg: 'bg-slate-100', text: 'text-slate-600',
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: 'Free',
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: t('subscriptions.statusFree'),
     },
   };
 
@@ -81,7 +83,7 @@ function StatusBadge({ status, cancelAtPeriodEnd, currentPeriodEnd }: {
       {cancelAtPeriodEnd && currentPeriodEnd && (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
           <Clock className="w-3.5 h-3.5" />
-          Ends {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {t('common.ends')} {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
       )}
     </div>
@@ -128,6 +130,7 @@ function LoadingSkeleton() {
 }
 
 export const Subscription: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscribing, setSubscribing] = useState(false);
@@ -147,7 +150,7 @@ export const Subscription: React.FC = () => {
       setSubscriptionStatus(status);
     } catch (err) {
       console.error('Failed to fetch subscription status:', err);
-      setError('Could not load subscription details. Please try again.');
+      setError(t('subscriptions.failedToOpen'));
     } finally {
       setLoading(false);
     }
@@ -156,50 +159,50 @@ export const Subscription: React.FC = () => {
   const plans: PricingPlan[] = [
     {
       id: 'BASIC',
-      name: 'BASIC',
+      name: t('subscriptions.basicTier'),
       price: 0,
-      period: 'mo',
+      period: t('subscriptions.perMonth'),
       tier: 'BASIC',
       isPopular: false,
       isCurrent: subscriptionStatus?.subscriptionTier?.toUpperCase() === 'BASIC',
       features: [
-        { text: 'Basic AI Meal Suggestions', icon: <Sparkles className="w-4 h-4" /> },
-        { text: 'Standard Workout Library', icon: <Dumbbell className="w-4 h-4" /> },
-        { text: 'Basic Nutrition Tracking', icon: <BarChart3 className="w-4 h-4" /> },
-        { text: 'Community Access', icon: <Users className="w-4 h-4" /> },
+        { text: t('subscriptions.basicAIMeal'), icon: <Sparkles className="w-4 h-4" /> },
+        { text: t('subscriptions.basicWorkoutLib'), icon: <Dumbbell className="w-4 h-4" /> },
+        { text: t('subscriptions.basicTracking'), icon: <BarChart3 className="w-4 h-4" /> },
+        { text: t('subscriptions.basicCommunity'), icon: <Users className="w-4 h-4" /> },
       ],
     },
     {
       id: import.meta.env.VITE_STRIPE_PRO_PRICE_ID as string || 'PRO',
-      name: 'Pro',
+      name: t('subscriptions.proTier'),
       price: 19.99,
-      period: 'mo',
+      period: t('subscriptions.perMonth'),
       tier: 'PRO',
       planTier: 'PRO',
       features: [
-        { text: 'Unlimited AI Meal Gen', icon: <Sparkles className="w-4 h-4" /> },
-        { text: 'Full Workout Library', icon: <Dumbbell className="w-4 h-4" /> },
-        { text: 'Advanced Food Scanner', icon: <Utensils className="w-4 h-4" /> },
-        { text: 'Detailed Macro Analytics', icon: <BarChart3 className="w-4 h-4" /> },
-        { text: 'Priority Support', icon: <Crown className="w-4 h-4" /> },
+        { text: t('subscriptions.proAIMeal'), icon: <Sparkles className="w-4 h-4" /> },
+        { text: t('subscriptions.proWorkoutLib'), icon: <Dumbbell className="w-4 h-4" /> },
+        { text: t('subscriptions.proFoodScanner'), icon: <Utensils className="w-4 h-4" /> },
+        { text: t('subscriptions.proAnalytics'), icon: <BarChart3 className="w-4 h-4" /> },
+        { text: t('subscriptions.proPrioritySupport'), icon: <Crown className="w-4 h-4" /> },
       ],
       isPopular: true,
       isCurrent: subscriptionStatus?.subscriptionTier?.toUpperCase() === 'PRO',
     },
     {
       id: import.meta.env.VITE_STRIPE_FAMILY_PRICE_ID as string || 'family',
-      name: 'Family',
+      name: t('subscriptions.familyTier'),
       price: 29.99,
-      period: 'mo',
+      period: t('subscriptions.perMonth'),
       tier: 'family',
       planTier: 'family',
       features: [
-        { text: 'Up to 6 Family Members', icon: <Users className="w-4 h-4" /> },
-        { text: 'Unified Grocery List', icon: <Utensils className="w-4 h-4" /> },
-        { text: 'Family Challenges', icon: <Crown className="w-4 h-4" /> },
-        { text: 'Individual Calorie Targets', icon: <BarChart3 className="w-4 h-4" /> },
-        { text: 'Parental Controls', icon: <Shield className="w-4 h-4" /> },
-        { text: 'Dietitian Consultation', icon: <Sparkles className="w-4 h-4" /> },
+        { text: t('subscriptions.familyMembers'), icon: <Users className="w-4 h-4" /> },
+        { text: t('subscriptions.familyGrocery'), icon: <Utensils className="w-4 h-4" /> },
+        { text: t('subscriptions.familyChallenges'), icon: <Crown className="w-4 h-4" /> },
+        { text: t('subscriptions.familyCalories'), icon: <BarChart3 className="w-4 h-4" /> },
+        { text: t('subscriptions.familyControls'), icon: <Shield className="w-4 h-4" /> },
+        { text: t('subscriptions.familyDietitian'), icon: <Sparkles className="w-4 h-4" /> },
       ],
       isCurrent: subscriptionStatus?.subscriptionTier?.toUpperCase() === 'FAMILY',
     },
@@ -233,11 +236,11 @@ export const Subscription: React.FC = () => {
       if (response.checkoutUrl) {
         window.location.href = response.checkoutUrl;
       } else if (response.subscriptionId) {
-        toast.success(`Subscribed to ${plan.name} successfully!`);
+        toast.success(`${t('subscriptions.subscribe')} ${plan.name}`);
         await fetchSubscriptionStatus();
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Failed to subscribe';
+      const msg = err?.response?.data?.message || err?.message || t('subscriptions.failedToOpen');
       toast.error(msg);
     } finally {
       setSubscribing(false);
@@ -264,7 +267,7 @@ export const Subscription: React.FC = () => {
       const { url } = await subscriptionService.getPortal();
       window.location.href = url;
     } catch {
-      toast.error('Failed to open billing portal');
+      toast.error(t('subscriptions.failedToOpen'));
     }
   };
 
@@ -272,11 +275,11 @@ export const Subscription: React.FC = () => {
     setCanceling(true);
     try {
       await subscriptionService.cancel();
-      toast.success('Subscription will be canceled at the end of the billing period');
+      toast.success(t('subscriptions.cancelEndOfPeriod'));
       await fetchSubscriptionStatus();
       setShowCancelDetails(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Failed to cancel subscription';
+      const msg = err?.response?.data?.message || err?.message || t('subscriptions.failedToCancel');
       toast.error(msg);
     } finally {
       setCanceling(false);
@@ -302,7 +305,7 @@ export const Subscription: React.FC = () => {
           className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-800 transition-colors"
         >
           <Loader2 className="w-4 h-4" />
-          Try again
+          {t('common.tryAgain')}
         </button>
       </div>
     );
@@ -321,7 +324,7 @@ export const Subscription: React.FC = () => {
             <Crown className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Current Plan</p>
+            <p className="text-xs font-semibold text-slate-500 tracking-wide uppercase">{t('subscriptions.currentPlan')}</p>
             <h2 className="text-lg font-bold text-slate-900">{displayPlanName}</h2>
           </div>
         </div>
@@ -341,9 +344,9 @@ export const Subscription: React.FC = () => {
         >
           <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-orange-900 text-sm">Payment past due</p>
+            <p className="font-semibold text-orange-900 text-sm">{t('subscriptions.pastDueTitle')}</p>
             <p className="text-sm text-orange-700 mt-0.5">
-              Your last payment failed. Update your payment method through the billing portal to continue using all features.
+              {t('subscriptions.pastDueDesc')}
             </p>
           </div>
         </motion.div>
@@ -352,35 +355,35 @@ export const Subscription: React.FC = () => {
       {/* Metrics row */}
       <dl className="grid grid-cols-2 md:grid-cols-5 gap-px bg-slate-200 rounded-xl overflow-hidden">
         <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Started</dt>
+          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.started')}</dt>
           <dd className="text-sm font-bold text-slate-900 mt-1">
             {subscriptionStatus?.subscriptionStartDate
               ? formatDate(subscriptionStatus.subscriptionStartDate)
-              : 'N/A'}
+              : t('subscriptions.na')}
           </dd>
         </div>
         <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Next Charge</dt>
+          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.nextCharge')}</dt>
           <dd className="text-sm font-bold text-slate-900 mt-1">
             {subscriptionStatus?.currentPeriodEnd
               ? formatDate(subscriptionStatus.currentPeriodEnd)
-              : 'N/A'}
+              : t('subscriptions.na')}
           </dd>
         </div>
         <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</dt>
+          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.amount')}</dt>
           <dd className="text-sm font-bold text-slate-900 mt-1">
-            {displayPlanPrice === 0 ? 'Free' : `$${displayPlanPrice}/mo`}
+            {displayPlanPrice === 0 ? t('subscriptions.statusFree') : `$${displayPlanPrice}/mo`}
           </dd>
         </div>
         <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Billing</dt>
+          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.billing')}</dt>
           <dd className="text-sm font-bold text-slate-900 mt-1 capitalize">
-            {subscriptionStatus?.status === 'active' ? 'Monthly' : 'N/A'}
+            {subscriptionStatus?.status === 'active' ? t('subscriptions.monthly') : t('subscriptions.na')}
           </dd>
         </div>
         <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</dt>
+          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.payment')}</dt>
           <dd className="text-sm font-bold text-slate-900 mt-1">
             {subscriptionStatus?.cardLast4 ? `•••• ${subscriptionStatus.cardLast4}` : 'Stripe'}
           </dd>
@@ -395,7 +398,7 @@ export const Subscription: React.FC = () => {
             className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-800 transition-colors"
           >
             <Settings className="w-4 h-4" />
-            Manage Stripe
+            {t('subscriptions.manageStripe')}
           </button>
         )}
         {showCancelButton && !isCanceled && (
@@ -404,7 +407,7 @@ export const Subscription: React.FC = () => {
             className="inline-flex items-center gap-2 border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold hover:bg-slate-50 transition-colors"
           >
             <Pause className="w-4 h-4" />
-            Cancel Plan
+            {t('subscriptions.cancelPlan')}
           </button>
         )}
       </div>
@@ -420,12 +423,12 @@ export const Subscription: React.FC = () => {
             <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-semibold text-orange-900">
-                Your subscription will end on{' '}
+                {t('subscriptions.yourSubEnds')}{' '}
                 {subscriptionStatus?.currentPeriodEnd
                   ? formatDate(subscriptionStatus.currentPeriodEnd)
-                  : 'the end of the billing period'}
+                  : t('subscriptions.na')}
               </p>
-              <p className="text-sm text-orange-700 mt-0.5">You will keep access until then.</p>
+              <p className="text-sm text-orange-700 mt-0.5">{t('subscriptions.keepAccessUntil')}</p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <button
                   onClick={handleCancelSubscription}
@@ -433,16 +436,16 @@ export const Subscription: React.FC = () => {
                   className="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {canceling ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> {t('subscriptions.processing')}</>
                   ) : (
-                    <><Pause className="w-4 h-4" /> Yes, Cancel My Plan</>
+                    <><Pause className="w-4 h-4" /> {t('subscriptions.yesCancel')}</>
                   )}
                 </button>
                 <button
                   onClick={() => setShowCancelDetails(false)}
                   className="inline-flex items-center gap-2 border border-orange-300 text-orange-800 px-5 py-2.5 rounded-xl font-bold hover:bg-orange-100 transition-colors"
                 >
-                  Keep My Plan
+                  {t('subscriptions.keepMyPlan')}
                 </button>
               </div>
             </div>
@@ -454,29 +457,28 @@ export const Subscription: React.FC = () => {
       {isFamilyPlan ? (
         <div className="pt-4 text-center">
           <h2 className="text-xl font-bold text-slate-900">
-            Manage Your Family Plan
+            {t('subscriptions.manageYourPlan')}
           </h2>
           <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
-            Manage your family members and their subscriptions.
+            {t('subscriptions.manageYourPlanDesc')}
           </p>
         </div>
       ) : (
         <div className="pt-4 text-center">
           <h2 className="text-xl font-bold text-slate-900">
-            {isPaidTier ? 'Upgrade your plan' : 'Choose your plan'}
+            {isPaidTier ? t('subscriptions.upgradePlan') : t('subscriptions.choosePlan')}
           </h2>
-        <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
-          {isPaidTier
-            ? `You are on the ${currentPlan.name} plan. Unlock more features with a higher tier.`
-            : 'Unlock AI-powered meal plans, advanced analytics, and exclusive workouts.'}
-        </p>
-      </div >
-      )
-     }
+          <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+            {isPaidTier
+              ? `${t('subscriptions.onPlan')} ${currentPlan.name}. ${t('subscriptions.unlockMore')}`
+              : t('subscriptions.unlockFeatures')}
+          </p>
+        </div>
+      )}
 
-{/* Plan grid */ }
-<PricingSection availablePlans={availablePlans} isFamilyPlan={isFamilyPlan} subscribing={subscribing} handleSubscribe={handleSubscribe} />
-    </div >
+      {/* Plan grid */}
+      <PricingSection availablePlans={availablePlans} isFamilyPlan={isFamilyPlan} subscribing={subscribing} handleSubscribe={handleSubscribe} />
+    </div>
   );
 };
 

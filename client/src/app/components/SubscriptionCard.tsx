@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Sparkles, Check, CheckCircle2, Loader2, ChevronRight } from "lucide-react";
 import { ReactNode } from "react";
+import { useTranslation } from 'react-i18next';
 
 export interface SubscriptionFeature {
     icon?: ReactNode;
@@ -32,6 +33,7 @@ export default function SubscriptionCard({
     isFamilyPlan = false,
     onSubscribe,
 }: SubscriptionCardProps) {
+    const { t } = useTranslation();
     return (
         <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -46,7 +48,7 @@ export default function SubscriptionCard({
             {plan.isPopular && !plan.isCurrent && (
                 <div className="absolute -top-3 left-6 bg-green-700 text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    Most Popular
+                    {t('subscriptions.mostPopular')}
                 </div>
             )}
 
@@ -90,16 +92,16 @@ export default function SubscriptionCard({
                 >
                     {plan.isCurrent ? (
                         <>
-                            <CheckCircle2 className="w-4 h-4" /> Current Plan
+                            <CheckCircle2 className="w-4 h-4" /> {t('subscriptions.currentPlan')}
                         </>
                     ) : subscribing ? (
                         <>
-                            <Loader2 className="w-4 h-4 animate-spin" /> Processing...
+                            <Loader2 className="w-4 h-4 animate-spin" /> {t('subscriptions.processing')}
                         </>
                     ) : (
                         <>
-                            {isFamilyPlan ? 'Upgrade to Family' : 'Subscribe'}
-                            <ChevronRight className="w-4 h-4" />
+                            {isFamilyPlan ? t('subscriptions.upgradeToFamily') : t('subscriptions.subscribe')}
+                            <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                         </>
                     )}
                 </button>

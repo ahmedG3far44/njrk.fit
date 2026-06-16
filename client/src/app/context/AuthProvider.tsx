@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { gamificationService } from '../services/gamificationService';
+import i18n from '../i18n/i18n';
 
 const STORAGE_KEY = 'njerka_user';
 
@@ -39,6 +40,7 @@ export interface AuthUser {
   }
   dietaryRestrictions?: string[];
   allergies?: string[];
+  language?: 'en' | 'ar';
   [key: string]: unknown;
 }
 
@@ -61,6 +63,7 @@ export interface OnboardingData {
   targetWeight: number;
   fitnessGoal: string;
   goalDate?: string;
+  language?: 'en' | 'ar';
 }
 
 interface AuthContextValue {
@@ -91,6 +94,12 @@ interface OnboardingResponse {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const syncLanguage = (user: AuthUser) => {
+  if (user.language) {
+    i18n.changeLanguage(user.language);
+  }
+};
 
 const saveUserToStorage = (user: AuthUser) => {
   try {
@@ -131,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = getUserFromStorage();
     if (storedUser) {
       setUser(storedUser);
+      syncLanguage(storedUser);
     }
 
     // Then verify with backend
@@ -138,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.get<MeResponse>('/users/me');
       setUser(response.user);
       saveUserToStorage(response.user);
+      syncLanguage(response.user);
       
       // Auto check-in on session load
       try {
@@ -159,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await api.get<MeResponse>('/users/me');
       setUser(response.user);
       saveUserToStorage(response.user);
+      syncLanguage(response.user);
     } catch {
       clearSession();
     }
@@ -168,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await api.post<AuthLoginResponse>('/auth/login', credentials, { skipAuthRefresh: true });
     setUser(response.user);
     saveUserToStorage(response.user);
+    syncLanguage(response.user);
     
     // Auto check-in on login
     try {
@@ -183,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await api.post<AuthLoginResponse>('/auth/register', credentials, { skipAuthRefresh: true });
     setUser(response.user);
     saveUserToStorage(response.user);
+    syncLanguage(response.user);
     
     // Auto check-in on register (first check-in)
     try {
@@ -197,8 +211,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const completeOnboarding = useCallback(async (data: OnboardingData) => {
     await api.post<OnboardingResponse>('/auth/onboarding', data);
     setUser(prev => {
-      const updated = prev ? { ...prev, onboardingCompleted: true } : null;
-      if (updated) saveUserToStorage(updated);
+      const updated = prev ? { ...prev, onboardingCompleted: true, language: data.language || prev.language } : null;
+      if (updated) {
+        saveUserToStorage(updated);
+        syncLanguage(updated);
+      }
       return updated;
     });
   }, []);

@@ -27,6 +27,7 @@ import { useAuth } from "../context/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { familyService, PendingInvitation } from "../services/familyService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface Notification {
   id: string;
@@ -61,6 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   // Notification States
   const [showNotifications, setShowNotifications] = useState(false);
@@ -87,10 +89,9 @@ export const Layout: React.FC<LayoutProps> = ({
       const seedNotif = {
         id: `local_meal_${Date.now()}`,
         type: "meal_reminder" as const,
-        title: "Meal Reminder",
-        message:
-          "Welcome to Njerka! Time for your scheduled healthy meal! Make sure to log your calories.",
-        time: "Just now",
+        title: t("layout.mealReminder"),
+        message: t("layout.welcomeNotification"),
+        time: t("layout.justNow"),
         isLocal: true,
         isRead: false,
       };
@@ -112,10 +113,10 @@ export const Layout: React.FC<LayoutProps> = ({
         response.pendingInvitations.map((invite: PendingInvitation) => ({
           id: invite.id,
           type: "family_invite" as const,
-          title: invite.user?.name || "Family Invitation",
-          message: `${invite.user?.name || "Someone"} invited you to join their family plan`,
+          title: invite.user?.name || t("layout.familyInvitation"),
+          message: `${invite.user?.name || t("layout.someone")} ${t("layout.invitedYou")}`,
           avatar: invite.user?.avatarUrl,
-          time: "Just now",
+          time: t("layout.justNow"),
           invitationId: invite.id,
         }));
 
@@ -167,8 +168,8 @@ export const Layout: React.FC<LayoutProps> = ({
       setRespondedNotifs((prev) => ({ ...prev, [id]: response }));
       toast.success(
         response === "accepted"
-          ? "Invitation accepted!"
-          : "Invitation declined",
+          ? t("layout.invitationAccepted")
+          : t("layout.invitationDeclined"),
       );
 
       // Remove from list after a delay
@@ -177,7 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({
       }, 1500);
     } catch (error) {
       console.error("Failed to respond to invitation:", error);
-      toast.error("Failed to respond. Please try again.");
+      toast.error(t("layout.invitationFailed"));
     } finally {
       setRespondingId(null);
     }
@@ -196,7 +197,7 @@ export const Layout: React.FC<LayoutProps> = ({
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       );
-      toast.success("Notification marked as read");
+      toast.success(t("layout.markedAsRead"));
     }
   };
 
@@ -209,7 +210,7 @@ export const Layout: React.FC<LayoutProps> = ({
         const filtered = localNotifs.filter((n: any) => n.id !== id);
         localStorage.setItem("local_notifications", JSON.stringify(filtered));
       }
-      toast.success("Notification removed");
+      toast.success(t("layout.notificationRemoved"));
     }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
@@ -232,71 +233,71 @@ export const Layout: React.FC<LayoutProps> = ({
   const navItems = [
     {
       id: "insights",
-      label: "Dashboard",
+      label: t("layout.sidebarDashboard"),
       icon: LayoutDashboard,
       color: "text-green-700",
     },
     {
       id: "streaks",
-      label: "Streaks & Rewards",
+      label: t("layout.sidebarStreaks"),
       icon: Flame,
       color: "text-orange-500",
     },
     {
       id: "schedule",
-      label: "Schedule",
+      label: t("layout.sidebarSchedule"),
       icon: Calendar,
       color: "text-blue-600",
     },
     {
       id: "nutrition",
-      label: "Nutrition",
+      label: t("layout.sidebarNutrition"),
       icon: Utensils,
       color: "text-green-700",
     },
     {
       id: "grocery",
-      label: "Grocery List",
+      label: t("layout.sidebarGrocery"),
       icon: ShoppingCart,
       color: "text-emerald-600",
     },
     {
       id: "fitness",
-      label: "Fitness",
+      label: t("layout.sidebarFitness"),
       icon: Dumbbell,
       color: "text-green-800",
     },
     {
       id: "progress",
-      label: "Progress",
+      label: t("layout.sidebarProgress"),
       icon: LineChart,
       color: "text-blue-500",
     },
     {
       id: "community",
-      label: "Community",
+      label: t("layout.sidebarCommunity"),
       icon: Users,
       color: "text-pink-600",
     },
     {
       id: "subscriptions",
-      label: "Subscription",
+      label: t("layout.sidebarSubscription"),
       icon: Zap,
       color: "text-amber-500",
     },
     {
       id: "settings",
-      label: "Settings",
+      label: t("layout.sidebarSettings"),
       icon: Settings,
       color: "text-slate-500",
     },
   ];
 
   const bottomNavItems = [
-    { id: "insights", path: "/insights", label: "Home", icon: LayoutDashboard },
-    { id: "nutrition", path: "/nutrition", label: "Nutrition", icon: Utensils },
-    { id: "fitness", path: "/fitness", label: "Fitness", icon: Dumbbell },
-    { id: "progress", path: "/progress", label: "Progress", icon: LineChart },
+    { id: "insights", path: "/insights", label: t("layout.bottomNavHome"), icon: LayoutDashboard },
+    { id: "nutrition", path: "/nutrition", label: t("layout.bottomNavNutrition"), icon: Utensils },
+    { id: "fitness", path: "/fitness", label: t("layout.bottomNavFitness"), icon: Dumbbell },
+    { id: "progress", path: "/progress", label: t("layout.bottomNavProgress"), icon: LineChart },
   ];
 
   const handleLogoutClick = () => {
@@ -339,24 +340,23 @@ export const Layout: React.FC<LayoutProps> = ({
                 <LogOut className="w-7 h-7 text-red-500" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">
-                Log Out?
+                {t("layout.logoutTitle")}
               </h3>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                You'll be returned to the landing page. Your data is always
-                saved.
+                {t("layout.logoutMessage")}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
                   className="flex-1 py-3 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition-colors text-sm"
                 >
-                  Cancel
+                  {t("layout.cancel")}
                 </button>
                 <button
                   onClick={handleLogoutConfirm}
                   className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors text-sm"
                 >
-                  Log Out
+                  {t("layout.logoutConfirm")}
                 </button>
               </div>
             </motion.div>
@@ -388,7 +388,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 {isActive && (
                   <motion.div
                     layoutId="activeNav"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-700 rounded-r-full"
+                    className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-700 rounded-e-full"
                   />
                 )}
                 <div
@@ -404,7 +404,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
                 <span className="text-sm">{item.label}</span>
                 {isActive && (
-                  <ChevronRight className="w-3.5 h-3.5 ml-auto text-green-500" />
+                  <ChevronRight className="w-3.5 h-3.5 ms-auto text-green-500 rtl:rotate-180" />
                 )}
               </button>
             );
@@ -420,7 +420,7 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent group-hover:bg-red-100 transition-colors flex-shrink-0">
               <LogOut className="w-4 h-4" />
             </div>
-            <span className="text-sm">Log Out</span>
+            <span className="text-sm">{t("layout.logout")}</span>
           </button>
         </div>
 
@@ -435,21 +435,21 @@ export const Layout: React.FC<LayoutProps> = ({
             <div className="flex items-center gap-2 mb-1.5 font-bold text-sm relative z-10">
               <Users className="w-4 h-4" />{" "}
               {user?.subscription?.subscriptionTier === "BASIC"
-                ? "Free"
+                ? t("layout.planFree")
                 : user?.subscription?.subscriptionTier === "PRO"
-                  ? "Pro"
-                  : "Family"}{" "}
-              Plan
+                  ? t("layout.planPro")
+                  : t("layout.planFamily")}{" "}
+              {t("layout.planLabel")}
             </div>
             <p className="text-xs text-green-200 mb-3 relative z-10 leading-relaxed">
               {user?.subscription?.subscriptionTier === "BASIC"
-                ? "Upgrade to unlock more features"
+                ? t("layout.planUpgradeBasic")
                 : user?.subscription?.subscriptionTier === "PRO"
-                  ? "Upgrade to Family Plan to add more members."
-                  : "Manage your family's nutrition."}
+                  ? t("layout.planUpgradePro")
+                  : t("layout.planUpgradeFamily")}
             </p>
             <div className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-xs font-bold py-2 px-3 rounded-xl transition-colors w-fit relative z-10">
-              Manage Profiles <ChevronRight className="w-3 h-3" />
+              {t("layout.manageProfiles")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
             </div>
           </motion.div>
         </div>
@@ -489,7 +489,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Floating Bell Button for Desktop & Tablet */}
         <button
           onClick={() => setShowNotifications(true)}
-          className="hidden lg:flex absolute top-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+          className="hidden lg:flex absolute bottom-6 right-10 z-40 items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
         >
           <Bell className="w-5 h-5 text-slate-600" />
           {notifCount > 0 && (
@@ -507,7 +507,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed top-0 left-0 right-0 bottom-0 w-screen min-h-screen z-50 bg-black/30 backdrop-blur-sm"
+                className="fixed top-0 start-0 end-0 bottom-0 w-screen min-h-screen z-50 bg-black/30 backdrop-blur-sm"
                 onClick={() => setShowNotifications(false)}
               />
               <motion.div
@@ -515,13 +515,13 @@ export const Layout: React.FC<LayoutProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 320 }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
+                className="fixed top-0 end-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
               >
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
                   <div>
-                    <h3 className="font-bold text-lg">Notification Center</h3>
+                    <h3 className="font-bold text-lg">{t("layout.notificationCenter")}</h3>
                     <p className="text-green-200 text-sm">
-                      {notifCount} new notifications
+                      {notifCount} {t("layout.notificationCount")}
                     </p>
                   </div>
                   <button
@@ -536,13 +536,13 @@ export const Layout: React.FC<LayoutProps> = ({
                   {loadingInvitations ? (
                     <div className="text-center py-12 text-slate-400">
                       <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
-                      <p className="font-medium">Loading notifications...</p>
+                      <p className="font-medium">{t("layout.loadingNotifications")}</p>
                     </div>
                   ) : notifications.length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
                       <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">All caught up!</p>
-                      <p className="text-sm">No new notifications</p>
+                      <p className="font-medium">{t("layout.allCaughtUp")}</p>
+                      <p className="text-sm">{t("layout.noNewNotifications")}</p>
                     </div>
                   ) : (
                     notifications.map((notif) => (
@@ -568,7 +568,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                 {notifTypeIcon(notif.type)}
                               </div>
                             )}
-                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
                               {notifTypeIcon(notif.type)}
                             </div>
                           </div>
@@ -599,7 +599,7 @@ export const Layout: React.FC<LayoutProps> = ({
                               onClick={() => handleMarkAsRead(notif.id)}
                               className="px-2.5 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                             >
-                              <Check className="w-3 h-3" /> Mark as read
+                              <Check className="w-3 h-3" /> {t("layout.markAsRead")}
                             </button>
                           </div>
                         )}
@@ -607,7 +607,7 @@ export const Layout: React.FC<LayoutProps> = ({
                         {notif.isLocal && notif.isRead && (
                           <div className="mt-3 flex justify-end">
                             <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 select-none">
-                              <Check className="w-3 h-3 text-slate-400" /> Read
+                              <Check className="w-3 h-3 text-slate-400" /> {t("layout.read")}
                             </span>
                           </div>
                         )}
@@ -626,7 +626,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
                                   <>
-                                    <Check className="w-3.5 h-3.5" /> Accept
+                                    <Check className="w-3.5 h-3.5" /> {t("layout.accept")}
                                   </>
                                 )}
                               </button>
@@ -640,7 +640,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                 {respondingId === notif.id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
-                                  "Decline"
+                                  t("layout.decline")
                                 )}
                               </button>
                             </div>
@@ -651,8 +651,8 @@ export const Layout: React.FC<LayoutProps> = ({
                             className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === "accepted" ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-400"}`}
                           >
                             {respondedNotifs[notif.id] === "accepted"
-                              ? "✓ Accepted"
-                              : "✕ Declined"}
+                              ? t("layout.accepted")
+                              : t("layout.declined")}
                           </div>
                         )}
                       </motion.div>
@@ -672,7 +672,7 @@ export const Layout: React.FC<LayoutProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-              className="absolute top-[61px] left-0 right-0 bottom-0 bg-white/95 backdrop-blur-xl z-20 lg:hidden overflow-y-auto"
+              className="absolute top-[61px] start-0 end-0 bottom-0 bg-white/95 backdrop-blur-xl z-20 lg:hidden overflow-y-auto"
             >
               <nav className="p-4 space-y-1 pb-28">
                 {navItems.map((item, i) => {
@@ -706,7 +706,7 @@ export const Layout: React.FC<LayoutProps> = ({
                       </div>
                       <span className="font-semibold">{item.label}</span>
                       {isActive && (
-                        <div className="ml-auto w-2 h-2 bg-green-600 rounded-full" />
+                        <div className="ms-auto w-2 h-2 bg-green-600 rounded-full" />
                       )}
                     </motion.button>
                   );
@@ -730,7 +730,7 @@ export const Layout: React.FC<LayoutProps> = ({
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-50">
                     <LogOut className="w-5 h-5" />
                   </div>
-                  <span className="font-semibold">Log Out</span>
+                  <span className="font-semibold">{t("layout.logout")}</span>
                 </motion.button>
               </nav>
             </motion.div>
@@ -751,9 +751,9 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         {/* ── Mobile Bottom Tab Bar ── */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30">
+        <div className="lg:hidden fixed bottom-0 start-0 end-0 z-30">
           <div className="bg-white/90 backdrop-blur-xl border-t border-slate-100 px-2 pt-2 pb-4 shadow-2xl shadow-slate-900/10">
-            <div className="flex items-center justify-around max-w-md mx-auto">
+            <div className="flex items-center justify-around">
               {bottomNavItems.map((item) => {
                 const isActive = currentView === item.id; // Treat "insights" as "home" for bottom nav
                 return (
@@ -763,7 +763,7 @@ export const Layout: React.FC<LayoutProps> = ({
                       onChangeView(item.path);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl transition-all relative"
+                    className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all relative"
                   >
                     {isActive && (
                       <motion.div
@@ -788,7 +788,7 @@ export const Layout: React.FC<LayoutProps> = ({
               {/* More Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="flex flex-col items-center gap-1 px-5 py-1.5 rounded-2xl transition-all relative"
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all relative"
               >
                 {isMobileMenuOpen && (
                   <motion.div
@@ -806,7 +806,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 <span
                   className={`text-[10px] font-bold relative z-10 ${isMobileMenuOpen ? "text-slate-700" : "text-slate-400"}`}
                 >
-                  More
+                  {t("layout.bottomNavMore")}
                 </span>
               </button>
             </div>

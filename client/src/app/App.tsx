@@ -1,4 +1,6 @@
-﻿import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router";
+﻿import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router";
 import {
   DashboardLayout,
   FitnessPage,
@@ -76,9 +78,23 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const LanguageWatcher = () => {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const lang = i18n.language?.startsWith('ar') ? 'ar' : 'en';
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dir;
+  }, [i18n.language]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <BrowserRouter>
+      <LanguageWatcher />
       <Routes>
         <Route index path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />

@@ -22,6 +22,8 @@ import {
 import { nutritionService } from "../services/nutritionService";
 import { fitnessService } from "../services/fitnessService";
 import { gamificationService } from "../services/gamificationService";
+import { useTranslation } from "react-i18next";
+import GoalProgressBar from "./GoalProgressBar";
 
 interface DashboardProps {
   user: any;
@@ -34,11 +36,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onChangeView,
   onOpenCam,
 }) => {
+  const { t } = useTranslation();
   const [aiTipVisible, setAiTipVisible] = useState(true);
 
   const [nutrition, setNutrition] = useState([
     {
-      label: "Calories",
+      label: t("dashboard.calories"),
       current: 0,
       target: 0,
       unit: "kcal",
@@ -47,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       text: "text-orange-600",
     },
     {
-      label: "Protein",
+      label: t("dashboard.protein"),
       current: 0,
       target: 0,
       unit: "g",
@@ -56,7 +59,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       text: "text-blue-600",
     },
     {
-      label: "Carbs",
+      label: t("dashboard.carbs"),
       current: 0,
       target: 0,
       unit: "g",
@@ -65,7 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       text: "text-green-600",
     },
     {
-      label: "Fat",
+      label: t("dashboard.fat"),
       current: 0,
       target: 0,
       unit: "g",
@@ -77,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const [vitals, setVitals] = useState([
     {
-      label: "Water",
+      label: t("dashboard.waterLabel"),
       value: "0L",
       target: "2.5L",
       icon: Droplets,
@@ -87,7 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       progressColor: "bg-blue-500",
     },
     {
-      label: "Sleep",
+      label: t("dashboard.sleepLabel"),
       value: "0h",
       target: "8h",
       icon: Moon,
@@ -97,7 +100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       progressColor: "bg-teal-500",
     },
     {
-      label: "Steps",
+      label: t("dashboard.stepsLabel"),
       value: "0",
       target: "10000",
       icon: Activity,
@@ -140,8 +143,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   });
 
   const [aiTip, setAiTip] = useState({
-    content:
-      "Logging breakfast before 9am correlates with higher daily energy. Try it tomorrow.",
+    content: t("dashboard.aiInsightContent"),
   });
 
   const [loading, setLoading] = useState({
@@ -182,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         setNutrition([
           {
-            label: "Calories",
+            label: t("dashboard.calories"),
             current: consumed.calories,
             target: targetMacros.calories,
             unit: "kcal",
@@ -191,7 +193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             text: "text-orange-600",
           },
           {
-            label: "Protein",
+            label: t("dashboard.protein"),
             current: consumed.protein,
             target: targetMacros.protein,
             unit: "g",
@@ -200,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             text: "text-blue-600",
           },
           {
-            label: "Carbs",
+            label: t("dashboard.carbs"),
             current: consumed.carbs,
             target: targetMacros.carbs,
             unit: "g",
@@ -209,7 +211,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             text: "text-green-600",
           },
           {
-            label: "Fat",
+            label: t("dashboard.fat"),
             current: consumed.fats,
             target: targetMacros.fats,
             unit: "g",
@@ -291,7 +293,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         setVitals([
           {
-            label: "Water",
+            label: t("dashboard.waterLabel"),
             value: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
             target: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
             icon: Droplets,
@@ -301,7 +303,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             progressColor: "bg-blue-500",
           },
           {
-            label: "Sleep",
+            label: t("dashboard.sleepLabel"),
             value: `${insightsRes.estimatedSleepHours}h`,
             target: `8h`,
             icon: Moon,
@@ -314,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             progressColor: "bg-teal-500",
           },
           {
-            label: "Steps",
+            label: t("dashboard.stepsLabel"),
             value: stepGoal.toLocaleString(),
             target: stepGoal.toLocaleString(),
             icon: Activity,
@@ -338,44 +340,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [fetchNutritionData, fetchFitnessData, fetchGamificationData]);
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-4 sm:space-y-6 pb-8">
       {/* ── Hero Greeting ── */}
       <motion.div
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl max-sm:text-xl font-bold sm:font-semibold text-slate-900 leading-tight">
-            Good morning, {user?.name || "friend"}.
+          <h1 className="text-2xl sm:text-3xl max-sm:text-xl font-bold sm:font-semibold text-slate-900 leading-tight">
+            {t("dashboard.greetingMorning")} {user?.name || t("dashboard.greetingFriend")}.
           </h1>
           <p className="text-slate-500 text-xs mt-1">
             {streakData.currentStreak > 0 ? (
               <>
-                You're on a{" "}
+                {t("dashboard.streakActive")}{" "}
                 <span className="inline-flex items-center gap-1 text-orange-500 font-bold">
-                  <Flame className="w-4 h-4" /> {streakData.currentStreak}-day
-                  streak
+                  <Flame className="w-3.5 h-3.5" /> {streakData.currentStreak}{t("dashboard.dayStreakLabel")}
                 </span>
-                . Keep it up!
+                . {t("dashboard.keepItUp")}
               </>
             ) : (
-              "Start your wellness journey today!"
+              t("dashboard.startJourney")
             )}
           </p>
         </div>
 
         {/* Today's Focus Card */}
-        <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl">
-          <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-4 h-4 text-green-700 animate-pulse" />
+        <div className="flex items-center gap-3 bg-white px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-50 sm:border-transparent w-fit">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-50 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700 animate-pulse" />
           </div>
-          <div className="text-left">
-            <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+          <div className="text-start">
+            <div className="text-[9px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
               Today's Focus
             </div>
-            <div className="text-sm font-black text-slate-800">
+            <div className="text-xs sm:text-sm font-black text-slate-800">
               {new Date().toLocaleDateString("en-US", {
                 weekday: "short",
                 month: "short",
@@ -393,37 +394,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         whileHover={{ scale: 1.005 }}
-        className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 rounded-3xl p-[2px] shadow-xl shadow-orange-200/50 cursor-pointer"
+        className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 rounded-2xl sm:rounded-3xl p-[2px] shadow-lg sm:shadow-xl shadow-orange-200/50 cursor-pointer"
       >
-        <div className="bg-white rounded-[22px] p-5 flex items-center justify-between relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-2/5 bg-gradient-to-l from-orange-50/80 to-transparent pointer-events-none" />
+        <div className="bg-white rounded-[14px] sm:rounded-[22px] p-4 sm:p-5 flex items-center justify-between relative overflow-hidden">
+          <div className="absolute end-0 top-0 bottom-0 w-2/5 bg-gradient-to-l from-orange-50/80 to-transparent pointer-events-none" />
 
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="w-14 h-14 flex items-center justify-center">
-              <span className="text-4xl">🔥</span>
+          <div className="relative z-10 flex items-center gap-3.5 sm:gap-4">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center text-2xl sm:text-4xl">
+              🔥
             </div>
             <div>
-              <div className="flex items-baseline gap-2 mb-0.5">
-                <span className="text-4xl font-black text-slate-900">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mb-0.5">
+                <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none">
                   {streakData.currentStreak || "-"}
                 </span>
-                <span className="font-bold text-slate-600">Day Streak</span>
+                <span className="font-bold text-slate-600 text-xs sm:text-base">{t("dashboard.dayStreak")}</span>
               </div>
-              <p className="text-xs text-slate-400">
-                Personal Best:{" "}
+              <p className="text-[10px] sm:text-xs text-slate-400">
+                {t("dashboard.streakPersonalBest")}{" "}
                 <span className="text-orange-500 font-bold">
-                  {streakData.personalBest || "-"} days
+                  {streakData.personalBest || "-"} {t("dashboard.days")}
                 </span>
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Log one more meal to keep it alive!
+              <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
+                {t("dashboard.logMoreMeals")}
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1 text-orange-500 relative z-10 ml-3">
-            <span className="text-xs font-bold">Rewards</span>
-            <ChevronRight className="w-4 h-4" />
+          <div className="hidden sm:flex items-center gap-1 text-orange-500 relative z-10 ms-3">
+            <span className="text-xs font-bold">{t("dashboard.rewards")}</span>
+            <ChevronRight className="w-4 h-4 rtl:rotate-180" />
           </div>
         </div>
       </motion.div>
@@ -433,7 +434,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-        className="grid grid-cols-3 gap-4"
+        className="grid grid-cols-3 gap-2 sm:gap-4"
       >
         {vitals.map((v, i) => {
           const isSteps = v.label === "Steps";
@@ -460,36 +461,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-                className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                     <div
-                      className={`w-8 h-8 ${v.bg} rounded-xl flex items-center justify-center`}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 ${v.bg} rounded-lg sm:rounded-xl flex items-center justify-center`}
                     >
-                      <v.icon className={`w-4 h-4 ${v.color}`} />
+                      <v.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${v.color}`} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400">
-                      Target: {stepGoal.toLocaleString()}/d
+                    <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 truncate">
+                      {t("dashboard.target")} {stepGoal.toLocaleString()}
                     </span>
                   </div>
                   <div className="space-y-0.5">
-                    <div className="text-lg font-black text-slate-900 leading-tight">
+                    <div className="text-xs sm:text-lg font-black text-slate-900 leading-tight">
                       {stepGoal.toLocaleString()}{" "}
-                      <span className="text-[10px] text-slate-400 font-semibold">
-                        / day
+                      <span className="text-[8px] sm:text-[10px] text-slate-400 font-semibold">
+                        /d
                       </span>
                     </div>
-                    <div className="text-xs font-bold text-green-700">
+                    <div className="text-[10px] sm:text-xs font-bold text-green-700 leading-tight">
                       {totalSteps.toLocaleString()}{" "}
-                      <span className="text-[9px] text-slate-400 font-medium">
-                        total ({days}d)
+                      <span className="text-[8px] sm:text-[9px] text-slate-400 font-medium block sm:inline">
+                        {t("dashboard.total")} ({days}d)
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="text-[10px] font-semibold text-slate-400 mt-2">
-                  Daily & Total Steps
+                <div className="text-[8px] sm:text-[10px] font-semibold text-slate-400 mt-1.5">
+                  {t("dashboard.dailyTotalSteps")}
                 </div>
               </motion.div>
             );
@@ -501,21 +502,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-              className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div
-                  className={`w-8 h-8 ${v.bg} rounded-xl flex items-center justify-center`}
-                >
-                  <v.icon className={`w-4 h-4 ${v.color}`} />
+              <div>
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 ${v.bg} rounded-lg sm:rounded-xl flex items-center justify-center`}
+                  >
+                    <v.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${v.color}`} />
+                  </div>
+                  <span className="text-[9px] sm:text-xs font-bold text-slate-400">
+                    {v.target}
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-slate-400">
-                  {v.target}
-                </span>
+                <div className="font-bold text-xs sm:text-lg text-slate-900 mb-0.5 sm:mb-1 leading-none">{v.value}</div>
+                <div className="text-[10px] sm:text-xs text-slate-400 mb-1.5 sm:mb-2 leading-none">{v.label}</div>
               </div>
-              <div className="font-bold text-slate-900 mb-1">{v.value}</div>
-              <div className="text-xs text-slate-400 mb-2">{v.label}</div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1 sm:h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${v.progress}%` }}
@@ -528,53 +531,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
         })}
       </motion.div>
 
+      {/* ── Goal Progress ── */}
+      <GoalProgressBar user={user} />
+
       {/* ── Nutrition Snapshot ── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         onClick={() => onChangeView("nutrition")}
-        className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
+        className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
       >
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-100 rounded-lg sm:rounded-xl flex items-center justify-center">
               <Flame className="w-4 h-4 text-orange-500" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 leading-tight">
-                Nutrition Snapshot
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                {t("dashboard.nutritionSnapshot")}
               </h3>
-              <p className="text-xs text-slate-400">Daily macros progress</p>
+              <p className="text-[10px] sm:text-xs text-slate-400">{t("dashboard.dailyMacros")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-green-700 font-bold bg-green-50 px-2.5 py-1 rounded-lg">
-              Today
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-[10px] sm:text-xs text-green-700 font-bold bg-green-50 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg">
+              {t("dashboard.today")}
             </span>
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-green-600 transition-colors" />
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300 group-hover:text-green-600 transition-colors rtl:rotate-180" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+        <div className="grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-3 sm:gap-y-4">
           {nutrition.map((n, i) => (
             <div key={n.label}>
-              <div className="flex justify-between items-center mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-2 h-2 rounded-full ${n.color}`} />
-                  <span className="text-sm font-semibold text-slate-700">
+              <div className="flex justify-between items-center mb-1 sm:mb-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${n.color}`} />
+                  <span className="text-xs sm:text-sm font-semibold text-slate-700">
                     {n.label}
                   </span>
                 </div>
-                <span className="text-sm font-bold text-slate-900">
+                <span className="text-xs sm:text-sm font-bold text-slate-900">
                   {n.current}
-                  <span className="text-slate-400 font-normal text-xs">
+                  <span className="text-slate-400 font-normal text-[10px] sm:text-xs">
                     /{n.target}
                     {n.unit}
                   </span>
                 </span>
               </div>
-              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{
@@ -589,15 +595,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView("nutrition")}
-          className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 group relative"
+          className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-300 group relative"
         >
-          <div className="relative h-36 bg-slate-100">
+          <div className="relative h-28 sm:h-36 bg-slate-100">
             {upcomingMeal.image ? (
               <img
                 src={upcomingMeal.image}
@@ -606,39 +612,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
               />
             ) : (
               <div className="absolute flex items-center justify-center bg-slate-100">
-                <Utensils className="w-12 h-12 text-slate-300" />
+                <Utensils className="w-10 h-10 sm:w-12 sm:h-12 text-slate-300" />
               </div>
             )}
             <div className="absolute bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
             {upcomingMeal.time && (
-              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-green-800 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+              <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-white/90 backdrop-blur-sm text-green-800 text-[10px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg flex items-center gap-1 shadow-sm">
                 <Clock className="w-3 h-3" /> {upcomingMeal.time}
               </div>
             )}
             {upcomingMeal.calories > 0 && (
-              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-orange-600 text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm">
+              <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-white/90 backdrop-blur-sm text-orange-600 text-[10px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg shadow-sm">
                 🔥 {upcomingMeal.calories} kcal
               </div>
             )}
           </div>
-          <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Utensils className="w-3.5 h-3.5 text-green-700" />
-              <span className="text-xs font-bold text-green-700 uppercase tracking-wider">
-                Upcoming Meal
+          <div className="p-3 sm:p-4">
+            <div className="flex items-center gap-1.5 mb-0.5 sm:mb-1">
+              <Utensils className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-700" />
+              <span className="text-[10px] sm:text-xs font-bold text-green-700 uppercase tracking-wider">
+                {t("dashboard.upcomingMeal")}
               </span>
             </div>
-            <h3 className="font-bold text-slate-900 mb-2.5 group-hover:text-green-700 transition-colors">
-              {upcomingMeal.name || "No meal scheduled"}
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-2 group-hover:text-green-700 transition-colors">
+              {upcomingMeal.name || t("dashboard.noMealScheduled")}
             </h3>
-            <div className="flex gap-2">
-              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-semibold">
+            <div className="flex gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-xs bg-blue-50 text-blue-700 px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg font-semibold">
                 P: {upcomingMeal.macros.p}
               </span>
-              <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg font-semibold">
+              <span className="text-[10px] sm:text-xs bg-green-50 text-green-700 px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg font-semibold">
                 C: {upcomingMeal.macros.c}
               </span>
-              <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded-lg font-semibold">
+              <span className="text-[10px] sm:text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg font-semibold">
                 F: {upcomingMeal.macros.f}
               </span>
             </div>
@@ -651,53 +657,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView("fitness")}
-          className="bg-gradient-to-br from-green-800 to-green-700 rounded-3xl p-6 cursor-pointer group relative overflow-hidden"
+          className="bg-gradient-to-br from-green-800 to-green-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 cursor-pointer group relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-green-700/20 rounded-full blur-xl -ml-6 -mb-6" />
+          <div className="absolute top-0 end-0 w-36 h-36 bg-white/10 rounded-full blur-2xl -me-10 -mt-10" />
+          <div className="absolute bottom-0 start-0 w-24 h-24 bg-green-700/20 rounded-full blur-xl -ms-6 -mb-6" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(255,255,255,0.05),transparent_60%)]" />
 
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Dumbbell className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Dumbbell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-green-200 uppercase tracking-wider">
-                  Next Workout
+                <span className="text-[10px] sm:text-xs font-bold text-green-200 uppercase tracking-wider">
+                  {t("dashboard.nextWorkout")}
                 </span>
                 <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
               </div>
             </div>
 
-            <h3 className="text-2xl font-bold text-white mb-1">
-              {nextWorkout.title || "No workout scheduled"}
+            <h3 className="text-lg xs:text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1 leading-tight">
+              {nextWorkout.title || t("dashboard.noWorkoutScheduled")}
             </h3>
-            <p className="text-green-200 text-sm mb-5">
+            <p className="text-green-200 text-xs sm:text-sm mb-4 sm:mb-5">
               {nextWorkout.time || ""}
             </p>
 
-            <div className="flex gap-2 mb-6 flex-wrap">
+            <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap">
               {nextWorkout.duration && (
-                <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 border border-white/10">
+                <span className="text-[10px] sm:text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg font-semibold flex items-center gap-1 border border-white/10">
                   <Clock className="w-3 h-3" /> {nextWorkout.duration}
                 </span>
               )}
               {nextWorkout.intensity && (
-                <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 border border-white/10">
+                <span className="text-[10px] sm:text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg font-semibold flex items-center gap-1 border border-white/10">
                   <Zap className="w-3 h-3" /> {nextWorkout.intensity}
                 </span>
               )}
               {nextWorkout.type && (
-                <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg font-semibold border border-white/10">
+                <span className="text-[10px] sm:text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg font-semibold border border-white/10">
                   {nextWorkout.type}
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-white font-bold group-hover:translate-x-0.5 transition-transform duration-200">
-              <span>View Routine</span>
-              <ArrowRight className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-white font-bold group-hover:translate-x-0.5 transition-transform duration-200 text-xs sm:text-sm">
+              <span>{t("dashboard.viewRoutine")}</span>
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </motion.div>
@@ -711,7 +717,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView("community")}
-          className="group relative h-44 rounded-3xl overflow-hidden cursor-pointer"
+          className="group relative h-36 sm:h-44 rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer"
         >
           <img
             src="https://images.unsplash.com/photo-1662549905044-e3f71c293989?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZpdG5lc3MlMjBmcmllbmRzJTIwc21pbGluZ3xlbnwxfHx8fDE3Njg3MDA1ODV8MA&ixlib=rb-4.1.0&q=80&w=1080"
@@ -720,16 +726,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-orange-600/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="absolute bottom-0 left-0 p-5 text-white">
-            <div className="flex items-center gap-1.5 mb-1">
+          <div className="absolute bottom-0 start-0 p-4 sm:p-5 text-white">
+            <div className="flex items-center gap-1.5 mb-0.5 sm:mb-1">
               <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider">
-                Live Challenge
+              <span className="text-[10px] sm:text-xs font-bold text-yellow-400 uppercase tracking-wider">
+                {t("dashboard.liveChallenge")}
               </span>
             </div>
-            <h3 className="font-bold">Step Challenge</h3>
-            <p className="text-white/70 text-xs mt-0.5">
-              Join the community challenge!
+            <h3 className="font-bold text-sm sm:text-base">{t("dashboard.stepChallenge")}</h3>
+            <p className="text-white/70 text-[10px] sm:text-xs mt-0.5">
+              {t("dashboard.joinCommunityChallenge")}
             </p>
           </div>
         </motion.div>
@@ -740,58 +746,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView("grocery")}
-          className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
+          className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
+          <div>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
+                </div>
+                <span className="text-[10px] sm:text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                  {t("dashboard.grocery")}
+                </span>
               </div>
-              <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                Grocery
-              </span>
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-200 group-hover:text-green-600 transition-colors rtl:rotate-180" />
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-200 group-hover:text-green-600 transition-colors" />
-          </div>
-          <h3 className="font-bold text-slate-900 mb-1">Shopping List</h3>
-          {groceryProgress.total > 0 ? (
-            <>
-              <p className="text-slate-400 text-xs mb-3">
-                {groceryProgress.total - groceryProgress.checked} items
-                remaining this week
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 mb-1">{t("dashboard.shoppingList")}</h3>
+            {groceryProgress.total > 0 ? (
+              <>
+                <p className="text-slate-400 text-[10px] sm:text-xs mb-2.5 sm:mb-3">
+                  {groceryProgress.total - groceryProgress.checked} {t("dashboard.itemsRemaining")}
+                </p>
+                <div className="h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${(groceryProgress.checked / groceryProgress.total) * 100}%`,
+                    }}
+                    transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                    className="h-full bg-emerald-500 rounded-full"
+                  />
+                </div>
+              </>
+            ) : (
+              <p className="text-slate-400 text-[10px] sm:text-xs">
+                {t("dashboard.noItems")}
               </p>
-              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${(groceryProgress.checked / groceryProgress.total) * 100}%`,
-                  }}
-                  transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-                  className="h-full bg-emerald-500 rounded-full"
-                />
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-slate-400">
-                  {groceryProgress.checked} of {groceryProgress.total} checked
-                </p>
-                <p className="text-xs font-bold text-emerald-600">
-                  {Math.round(
-                    (groceryProgress.checked / groceryProgress.total) * 100,
-                  )}
-                  %
-                </p>
-              </div>
-            </>
-          ) : (
-            <p className="text-slate-400 text-xs">
-              No items yet. Check your nutrition plan.
+            )}
+          </div>
+          <div className="flex items-center justify-between mt-2.5 pt-1">
+            <p className="text-[10px] sm:text-xs text-slate-400">
+              {groceryProgress.checked} {t("dashboard.of")} {groceryProgress.total} {t("dashboard.checked")}
             </p>
-          )}
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-slate-400">
-              {groceryProgress.checked} of {groceryProgress.total} checked
-            </p>
-            <p className="text-xs font-bold text-emerald-600">
+            <p className="text-[10px] sm:text-xs font-bold text-emerald-600">
               {groceryProgress.total > 0
                 ? Math.round(
                     (groceryProgress.checked / groceryProgress.total) * 100,
@@ -808,29 +804,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           onClick={() => onChangeView("streaks")}
-          className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.015] transition-transform duration-200 relative overflow-hidden group"
+          className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl sm:rounded-3xl p-4 sm:p-5 cursor-pointer hover:scale-[1.015] transition-transform duration-200 relative overflow-hidden group flex flex-col justify-between"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-6 -mt-6" />
-          <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-400/30 rounded-full blur-xl -ml-4 -mb-4" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-300" />
-                <span className="text-xs font-bold text-orange-100 uppercase tracking-wider">
-                  Rewards
-                </span>
+          <div className="absolute top-0 end-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -me-6 -mt-6" />
+          <div className="absolute bottom-0 start-0 w-16 h-16 bg-red-400/30 rounded-full blur-xl -ms-4 -mb-4" />
+          <div className="relative z-10 w-full h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Trophy className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-yellow-300" />
+                  <span className="text-[10px] sm:text-xs font-bold text-orange-100 uppercase tracking-wider">
+                    {t("dashboard.rewards")}
+                  </span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/50 group-hover:text-white transition-colors rtl:rotate-180" />
               </div>
-              <ChevronRight className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
+              <h3 className="font-bold text-white text-lg sm:text-xl mb-0.5">
+                {pointsData.current} {t("dashboard.pts")}
+              </h3>
+              <p className="text-orange-100 text-[10px] sm:text-xs mb-2.5 sm:mb-3">
+                {pointsData.nextReward > 0
+                  ? `${pointsData.nextReward} ${t("dashboard.ptsUntilBadge")}`
+                  : t("dashboard.startEarning")}
+              </p>
             </div>
-            <h3 className="font-bold text-white text-xl mb-0.5">
-              {pointsData.current} pts
-            </h3>
-            <p className="text-orange-100 text-xs mb-3">
-              {pointsData.nextReward > 0
-                ? `${pointsData.nextReward} pts until next badge!`
-                : "Start earning points!"}
-            </p>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-1.5 sm:h-2 bg-white/20 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{
@@ -852,23 +850,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
             transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="bg-gradient-to-r from-slate-900 to-green-900 rounded-3xl p-6 relative overflow-hidden"
+            className="bg-gradient-to-r from-slate-900 to-green-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-green-600/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-            <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-green-500/10 rounded-full blur-2xl -mb-10 pointer-events-none" />
+            <div className="absolute top-0 end-0 w-48 h-48 bg-green-600/20 rounded-full blur-3xl -me-16 -mt-16 pointer-events-none" />
+            <div className="absolute bottom-0 start-1/2 w-32 h-32 bg-green-500/10 rounded-full blur-2xl -mb-10 pointer-events-none" />
 
-            <div className="flex items-start gap-4 relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-700 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                <Brain className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-3 sm:gap-4 relative z-10">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-700 to-green-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold text-green-300 uppercase tracking-wider">
-                    AI Daily Insight
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                  <span className="text-[10px] sm:text-xs font-bold text-green-300 uppercase tracking-wider">
+                    {t("dashboard.aiDailyInsight")}
                   </span>
                   <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
                 </div>
-                <p className="text-white/90 text-sm leading-relaxed">
+                <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
                   {aiTip.content}
                 </p>
               </div>
@@ -876,14 +874,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => setAiTipVisible(false)}
                 className="text-white/40 hover:text-white/70 transition-colors p-1 flex-shrink-0"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
 
-            <div className="flex items-center gap-3 mt-5 pt-4 border-t border-white/10 relative z-10">
-              <Sparkles className="w-4 h-4 text-green-400" />
-              <p className="text-xs text-green-300 font-medium">
-                Powered by Njerka AI — updates daily based on your progress
+            <div className="flex items-center gap-2.5 sm:gap-3 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/10 relative z-10">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+              <p className="text-[10px] sm:text-xs text-green-300 font-medium">
+                {t("dashboard.aiInsightFooter")}
               </p>
             </div>
           </motion.div>

@@ -90,6 +90,7 @@ const envSchema = z.object({
     .default(process.env.GOOGLE_CLIENT_SECRET || ""),
 
   OPENROUTER_API_KEY: z.string().default(process.env.OPENROUTER_API_KEY || ""),
+  LLM_MODEL: z.string().default(process.env.LLM_MODEL || "google/gemma-2-9b-it:free"),
 
   CLOUDINARY_NAME: z.string().default(process.env.CLOUDINARY_NAME || ""),
   CLOUDINARY_API_KEY: z.string().default(process.env.CLOUDINARY_API_KEY || ""),
@@ -98,8 +99,8 @@ const envSchema = z.object({
     .default(process.env.CLOUDINARY_API_SECRET || ""),
 
   RAPIDAPI_KEY: z.string().default(process.env.RAPIDAPI_KEY || ""),
-  EMAIL_HOST: z.string().default(process.env.EMAIL_HOST || "smtp.gmail.com"),
-  EMAIL_PORT: z.string().default(process.env.EMAIL_PORT || "587"),
+  EMAIL_HOST: z.string().default(process.env.EMAIL_HOST || "smtp.hostinger.com"),
+  EMAIL_PORT: z.string().default(process.env.EMAIL_PORT || "465"),
   EMAIL_USER: z.string().default(process.env.EMAIL_USER || ""),
   EMAIL_PASSWORD: z.string().default(process.env.EMAIL_PASSWORD || ""),
 });

@@ -7,6 +7,9 @@ import { env } from './env';
 const openrouter = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+        "X-Title": "NJrk.Fit",
+    },
 });
 
 export { openrouter }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { CheckCircle2, Circle, Utensils, Dumbbell, Calendar, ChevronLeft, ChevronRight, Loader2, GripVertical, Cookie } from 'lucide-react';
@@ -37,6 +38,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
   getTypeColor,
   canComplete,
 }) => {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -106,13 +108,13 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                   slot.type === 'snack' ? 'text-amber-500' :
                   'text-blue-500'
                 }`}>
-                  {slot.type === 'workout' ? 'Training Session' : slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
+                  {slot.type === 'workout' ? t('schedule.trainingSession') : slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
                 </span>
               </div>
             </div>
             {slot.completed ? (
               <div className="flex items-center gap-1 text-green-600 text-sm font-bold">
-                <CheckCircle2 className="w-4 h-4" /> Done
+                <CheckCircle2 className="w-4 h-4" /> {t("schedule.done")}
               </div>
             ) : canComplete ? (
               <button 
@@ -123,12 +125,12 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                 {completingId === slot.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  'Mark Done'
+                  t('schedule.markDone')
                 )}
               </button>
             ) : (
               <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
-                <Circle className="w-4 h-4" /> Future
+                <Circle className="w-4 h-4" /> {t("schedule.future")}
               </div>
             )}
           </div>
@@ -176,6 +178,7 @@ interface TimeSlot {
 }
 
 export const Schedule: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -215,7 +218,7 @@ export const Schedule: React.FC = () => {
           title: item.name,
           type: item.type as 'meal' | 'snack' | 'workout',
           calories: item.type === 'meal' || item.type === 'snack'
-            ? (details.macros?.calories || details.calories)
+            ? (details.macros?.calories || (details as any).calories)
             : details.estimatedCaloriesBurn,
           duration: details.durationMin ? `${details.durationMin} min` : undefined,
           durationMin: details.durationMin,
@@ -254,7 +257,7 @@ export const Schedule: React.FC = () => {
       console.error('Failed to update item:', error);
       // Revert on error
       setTimeSlots(previousSlots);
-      toast.error('Failed to update item');
+      toast.error(t('schedule.updateFailed'));
     } finally {
       setCompletingId(null);
     }
@@ -338,15 +341,15 @@ export const Schedule: React.FC = () => {
     <div className="space-y-8 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Daily Schedule</h1>
-          <p className="text-slate-500">Your personalized timeline for success.</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t("schedule.title")}</h1>
+          <p className="text-slate-500">{t("schedule.subtitle")}</p>
         </div>
         <div className="flex bg-white rounded-xl border border-slate-200 p-1">
           <button 
             onClick={() => navigateDate('prev')}
             className="p-2 hover:bg-slate-50 rounded-lg text-slate-500"
           >
-            <ChevronLeft className="w-5 h-5" />
+            {i18n.dir() === 'rtl' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           </button>
           <button 
             onClick={goToToday}
@@ -359,7 +362,7 @@ export const Schedule: React.FC = () => {
             onClick={() => navigateDate('next')}
             className="p-2 hover:bg-slate-50 rounded-lg text-slate-500"
           >
-            <ChevronRight className="w-5 h-5" />
+            {i18n.dir() === 'rtl' ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </button>
         </div>
       </div>
@@ -396,7 +399,7 @@ export const Schedule: React.FC = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-3" />
-            <p className="text-slate-500">Loading schedule...</p>
+            <p className="text-slate-500">{t("schedule.loading")}</p>
           </div>
         ) : timeSlots.length > 0 ? (
           <>
@@ -430,8 +433,8 @@ export const Schedule: React.FC = () => {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
             <Calendar className="w-16 h-16 mb-4 opacity-30" />
-            <p className="font-medium text-lg">No schedule for {formatDisplayDate().toLowerCase()}</p>
-            <p className="text-sm">Generate a nutrition or fitness plan to see your schedule</p>
+            <p className="font-medium text-lg">{t("schedule.noScheduleTitle")} {formatDisplayDate().toLowerCase()}</p>
+            <p className="text-sm">{t("schedule.noScheduleDesc")}</p>
           </div>
         )}
       </div>

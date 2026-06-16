@@ -33,7 +33,7 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
     await user.save();
 
     const existingPlan = await WeeklyFitnessPlan.findOne({ userId }).sort({ createdAt: -1 });
-    if (existingPlan && existingPlan.endDate > new Date()) {
+    if (existingPlan && existingPlan.sessions && existingPlan.sessions.length > 0 && existingPlan.endDate > new Date()) {
       return res.status(403).json({
         error: `This workout plan is still active. You can generate a new plan after ${existingPlan.endDate.toLocaleDateString()}.`,
       });
@@ -53,13 +53,15 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       equipment: user.equipment,
       trainingDays: trainingDays || user.trainingDays || 3,
       trainingProgram: trainingProgram || user.trainingProgram || 'full_body',
+      language: user.language || 'en',
     };
 
     const plan = await generateWorkoutPlan(
       userContext,
       userContext.trainingProgram || 'full_body',
       userContext.trainingDays || 3,
-      duration || 60
+      duration || 60,
+      user.language || 'en',
     );
 
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));

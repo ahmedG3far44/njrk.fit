@@ -448,3 +448,4 @@ The server uses Mongoose with the following main collections:
 - **FamilyInvitation** — Pending family join requests
 - **SubscriptionTransaction** — Stripe payment records
 - **Admin** — Admin panel accounts
+

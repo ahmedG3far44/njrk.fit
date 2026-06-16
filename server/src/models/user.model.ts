@@ -64,6 +64,7 @@ export interface IUser extends Document {
     reminderTime?: string;
     reminderTypes?: string[];
   };
+  language: 'en' | 'ar';
   medicalCondition?: string;
   isBlocked?: boolean;
   blockedAt?: Date;
@@ -147,6 +148,7 @@ const UserSchema = new Schema<IUser>({
     reminderTime: { type: String },
     reminderTypes: [{ type: String }],
   },
+  language: { type: String, enum: ['en', 'ar'], default: 'en' },
   medicalCondition: { type: String },
   allergies: [{ type: String }],
   isBlocked: { type: Boolean, default: false },

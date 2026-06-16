@@ -47,7 +47,7 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
     return jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload;
 };
 
-export const registerUser = async (provider: 'google' | 'github' | 'email', userData: { email: string, password?: string, name: string, avatarUrl?: string, googleId?: string, githubId?: string }): Promise<{
+export const registerUser = async (provider: 'google' | 'github' | 'email', userData: { email: string, password?: string, name: string, avatarUrl?: string, googleId?: string, githubId?: string, language?: 'en' | 'ar' }): Promise<{
     success: boolean;
     message?: string;
     user?: {
@@ -59,12 +59,13 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         onboardingCompleted: boolean;
         subscriptionTier: "BASIC" | "PRO" | "FAMILY";
         stripCustomerId: string;
+        language: 'en' | 'ar';
     };
     accessToken?: string;
     refreshToken?: string;
 }> => {
 
-    const { email, password, name, avatarUrl, googleId, githubId } = userData;
+    const { email, password, name, avatarUrl, googleId, githubId, language } = userData;
 
 
 
@@ -106,6 +107,7 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 email: email.toLowerCase(),
                 avatarUrl,
                 googleId,
+                language: userLanguage,
                 subscription: {
                     ...baseSubscription,
                     status: "trialing",
@@ -136,6 +138,7 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
                 email: email.toLowerCase(),
                 passwordHash: await hashPassword(password as string),
                 avatarUrl: placeholder,
+                language: userLanguage,
                 subscription: {
                     ...baseSubscription,
                     status: "active",
@@ -148,6 +151,7 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
 
 
     const user = await User.create(newUser);
+await sendSubscriptionEmail(user.email, user.name);
 
     if (provider === 'email') {
         // انتبه: يفضل تحط رابط الفرونت اند حقك في ملف الـ env
@@ -180,7 +184,8 @@ export const registerUser = async (provider: 'google' | 'github' | 'email', user
         avatarUrl: user.avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
         stripCustomerId: customer.id,
-        subscriptionTier: "BASIC" as const
+        subscriptionTier: "BASIC" as const,
+        language: user.language,
     };
 
     return {
@@ -289,7 +294,8 @@ export const loginUser = async (email: string, password: string) => {
         name: user.name,
         avatarUrl: user.avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
-        subscriptionTier: user.subscription?.subscriptionTier as "BASIC" | "PRO" | "FAMILY"
+        subscriptionTier: user.subscription?.subscriptionTier as "BASIC" | "PRO" | "FAMILY",
+        language: user.language,
     };
 
 
@@ -344,6 +350,7 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
         user.estimatedSteps = estimatedSteps;
         user.estimatedSleepHours = estimatedSleepHours;
         user.estimatedWaterOz = estimatedWaterOz;
+        if (data.language) user.language = data.language;
         
         await user.save();
         return { success: true, message: 'User onboarded successfully' };

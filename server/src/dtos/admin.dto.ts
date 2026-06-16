@@ -28,6 +28,10 @@ export const blockUserSchema = z.object({
   reason: z.string().min(1, 'Block reason is required').max(500),
 });
 
+export const updateUserSchema = z.object({
+  language: z.enum(['en', 'ar']).optional(),
+});
+
 export type LoginAdminInput = z.infer<typeof loginAdminSchema>;
 export type CreateAdminInput = z.infer<typeof createAdminSchema>;
 export type UserQueryInput = z.infer<typeof userQuerySchema>;

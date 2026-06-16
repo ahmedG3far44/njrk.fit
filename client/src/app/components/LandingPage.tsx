@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   CheckCircle,
@@ -38,54 +39,55 @@ const staggerContainer = {
   visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
 };
 
-const pricingPlans = [
-  {
-    name: "Basic/Free",
-    price: 0.0,
-    features: [
-      "Advanced AI Meal Gen",
-      "Personalized Workouts",
-      "Auto-Grocery Sync",
-      "Meal Scanning (Camera)",
-      "Priority Support",
-    ],
-    buttonText: "Get Started",
-  },
-  {
-    name: "Family Plan",
-    price: 29.99,
-    isBest: true,
-    features: [
-      "Up to 6 Family Members",
-      "Unified Grocery List",
-      "Family Challenges & Leaderboard",
-      "Parental Controls",
-      "Dietitian Consultation",
-      "All Individual Features",
-    ],
-    buttonText: "Create Family Plan",
-  },
-  {
-    name: "Pro",
-    price: 19.99,
-    features: [
-      "Everything in Family",
-      "Unlimited Members",
-      "1-on-1 Dietitian Sessions",
-      "InBody Analysis AI",
-      "White-glove Onboarding",
-      "API Access",
-    ],
-    buttonText: "Go Pro",
-  },
-];
-
 export const LandingPage: React.FC<LandingPageProps> = ({
   onGetStarted,
   onLogin,
 }) => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const pricingPlans = [
+    {
+      name: t('landing.planBasic'),
+      price: 0.0,
+      features: [
+        t('landing.featureAdvancedAIMeal'),
+        t('landing.featurePersonalizedWorkouts'),
+        t('landing.featureAutoGrocerySync'),
+        t('landing.featureMealScanning'),
+        t('landing.featurePrioritySupport'),
+      ],
+      buttonText: t('landing.planButtonBasic'),
+    },
+    {
+      name: t('landing.planFamily'),
+      price: 29.99,
+      isBest: true,
+      features: [
+        t('landing.featureUpTo6Family'),
+        t('landing.featureUnifiedGrocery'),
+        t('landing.featureFamilyChallenges'),
+        t('landing.featureParentalControls'),
+        t('landing.featureDietitianConsult'),
+        t('landing.featureAllIndividual'),
+      ],
+      buttonText: t('landing.planButtonFamily'),
+    },
+    {
+      name: t('landing.planPro'),
+      price: 19.99,
+      features: [
+        t('landing.featureEverythingInFamily'),
+        t('landing.featureUnlimitedMembers'),
+        t('landing.featureOneOnOneDietitian'),
+        t('landing.featureInBodyAnalysis'),
+        t('landing.featureWhiteGlove'),
+        t('landing.featureAPIAccess'),
+      ],
+      buttonText: t('landing.planButtonPro'),
+    },
+  ];
 
   const onClickPlan = () => {
     if (user) {
@@ -97,7 +99,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-green-100 selection:text-green-900">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-peak-white border-b border-limestone">
+      <nav className="fixed top-0 start-0 end-0 z-50 bg-peak-white border-b border-limestone">
         <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
           <NjerkaLogo />
 
@@ -106,20 +108,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               href="#features"
               className="hover:text-green-700 transition-colors"
             >
-              Features
+              {t('landing.navFeatures')}
             </a>
             <a
               href="#pricing"
               className="hover:text-green-700 transition-colors"
             >
-              Pricing
+              {t('landing.navPricing')}
             </a>
             <a
               href="#vision"
               className="hover:text-green-700 transition-colors"
             >
-              Vision
+              {t('landing.navVision')}
             </a>
+            <div className="flex items-center gap-1 border-l pl-4 border-slate-200">
+              <button
+                onClick={() => i18n.changeLanguage('en')}
+                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('en') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => i18n.changeLanguage('ar')}
+                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('ar') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
+              >
+                عربى
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             {user ? (
@@ -127,7 +143,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 to="/dashboard"
                 className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all text-sm"
               >
-                Go to Dashboard
+                {t('landing.goToDashboard')}
               </Link>
             ) : (
               <>
@@ -135,13 +151,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={onLogin}
                   className="text-trail-gray font-semibold hover:text-forest-canopy transition-colors hidden sm:block text-sm"
                 >
-                  Log In
+                  {t('auth.login')}
                 </button>
                 <button
                   onClick={onClickPlan}
                   className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm"
                 >
-                  Get Started
+                  {t('landing.getStarted')}
                 </button>
               </>
             )}
@@ -158,7 +174,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             duration: 10,
             ease: [0.77, 0, 0.175, 1],
           }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-green-100/70 rounded-full blur-3xl -z-10 mix-blend-multiply"
+          className="absolute top-0 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 w-[1000px] h-[600px] bg-green-100/70 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
         <motion.div
           animate={{ scale: [1, 1.06, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -168,7 +184,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             ease: [0.77, 0, 0.175, 1],
             delay: 2,
           }}
-          className="absolute top-20 right-0 w-[600px] h-[600px] bg-emerald-100/60 rounded-full blur-3xl -z-10 mix-blend-multiply"
+          className="absolute top-20 end-0 w-[600px] h-[600px] bg-emerald-100/60 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.45, 0.3] }}
@@ -178,7 +194,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             ease: [0.77, 0, 0.175, 1],
             delay: 1,
           }}
-          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-100/50 rounded-full blur-3xl -z-10 mix-blend-multiply"
+          className="absolute bottom-0 start-0 w-[400px] h-[400px] bg-orange-100/50 rounded-full blur-3xl -z-10 mix-blend-multiply"
         />
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -195,24 +211,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-600" />
               </span>
-              New: Family Mode 2.0 is live
+              {t('landing.heroBadge')}
             </motion.div>
 
             <motion.h1
               variants={fadeInUp}
               className="text-5xl md:text-7xl font-extrabold leading-[1.08] mb-6 tracking-tight text-slate-900"
             >
-              Precision Nutrition,{" "}
-              <span className="text-forest-canopy">Powered by AI.</span>
+              {t('landing.heroTitle')}{" "}
+              <span className="text-forest-canopy">{t('landing.heroTitleAccent')}</span>
             </motion.h1>
 
             <motion.p
               variants={fadeInUp}
               className="text-xl text-slate-500 mb-10 leading-relaxed max-w-lg"
             >
-              The first medical-grade ecosystem that adapts to your biology.
-              Generate personalized meal plans, workouts, and grocery lists for
-              your entire family.
+              {t('landing.heroSubtitle')}
             </motion.p>
 
             <motion.div
@@ -226,14 +240,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 className="bg-forest-canopy text-peak-white px-8 py-4 rounded-button font-bold text-lg hover:shadow-2xl hover:shadow-forest-mist transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-peak-white/0 via-peak-white/10 to-peak-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                Start Your Transformation{" "}
+                {t('landing.heroCTA')}{" "}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </motion.button>
               <button
                 onClick={onLogin}
                 className="bg-peak-white border border-limestone text-trail-gray px-8 py-4 rounded-button font-bold text-lg hover:bg-stone transition-all flex items-center justify-center gap-2 hover:border-trail-gray"
               >
-                View Demo
+                {t('landing.viewDemo')}
               </button>
             </motion.div>
 
@@ -261,9 +275,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   ))}
                 </div>
                 <span>
-                  Loved by{" "}
+                  {t('landing.socialProofLoved')}{" "}
                   <span className="text-slate-900 font-bold">10,000+</span>{" "}
-                  families
+                  {t('landing.socialProofFamilies')}
                 </span>
               </div>
             </motion.div>
@@ -272,7 +286,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               variants={fadeInUp}
               className="mt-6 flex flex-wrap gap-3"
             >
-              {["HIPAA Compliant", "Medical-Grade AI", "14-Day Free Trial"].map(
+              {[t('landing.badgeHipaa'), t('landing.badgeMedicalGrade'), t('landing.badgeFreeTrial')].map(
                 (badge) => (
                   <div
                     key={badge}
@@ -313,10 +327,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Active Streak
+                    {t('landing.heroVisualStreak')}
                   </p>
                   <p className="font-black text-slate-900 text-lg">
-                    Start yours!
+                    {t('landing.heroVisualStreakCTA')}
                   </p>
                   <div className="flex gap-0.5 mt-1">
                     {Array(7)
@@ -345,11 +359,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Family Plan
+                    {t('landing.heroVisualFamilyPlan')}
                   </p>
-                  <p className="font-black text-slate-900">Coming Soon</p>
+                  <p className="font-black text-slate-900">{t('landing.heroVisualComingSoon')}</p>
                   <p className="text-xs text-green-600 font-semibold mt-0.5">
-                    Enable in settings
+                    {t('landing.heroVisualEnableSettings')}
                   </p>
                 </div>
               </motion.div>
@@ -359,7 +373,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 className="absolute bottom-6 right-6 bg-slate-900/90 backdrop-blur-md text-white px-3 py-2 rounded-xl flex items-center gap-2 shadow-xl"
               >
                 <Brain className="w-4 h-4 text-green-400" />
-                <span className="text-xs font-bold">AI Analyzing...</span>
+                <span className="text-xs font-bold">{t('landing.heroVisualAIAnalyzing')}</span>
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
               </motion.div>
             </div>
@@ -381,39 +395,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <Heart className="w-8 h-8 fill-current" />
               </div>
               <h2 className="text-4xl font-bold text-slate-900 mb-4">
-                Our Vision
+                {t('landing.visionTitle')}
               </h2>
               <p className="text-xl text-green-700 font-semibold mb-4">
-                The Future of AI Health
+                {t('landing.visionSubtitle')}
               </p>
               <p className="text-lg text-slate-500 mb-6 leading-relaxed">
-                We believe that health isn't a solo journey. It's built at the
-                dinner table, in the grocery store, and during weekend
-                activities.
+                {t('landing.visionText')}
               </p>
               <h2 className="text-4xl font-bold text-slate-900 mb-4">
-                Our Mission
+                {t('landing.missionTitle')}
               </h2>
               <p className="text-xl text-green-600 font-semibold mb-4">
-                Sustainable Nutrition Without Deprivation
+                {t('landing.missionSubtitle')}
               </p>
               <p className="text-lg text-slate-500 mb-8 leading-relaxed">
-                To democratize medical-grade nutrition and fitness science —
-                making it accessible not just to elite athletes, but to busy
-                parents, growing children, and everyone in between.
+                {t('landing.missionText')}
               </p>
               <div className="grid grid-cols-2 gap-6">
-                <div className="border-l-4 border-green-700 pl-6">
+                <div className="border-s-4 border-green-700 ps-6">
                   <h4 className="font-bold text-2xl text-slate-900 mb-1">
-                    98%
+                    {t('landing.statSuccessRate')}
                   </h4>
-                  <p className="text-slate-500 text-sm">Success Rate</p>
+                  <p className="text-slate-500 text-sm">{t('landing.statSuccessLabel')}</p>
                 </div>
-                <div className="border-l-4 border-green-600 pl-6">
+                <div className="border-s-4 border-green-600 ps-6">
                   <h4 className="font-bold text-2xl text-slate-900 mb-1">
-                    2.5M+
+                    {t('landing.statMealsPlanned')}
                   </h4>
-                  <p className="text-slate-500 text-sm">Meals Planned</p>
+                  <p className="text-slate-500 text-sm">{t('landing.statMealsPlannedLabel')}</p>
                 </div>
               </div>
             </motion.div>
@@ -445,42 +455,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             className="text-center max-w-2xl mx-auto mb-20"
           >
             <span className="text-green-700 font-bold tracking-wider uppercase text-sm">
-              Why Njerka?
+              {t('landing.featuresEyebrow')}
             </span>
             <h2 className="text-4xl font-bold text-slate-900 mb-4 mt-2">
-              More Than Just Calorie Counting
+              {t('landing.featuresTitle')}
             </h2>
             <p className="text-slate-500 text-lg">
-              We engineer your lifestyle using data, not guesswork.
+              {t('landing.featuresSubtitle')}
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {[
               {
-                title: "AI-Meal-Sync",
-                desc: "Our AI engine generates recipes based on your unique metabolic rate, religion, dietary preferences, allergies, and taste. Every meal is yours alone.",
+                title: t('landing.featureAIMealTitle'),
+                desc: t('landing.featureAIMealDesc'),
                 icon: <Brain />,
                 color: "bg-green-100 text-green-700",
                 glow: "hover:shadow-green-100",
               },
               {
-                title: "Family Health Hub",
-                desc: "Manage nutrition for your entire family from one account. Individual calorie targets, shared grocery lists, and family challenge leaderboards.",
+                title: t('landing.featureFamilyTitle'),
+                desc: t('landing.featureFamilyDesc'),
                 icon: <Users />,
                 color: "bg-emerald-100 text-emerald-700",
                 glow: "hover:shadow-emerald-100",
               },
               {
-                title: "Computer Vision Streaks",
-                desc: "Use your camera to scan and verify meals. Our AI recognizes food, logs nutrition automatically, and maintains your daily streak like Snapchat.",
+                title: t('landing.featureVisionTitle'),
+                desc: t('landing.featureVisionDesc'),
                 icon: <Camera />,
                 color: "bg-orange-100 text-orange-600",
                 glow: "hover:shadow-orange-100",
               },
               {
-                title: "Dynamic Fitness",
-                desc: "Describe your fitness goal in your own words. Get a personalized weekly plan — whether it's home cardio, gym strength, or yoga recovery.",
+                title: t('landing.featureFitnessTitle'),
+                desc: t('landing.featureFitnessDesc'),
                 icon: <Dumbbell />,
                 color: "bg-green-100 text-green-800",
                 glow: "hover:shadow-green-100",
@@ -512,20 +522,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-8">
             {[
               {
-                title: "Smart Grocery Sync",
-                desc: "Weekly meal plans auto-generate a sorted, categorized shopping list.",
+                title: t('landing.featureGroceryTitle'),
+                desc: t('landing.featureGroceryDesc'),
                 icon: <ShoppingCart />,
                 color: "bg-yellow-100 text-yellow-600",
               },
               {
-                title: "Medical-Grade Insights",
-                desc: "Upload blood work & InBody scans. Our AI analyzes and adapts your plan.",
+                title: t('landing.featureMedicalTitle'),
+                desc: t('landing.featureMedicalDesc'),
                 icon: <CheckCircle />,
                 color: "bg-blue-100 text-blue-600",
               },
               {
-                title: "Community Challenges",
-                desc: "Compete with friends and family on step counts, meal streaks, and goals.",
+                title: t('landing.featureCommunityTitle'),
+                desc: t('landing.featureCommunityDesc'),
                 icon: <TrendingUp />,
                 color: "bg-red-100 text-red-600",
               },
@@ -569,10 +579,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             className="text-center max-w-2xl mx-auto mb-16"
           >
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              Simple, Transparent Pricing
+              {t('landing.pricingTitle')}
             </h2>
             <p className="text-slate-500 text-lg">
-              Invest in your health for less than the cost of a coffee a day.
+              {t('landing.pricingSubtitle')}
             </p>
           </motion.div>
 
@@ -598,8 +608,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }
               >
                 {plan.isBest && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-100 border border-green-500 text-green-800 text-xs font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap ">
-                    Recommended Plan
+                  <div className="absolute -top-4 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 bg-green-100 border border-green-500 text-green-800 text-xs font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap ">
+                    {t('landing.planRecommended')}
                   </div>
                 )}
                 <h3
@@ -610,11 +620,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <p
                   className={`text-sm mb-6 ${plan.isBest ? "text-green-200" : "text-slate-500"}`}
                 >
-                  {plan.name === "Individual" &&
-                    "For individuals starting out."}
-                  {plan.name === "Family Plan" &&
-                    "Total health for the household."}
-                  {plan.name === "Pro" && "For the serious health optimizer."}
+                  {plan.name === t('landing.planBasic') && t('landing.planBasicDesc')}
+                  {plan.name === t('landing.planFamily') && t('landing.planFamilyDesc')}
+                  {plan.name === t('landing.planPro') && t('landing.planProDesc')}
                 </p>
                 <div className="flex items-baseline gap-1 mb-6">
                   <span
@@ -622,7 +630,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   >
                     ${plan.price}
                   </span>
-                  <span className={"text-slate-500"}>/mo</span>
+                  <span className={"text-slate-500"}>{t('landing.perMonth')}</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((item) => (
@@ -666,37 +674,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             viewport={{ once: true }}
             className="bg-gradient-to-r from-green-900 via-green-800 to-green-900 rounded-[2.5rem] p-12 md:p-24 text-center text-white relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-green-600/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+            <div className="absolute top-0 start-0 w-64 h-64 bg-white/10 rounded-full blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 end-0 w-64 h-64 bg-green-600/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(255,255,255,0.05),transparent_70%)]" />
             <div className="relative z-10 max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-bold mb-8 border border-white/20">
-                <Leaf className="w-4 h-4" /> Powered by Medical-Grade AI
+                <Leaf className="w-4 h-4" /> {t('landing.ctaBadge')}
               </div>
               <h2 className="text-4xl md:text-6xl font-bold mb-6">
-                Join Njerka Today
+                {t('landing.ctaTitle')}
               </h2>
               <p className="text-green-100 text-xl mb-10 leading-relaxed">
-                Join thousands of users who have transformed their health with
-                our AI-powered ecosystem. Start your 14-day free trial today.
+                {t('landing.ctaText')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={onGetStarted}
                   className="bg-white text-green-800 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-green-50 transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2 group"
                 >
-                  Start Your Transformation{" "}
+                  {t('landing.ctaButton')}{" "}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={onLogin}
                   className="bg-white/10 border border-white/30 backdrop-blur-sm text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all"
                 >
-                  Log In
+                  {t('auth.login')}
                 </button>
               </div>
               <p className="mt-8 text-sm text-green-200 opacity-80">
-                No credit card required for trial.
+                {t('landing.ctaNoCard')}
               </p>
             </div>
           </motion.div>
@@ -712,76 +719,75 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <NjerkaLogo />
               </div>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Empowering families to live healthier, longer lives through
-                medical-grade AI technology and community.
+                {t('landing.footerTagline')}
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 mb-4">Product</h4>
+              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerProduct')}</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li>
                   <a href="#features" className="hover:text-green-700">
-                    Features
+                    {t('landing.footerFeatures')}
                   </a>
                 </li>
                 <li>
                   <a href="#pricing" className="hover:text-green-700">
-                    Pricing
+                    {t('landing.footerPricing')}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-green-700">
-                    Family Mode
+                    {t('landing.footerFamilyMode')}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-green-700">
-                    Reviews
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    Contact
+                    {t('landing.footerReviews')}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 mb-4">Legal</h4>
+              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerCompany')}</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li>
                   <a href="#" className="hover:text-green-700">
-                    Privacy
+                    {t('landing.footerAbout')}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-green-700">
-                    Terms
+                    {t('landing.footerCareers')}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-green-700">
-                    Security
+                    {t('landing.footerBlog')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-green-700">
+                    {t('landing.footerContact')}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerLegal')}</h4>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li>
+                  <a href="#" className="hover:text-green-700">
+                    {t('landing.footerPrivacy')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-green-700">
+                    {t('landing.footerTerms')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-green-700">
+                    {t('landing.footerSecurity')}
                   </a>
                 </li>
               </ul>
@@ -789,10 +795,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
           <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-400">
-              © 2026 Njerka Inc. All rights reserved. Nourish · Move · Thrive
+              {t('landing.footerCopyright')}
             </p>
             <div className="flex gap-3">
-              {["Twitter", "Instagram", "LinkedIn"].map((s) => (
+              {[t('landing.socialTwitter'), t('landing.socialInstagram'), t('landing.socialLinkedIn')].map((s) => (
                 <div
                   key={s}
                   className="w-8 h-8 bg-slate-100 hover:bg-green-100 hover:text-green-700 rounded-full flex items-center justify-center text-slate-400 cursor-pointer transition-colors text-xs font-bold"

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { validate } from "../middlewares/validateResource";
-import { userQuerySchema, blockUserSchema } from "../dtos/admin.dto";
+import { userQuerySchema, blockUserSchema, updateUserSchema } from "../dtos/admin.dto";
 import * as adminUserService from "../services/adminUser.service";
 import { adminAuthMiddleware } from "../middlewares/adminAuthMiddleware";
 
@@ -31,6 +31,23 @@ router.get(
         return res.status(404).json({ error: "User not found" });
       }
       res.status(200).json({ user });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+router.patch(
+  "/:id",
+  validate(updateUserSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id as string;
+      const result = await adminUserService.updateUser(id, req.body);
+      if (!result.success) {
+        return res.status(404).json({ error: result.message });
+      }
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }

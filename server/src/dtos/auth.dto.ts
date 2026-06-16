@@ -4,6 +4,7 @@ export const registerSchema = z.object({
     email: z.string().email('Invalid email format'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+    language: z.enum(['en', 'ar']).default('en'),
 });
 
 export const loginSchema = z.object({
@@ -43,6 +44,7 @@ export const onboardingSchema = z.object({
     targetWeight: z.number().optional(),
     weightUnit: z.enum(['kg', 'lb']).optional(),
     heightUnit: z.enum(['cm', 'in']).optional(),
+    language: z.enum(['en', 'ar']).default('en'),
 });
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>;

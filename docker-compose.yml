@@ -4,7 +4,7 @@ services:
       context: ./client
       args:
         - VITE_API_BASE_URL=/api
-        - VITE_API_URL=/api
+        - VITE_API_BASE_URL=/api
     container_name: client-container
     restart: always
     depends_on:
@@ -25,7 +25,15 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:8080/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
