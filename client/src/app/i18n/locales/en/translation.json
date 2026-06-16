@@ -740,7 +740,13 @@
     "logoutConfirm": "Log Out",
     "editAvatar": "Edit",
     "yourName": "Your Name",
-    "updateProfile": "Update your profile"
+    "updateProfile": "Update your profile",
+    "emailVerified": "Verified",
+    "emailNotVerified": "Unverified",
+    "verifyEmail": "Verify Email",
+    "verificationSent": "Verification email sent!",
+    "verificationSendFailed": "Failed to send verification email",
+    "emailAlreadyVerified": "Email already verified"
   },
 
   "community": {

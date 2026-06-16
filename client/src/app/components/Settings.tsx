@@ -6,13 +6,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthProvider';
 import { userService } from '../services/userService';
 import { subscriptionService } from '../services/subscriptionService';
+import { authService } from '../services/authService';
 import GoalProgressBar from './GoalProgressBar';
 
 export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, isGoogleUser } = useAuth();
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false)
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false)
 
   const [subscriptionInfo, setSubscriptionInfo] = useState<{
     status: string;
@@ -136,6 +138,19 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     }
   };
 
+  const handleVerifyEmail = async () => {
+    setIsVerifyingEmail(true);
+    try {
+      await authService.resendVerification();
+      toast.success(t('settings.verificationSent'));
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : t('settings.verificationSendFailed');
+      toast.error(msg);
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     onLogout?.();
@@ -253,13 +268,37 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
               <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t('settings.email')}
             </label>
-            <input
-              type="email"
-              value={formData.email}
-              disabled
-              className="w-full px-3.5 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs sm:text-sm cursor-not-allowed"
-              placeholder={t('settings.emailPlaceholder')}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="email"
+                value={formData.email}
+                disabled
+                className="flex-1 w-full px-3.5 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs sm:text-sm cursor-not-allowed"
+                placeholder={t('settings.emailPlaceholder')}
+              />
+              {!isGoogleUser && (
+                <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold ${user?.isEmailVerified
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-amber-100 text-amber-700'
+                  }`}>
+                  {user?.isEmailVerified ? t('settings.emailVerified') : t('settings.emailNotVerified')}
+                </span>
+              )}
+            </div>
+            {!isGoogleUser && !user?.isEmailVerified && (
+              <button
+                onClick={handleVerifyEmail}
+                disabled={isVerifyingEmail}
+                className="mt-1 flex items-center gap-1.5 text-xs text-green-700 font-semibold hover:text-green-800 transition-colors disabled:opacity-50"
+              >
+                {isVerifyingEmail ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                )}
+                {t('settings.verifyEmail')}
+              </button>
+            )}
           </div>
           <div className="space-y-1.5 sm:space-y-2">
             <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">

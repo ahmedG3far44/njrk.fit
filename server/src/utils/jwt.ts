@@ -13,6 +13,7 @@ interface TokenPayload {
     onboardingCompleted: boolean;
     subscriptionTier: string;
     googleId?: string;
+    isEmailVerified?: boolean;
 }
 
 export const jwtUtils = {

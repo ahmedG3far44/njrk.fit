@@ -740,7 +740,13 @@
     "logoutConfirm": "تسجيل الخروج",
     "editAvatar": "تعديل",
     "yourName": "اسمك",
-    "updateProfile": "تحديث ملفك الشخصي"
+    "updateProfile": "تحديث ملفك الشخصي",
+    "emailVerified": "موثق",
+    "emailNotVerified": "غير موثق",
+    "verifyEmail": "توثيق البريد",
+    "verificationSent": "تم إرسال بريد التوثيق!",
+    "verificationSendFailed": "فشل إرسال بريد التوثيق",
+    "emailAlreadyVerified": "البريد موثق بالفعل"
   },
 
   "community": {

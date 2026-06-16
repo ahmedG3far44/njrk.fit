@@ -98,4 +98,8 @@ export const authService = {
   async getCurrentUser(): Promise<{ user: User }> {
     return api.get<{ user: User }>('/auth/me');
   },
+
+  async resendVerification(): Promise<{ message: string }> {
+    return api.post<{ message: string }>('/auth/resend-verification');
+  },
 };

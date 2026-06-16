@@ -14,6 +14,7 @@ export interface AuthRequest extends Request {
     subscriptionTier: string;
     googleId?: string;
     googleAccessToken?: string;
+    isEmailVerified?: boolean;
   };
 }
 
@@ -76,6 +77,7 @@ export const authMiddleware = async (
         onboardingCompleted: user.onboardingCompleted,
         subscriptionTier: user.subscription?.subscriptionTier,
         googleAccessToken: googleAccessToken || null,
+        isEmailVerified: user.isEmailVerified,
       };
 
       const newAccessToken = jwtUtils.generateAccessToken(userPayload);

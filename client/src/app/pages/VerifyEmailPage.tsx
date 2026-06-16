@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router"; 
+import { useParams, Link } from "react-router";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
 
 export const VerifyEmailPage = () => {
   const { token } = useParams();
@@ -10,7 +12,7 @@ export const VerifyEmailPage = () => {
     const verifyToken = async () => {
       try {
         // نكلم الباك اند ونتأكد من التوكن
-        const response = await fetch(`http://localhost:8080/api/auth/verify-email/${token}`);
+        const response = await fetch(`${API_BASE_URL}/auth/verify-email/${token}`);
         const data = await response.json();
 
         if (response.ok) {

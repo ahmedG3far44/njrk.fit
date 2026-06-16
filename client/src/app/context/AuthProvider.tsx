@@ -13,6 +13,7 @@ export interface AuthUser {
   onboardingCompleted?: boolean;
   subscriptionTier?: string;
   googleId?: string;
+  isEmailVerified?: boolean;
   estimatedSteps?: number;
   preferences?: {
     notifications?: boolean;

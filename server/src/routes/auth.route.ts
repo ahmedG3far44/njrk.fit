@@ -269,6 +269,29 @@ router.get(
 
 
 router.post(
+  "/resend-verification",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthRequest).user?._id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const result = await authService.resendVerificationEmail(userId);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+
+      res.status(200).json({ message: result.message });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
   "/forgot-password",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
