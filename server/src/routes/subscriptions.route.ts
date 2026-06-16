@@ -71,12 +71,12 @@ router.post('/create', authMiddleware, async (req: Request, res: Response, next:
             subscription_data: {
                 metadata: {
                     userId: user._id.toString(),
-                    planTier: planTier,
+                    planTier: normalizedTier,
                 },
             },
 
-            success_url: `${env.CLIENT_URL}/dashboard/subscriptions?success=true`,
-            cancel_url: `${env.CLIENT_URL}/dashboard/subscriptions?canceled=true`,
+            success_url: `${env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${env.CLIENT_URL}/dashboard/subscriptions`,
         });
 
         res.status(201).json({

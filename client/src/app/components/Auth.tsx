@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Mail, Lock, User, Chrome } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, Chrome, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
@@ -35,6 +35,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
     email: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, register } = useAuth();
 
@@ -220,13 +221,20 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
                   placeholder={t('auth.passwordPlaceholder')}
-                  className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                  className={`w-full pl-12 pr-12 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
                     }`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
               {errors.password && (
                 <p className="text-red-500 text-xs font-medium">{errors.password}</p>

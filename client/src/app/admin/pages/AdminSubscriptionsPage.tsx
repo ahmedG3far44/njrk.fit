@@ -71,8 +71,7 @@ export const AdminSubscriptionsPage = () => {
   return (
     <div className="space-y-6 max-w-7xl">
       <div>
-        <h1 className="text-title text-summit-black">Subscriptions</h1>
-        <p className="text-body text-gravel mt-1">Revenue and plan management</p>
+        <h1 className="text-title text-summit-black font-extrabold">Subscriptions & Revenue Management</h1>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

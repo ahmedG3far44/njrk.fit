@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import NjerkaLogo from '../../components/NjerkaLogo';
 import { useAdminAuth } from '../context/AdminAuthProvider';
 
 export const AdminLoginPage = () => {
@@ -33,10 +34,8 @@ export const AdminLoginPage = () => {
       <div className="w-full max-w-sm">
         <div className="bg-peak-white rounded-container border border-limestone p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-forest-canopy flex items-center justify-center mb-3">
-              <Shield className="w-6 h-6 text-peak-white" />
-            </div>
-            <h1 className="text-title text-summit-black text-center">Admin Login</h1>
+            <NjerkaLogo size="medium" />
+            <h1 className="text-title text-summit-black text-center mt-3">Admin Login</h1>
             <p className="text-body text-gravel text-center mt-1">
               Sign in to manage Njerka
             </p>

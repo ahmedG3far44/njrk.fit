@@ -19,6 +19,7 @@ const SchedulePage = lazy(() => import("./pages/SchedulePage").then(m => ({ defa
 const StreaksPage = lazy(() => import("./pages/StreaksPage").then(m => ({ default: m.StreaksPage })));
 const SettingsPage = lazy(() => import("./pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage").then(m => ({ default: m.SubscriptionsPage })));
+const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage").then(m => ({ default: m.PaymentSuccessPage })));
 const CommunityPage = lazy(() => import("./pages/CommunityPage").then(m => ({ default: m.CommunityPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
@@ -134,6 +135,7 @@ const App = () => {
             }
           />
 
+          <Route path="/payment/success" element={<Suspense fallback={<PageLoader />}><PaymentSuccessPage /></Suspense>} />
           <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
         </Routes>
       </Suspense>

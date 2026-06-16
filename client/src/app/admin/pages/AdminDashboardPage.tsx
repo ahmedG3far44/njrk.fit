@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Users,
   DollarSign,
   Activity,
   CreditCard,
+  BarChart3,
 } from 'lucide-react';
 import {
   LineChart,
@@ -20,7 +21,6 @@ import { adminApi } from '../lib/adminApi';
 import { KpiCard } from '../components/KpiCard';
 import { SkeletonChart } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
-import { BarChart3 } from 'lucide-react';
 
 interface DashboardStats {
   totalUsers: number;
@@ -52,25 +52,28 @@ export const AdminDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, revenueRes, growthRes] = await Promise.all([
-          adminApi.get<DashboardStats>('/admin/analytics/dashboard'),
-          adminApi.get<RevenueDataPoint[]>('/admin/analytics/revenue?days=30'),
-          adminApi.get<GrowthDataPoint[]>('/admin/analytics/users/growth?days=30'),
-        ]);
-        setStats(statsRes);
-        setRevenueData(revenueRes);
-        setGrowthData(growthRes);
-      } catch {
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [statsRes, revenueRes, growthRes] = await Promise.all([
+        adminApi.get<DashboardStats>('/admin/analytics/dashboard'),
+        adminApi.get<RevenueDataPoint[]>('/admin/analytics/revenue?days=30'),
+        adminApi.get<GrowthDataPoint[]>('/admin/analytics/users/growth?days=30'),
+      ]);
+      setStats(statsRes);
+      setRevenueData(revenueRes);
+      setGrowthData(growthRes);
+    } catch {
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (error) {
     return (
@@ -78,7 +81,7 @@ export const AdminDashboardPage = () => {
         icon={<BarChart3 className="w-6 h-6" />}
         title="Failed to load dashboard"
         description={error}
-        action={{ label: 'Retry', onClick: () => window.location.reload() }}
+        action={{ label: 'Retry', onClick: fetchData }}
       />
     );
   }
@@ -111,8 +114,7 @@ export const AdminDashboardPage = () => {
   return (
     <div className="space-y-6 max-w-7xl">
       <div>
-        <h1 className="text-title text-summit-black">Dashboard</h1>
-        <p className="text-body text-gravel mt-1">Platform overview at a glance</p>
+        <h1 className="text-title text-summit-black font-extrabold">Dashboard & Platform Overview</h1>
       </div>
 
       {/* KPI Grid */}
@@ -132,13 +134,13 @@ export const AdminDashboardPage = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="bg-peak-white rounded-card border border-limestone p-5">
+        <div className="bg-peak-white rounded-card border border-limestone p-6">
           <h3 className="text-heading text-summit-black mb-1">Revenue</h3>
           <p className="text-label text-gravel mb-4">Last 30 days</p>
           {loading ? (
             <SkeletonChart />
           ) : revenueData.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-body text-dust">No revenue data yet</div>
+            <div className="h-48 flex items-center justify-center text-body text-dust">No revenue recorded in this period</div>
           ) : (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -149,10 +151,10 @@ export const AdminDashboardPage = () => {
                       <stop offset="100%" stopColor="#15803d" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-limestone, #e2e8f0)" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: 'var(--color-dust, #94a3b8)' }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v) => {
@@ -161,7 +163,7 @@ export const AdminDashboardPage = () => {
                     }}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: 'var(--color-dust, #94a3b8)' }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v) => `$${v}`}
@@ -169,14 +171,14 @@ export const AdminDashboardPage = () => {
                   <Tooltip
                     contentStyle={{
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--color-limestone, #e2e8f0)',
                       fontSize: '13px',
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#15803d"
+                    stroke="var(--color-forest-canopy, #15803d)"
                     strokeWidth={2}
                     fill="url(#revenueGrad)"
                   />
@@ -187,21 +189,21 @@ export const AdminDashboardPage = () => {
         </div>
 
         {/* User Growth Chart */}
-        <div className="bg-peak-white rounded-card border border-limestone p-5">
+        <div className="bg-peak-white rounded-card border border-limestone p-6">
           <h3 className="text-heading text-summit-black mb-1">User Growth</h3>
           <p className="text-label text-gravel mb-4">New users per day</p>
           {loading ? (
             <SkeletonChart />
           ) : growthData.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-body text-dust">No growth data yet</div>
+            <div className="h-48 flex items-center justify-center text-body text-dust">No new users in this period</div>
           ) : (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={growthData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-limestone, #e2e8f0)" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: 'var(--color-dust, #94a3b8)' }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v) => {
@@ -210,7 +212,7 @@ export const AdminDashboardPage = () => {
                     }}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tick={{ fontSize: 12, fill: 'var(--color-dust, #94a3b8)' }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -218,17 +220,17 @@ export const AdminDashboardPage = () => {
                   <Tooltip
                     contentStyle={{
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--color-limestone, #e2e8f0)',
                       fontSize: '13px',
                     }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#15803d"
+                    stroke="var(--color-forest-canopy, #15803d)"
                     strokeWidth={2}
                     dot={false}
-                    activeDot={{ r: 4, fill: '#15803d' }}
+                    activeDot={{ r: 4, fill: 'var(--color-forest-canopy, #15803d)' }}
                   />
                 </LineChart>
               </ResponsiveContainer>

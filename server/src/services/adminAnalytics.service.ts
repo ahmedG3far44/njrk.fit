@@ -1,5 +1,7 @@
 import User from '../models/user.model';
 import SubscriptionTransaction from '../models/subscriptionTransaction.model';
+import NutritionPlan from '../models/nutrition.model';
+import WeeklyFitnessPlan from '../models/fitness.model';
 
 export const getDashboardStats = async () => {
   const now = new Date();
@@ -12,6 +14,8 @@ export const getDashboardStats = async () => {
     totalPlansAgg,
     revenueAgg,
     blockedUsers,
+    totalNutritionPlans,
+    totalFitnessPlans,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ lastCheckInDate: { $gte: thirtyDaysAgo } }),
@@ -25,6 +29,8 @@ export const getDashboardStats = async () => {
       { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
     ]),
     User.countDocuments({ isBlocked: true }),
+    NutritionPlan.countDocuments(),
+    WeeklyFitnessPlan.countDocuments(),
   ]);
 
   const totalRevenuePeriod = revenueAgg[0]?.total || 0;
@@ -54,6 +60,8 @@ export const getDashboardStats = async () => {
     totalRevenue: totalRevenuePeriod,
     totalPlans,
     churnRate: parseFloat(churnRate),
+    totalNutritionPlans,
+    totalFitnessPlans,
   };
 };
 
@@ -123,6 +131,47 @@ export const getSubscriptionDistribution = async () => {
     count: d.count,
     percentage: total > 0 ? Math.round((d.count / total) * 100) : 0,
   }));
+};
+
+export const getPlanCreationData = async (days: number = 30) => {
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+  const [nutritionData, fitnessData] = await Promise.all([
+    NutritionPlan.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    WeeklyFitnessPlan.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+  ]);
+
+  return {
+    nutrition: nutritionData.map(d => ({ date: d._id, count: d.count })),
+    fitness: fitnessData.map(d => ({ date: d._id, count: d.count })),
+  };
 };
 
 export const getRecentTransactions = async (limit: number = 50) => {

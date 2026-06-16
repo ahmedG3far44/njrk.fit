@@ -1,8 +1,19 @@
 import User from '../models/user.model';
+import Activity from '../models/activity.model';
+import WeeklyFitnessPlan from '../models/fitness.model';
+import NutritionPlan from '../models/nutrition.model';
+import ProgressLog from '../models/progress.model';
+import { Post, Like, Comment, Squad } from '../models/community.model';
+import Notification from '../models/notification.model';
+import GroceryList from '../models/groceryList.model';
+import SharedList from '../models/sharedList.model';
+import FamilyInvitation from '../models/familyInvitation.model';
+import UserReward from '../models/reward.model';
+import SubscriptionTransaction from '../models/subscriptionTransaction.model';
 import type { UserQueryInput, BlockUserInput } from '../dtos/admin.dto';
 
 export const getUsers = async (query: UserQueryInput) => {
-  const { page, limit, search, tier, status, sort, order, startDate, endDate } = query;
+  const { page, limit, search, tier, provider, status, sort, order, startDate, endDate } = query;
 
   const filter: Record<string, unknown> = {};
 
@@ -16,6 +27,12 @@ export const getUsers = async (query: UserQueryInput) => {
 
   if (tier) {
     filter['subscription.subscriptionTier'] = tier;
+  }
+
+  if (provider === 'google') {
+    filter.googleId = { $ne: null };
+  } else if (provider === 'email') {
+    filter.googleId = null;
   }
 
   if (status === 'active') {
@@ -116,12 +133,19 @@ export const unblockUser = async (id: string) => {
   };
 };
 
-export const updateUser = async (id: string, data: { language?: 'en' | 'ar' }) => {
+export const updateUser = async (id: string, data: { language?: 'en' | 'ar'; subscriptionTier?: 'BASIC' | 'PRO' | 'FAMILY' }) => {
   const user = await User.findById(id);
   if (!user) return { success: false, message: 'User not found' };
 
   if (data.language) {
     user.language = data.language;
+  }
+
+  if (data.subscriptionTier) {
+    if (!user.subscription) {
+      user.subscription = {} as NonNullable<typeof user.subscription>;
+    }
+    user.subscription.subscriptionTier = data.subscriptionTier;
   }
 
   await user.save();
@@ -134,14 +158,33 @@ export const updateUser = async (id: string, data: { language?: 'en' | 'ar' }) =
       name: user.name,
       email: user.email,
       language: user.language,
+      subscriptionTier: user.subscription?.subscriptionTier,
     },
   };
 };
 
 export const deleteUser = async (id: string) => {
-  const user = await User.findById(id);
+  const user = await User.findByIdAndDelete(id);
   if (!user) return { success: false, message: 'User not found' };
 
-  await User.findByIdAndDelete(id);
+  await Promise.all([
+    Activity.deleteMany({ userId: id }),
+    WeeklyFitnessPlan.deleteMany({ userId: id }),
+    NutritionPlan.deleteMany({ userId: id }),
+    ProgressLog.deleteMany({ userId: id }),
+    Post.deleteMany({ userId: id }),
+    Like.deleteMany({ userId: id }),
+    Comment.deleteMany({ userId: id }),
+    Squad.deleteMany({ creatorId: id }),
+    Squad.updateMany({ members: id }, { $pull: { members: id } }),
+    Notification.deleteMany({ userId: id }),
+    GroceryList.deleteMany({ userId: id }),
+    SharedList.deleteMany({ userId: id }),
+    FamilyInvitation.deleteMany({ $or: [{ fromUserId: id }, { toUserId: id }] }),
+    UserReward.deleteMany({ userId: id }),
+    SubscriptionTransaction.deleteMany({ userId: id }),
+    User.updateMany({ familyMembers: id }, { $pull: { familyMembers: id } }),
+  ]);
+
   return { success: true, message: 'User deleted successfully' };
 };

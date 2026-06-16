@@ -11,8 +11,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  Shield,
 } from 'lucide-react';
+import NjerkaLogo from '../../components/NjerkaLogo';
 import { useAdminAuth } from '../context/AdminAuthProvider';
 
 const navItems = [
@@ -83,12 +83,10 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         )}
       </AnimatePresence>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-pebble border-r border-limestone h-full shrink-0">
+      {/* Sidebar - on the left */}
+      <aside className="hidden md:flex flex-col w-64 bg-pebble border-r border-limestone h-full shrink-0">
         <div className="p-5 pb-4 flex items-center gap-2.5 border-b border-limestone">
-          <div className="w-8 h-8 rounded-lg bg-forest-canopy flex items-center justify-center">
-            <Shield className="w-4 h-4 text-peak-white" />
-          </div>
+          <NjerkaLogo size="small" />
           <div>
             <span className="text-sm font-bold text-summit-black">Njerka</span>
             <span className="text-label text-dust block leading-none mt-0.5">Admin</span>
@@ -151,11 +149,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-peak-white border-b border-limestone px-4 py-3 flex items-center justify-between shrink-0">
+        <header className="md:hidden bg-peak-white border-b border-limestone px-4 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-forest-canopy flex items-center justify-center">
-              <Shield className="w-4 h-4 text-peak-white" />
-            </div>
+            <NjerkaLogo size="small" />
             <div>
               <span className="text-sm font-bold text-summit-black">Njerka</span>
               <span className="text-label text-dust block leading-none mt-0.5">Admin</span>
@@ -177,7 +173,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
-              className="absolute top-[57px] left-0 right-0 bottom-0 bg-peak-white/98 z-20 lg:hidden overflow-y-auto"
+              className="absolute top-[57px] left-0 right-0 bottom-0 bg-peak-white/98 z-20 md:hidden overflow-y-auto"
             >
               <nav className="p-4 space-y-1 pb-28">
                 {navItems.map((item, i) => {

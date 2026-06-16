@@ -69,4 +69,17 @@ router.get(
   },
 );
 
+router.get(
+  "/plans",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const days = Math.min(Math.max(parseInt(req.query.days as string) || 30, 1), 365);
+      const data = await adminAnalyticsService.getPlanCreationData(days);
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 export default router;

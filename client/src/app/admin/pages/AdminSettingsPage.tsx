@@ -7,8 +7,7 @@ export const AdminSettingsPage = () => {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-title text-summit-black">Settings</h1>
-        <p className="text-body text-gravel mt-1">Admin profile and preferences</p>
+        <h1 className="text-title text-summit-black font-extrabold">Settings & Admin Preferences</h1>
       </div>
 
       <div className="bg-peak-white rounded-card border border-limestone p-6">

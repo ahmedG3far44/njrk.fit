@@ -17,6 +17,7 @@ export const userQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().optional(),
   tier: z.enum(['BASIC', 'PRO', 'FAMILY']).optional(),
+  provider: z.enum(['email', 'google', 'all']).default('all'),
   status: z.enum(['active', 'blocked', 'all']).default('all'),
   sort: z.enum(['createdAt', 'name', 'email', 'subscription.subscriptionTier']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('desc'),
@@ -30,6 +31,7 @@ export const blockUserSchema = z.object({
 
 export const updateUserSchema = z.object({
   language: z.enum(['en', 'ar']).optional(),
+  subscriptionTier: z.enum(['BASIC', 'PRO', 'FAMILY']).optional(),
 });
 
 export type LoginAdminInput = z.infer<typeof loginAdminSchema>;
