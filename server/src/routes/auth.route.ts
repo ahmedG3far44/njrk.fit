@@ -86,7 +86,7 @@ router.get("/google/fit-connect", authMiddleware, (req: Request, res: Response) 
   res.redirect(url);
 });
 
-router.get("/google/callback", async (req: Request, res: Response) => {
+router.get("/google/callback", async (req: Request, res: Response, next: NextFunction) => {
   const code = req.query.code as string;
   const state = req.query.state as string;
   const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
@@ -112,7 +112,6 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     const data = await tokenRes.json();
 
     if (!tokenRes.ok) {
-      console.error("Google OAuth Token Error:", data);
       throw new Error("Failed to fetch access token");
     }
 
@@ -159,58 +158,65 @@ router.get("/google/callback", async (req: Request, res: Response) => {
 
     const { email, picture, family_name, given_name, id } = profileData;
 
-    let user: any = await authService.getUserByEmail(email);
+    let userDoc: any = await authService.getUserByEmail(email);
 
-    if (!user) {
+    if (!userDoc) {
       const result = await authService.registerUser("google", {
         email,
         name: `${given_name} ${family_name}`,
         avatarUrl: picture,
         googleId: id,
       });
-      user = result.user;
+      if (!result.user) {
+        return res.status(500).json({ error: "Failed to create user" });
+      }
+      userDoc = result.user;
     }
 
+    if (!userDoc) {
+      return res.status(500).json({ error: "User not found" });
+    }
+
+    const userId = userDoc._id.toString();
+
     if (data.refresh_token) {
-      await User.findByIdAndUpdate(user._id, {
+      await User.findByIdAndUpdate(userId, {
         $set: {
           googleRefreshToken: data.refresh_token,
           googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
         },
       });
     } else {
-      await User.findByIdAndUpdate(user._id, {
+      await User.findByIdAndUpdate(userId, {
         $set: {
           googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
         },
       });
     }
 
-    let userPayload = {
-      _id: user._id.toString(),
-      userId: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-      onboardingCompleted: user.onboardingCompleted,
-      subscriptionTier: user.subscriptionTier,
+    const userPayload = {
+      _id: userId,
+      userId,
+      email: userDoc.email,
+      name: userDoc.name,
+      avatarUrl: userDoc.avatarUrl,
+      onboardingCompleted: userDoc.onboardingCompleted,
+      subscriptionTier: userDoc.subscription?.subscriptionTier || 'BASIC',
     };
 
     const accessToken = jwtUtils.generateAccessToken(userPayload);
     const refreshToken = jwtUtils.generateRefreshToken(userPayload);
     const googleAccessToken = data.access_token;
 
-
     setAuthCookies(res, accessToken, refreshToken, googleAccessToken);
 
-    if (!user.onboardingCompleted) {
+    if (!userDoc.onboardingCompleted) {
       res.redirect(`${clientUrl}/onboarding`);
     } else {
       res.redirect(`${clientUrl}/dashboard/insights`);
     }
   } catch (err) {
-    console.error("Google OAuth Error:", err);
-    res.status(500).send("Google login failed");
+    next(err);
   }
 });
 
@@ -289,14 +295,10 @@ router.post(
 
 router.post(
   "/forgot-password",
+  validate(forgotPasswordSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "الرجاء إدخال البريد الإلكتروني" });
-      }
-
       const result = await authService.forgotPassword(email);
       res.status(200).json(result);
     } catch (error) {
@@ -305,18 +307,13 @@ router.post(
   }
 );
 
-
 router.post(
   "/reset-password/:token",
+  validate(resetPasswordSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.params;
       const { password } = req.body;
-
-      if (!password || password.length < 8) {
-        return res.status(400).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" });
-      }
-
       const result = await authService.resetPassword(token as string, password);
 
       if (!result.success) {
@@ -408,35 +405,7 @@ router.post(
   },
 );
 
-router.post(
-  "/forgot-password",
-  validate(forgotPasswordSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { email } = req.body;
-      console.log("Password reset requested for:", email);
-      // TODO: Implement actual email sending logic
-      res.status(200).json({ message: "Password reset email sent" });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
 
-router.post(
-  "/reset-password",
-  validate(resetPasswordSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { token, newPassword } = req.body;
-      console.log("Password reset with token:", token);
-      // TODO: Implement actual password hashing and database update
-      res.status(200).json({ message: "Password reset successfully" });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
 
 interface IOnboardingRequest {
   age: number;
@@ -500,28 +469,19 @@ export type TOnboarding = z.infer<typeof onboardingSchema>;
 router.post(
   "/onboarding",
   authMiddleware,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("onboarding request received");
       const userId = (req as AuthRequest).user?._id;
 
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const payload = req.body;
-      console.log("body", payload);
-
-      const onboarding = onboardingSchema.safeParse(payload);
-
-      console.log("passing schema validation of onboarding: ", onboarding);
+      const onboarding = onboardingSchema.safeParse(req.body);
 
       if (!onboarding.success) {
-        console.log("schema validation failed", onboarding.error);
         return res.status(400).json({ error: onboarding.error });
       }
-
-      console.log("onboarding", onboarding.data);
 
       const data = onboarding.data;
 
@@ -536,15 +496,13 @@ router.post(
       if (!result.success) {
         return res.status(400).json({ error: result.message });
       }
-      console.log("redirecting user to: ", env.CLIENT_URL);
 
       res.status(201).json({
         message: "User onboarded successfully",
         redirect: `${env.CLIENT_URL}/dashboard/insights`,
       });
     } catch (error) {
-      console.error("Onboarding error:", error);
-      res.status(500).json({ error: "Failed to complete onboarding" });
+      next(error);
     }
   },
 );

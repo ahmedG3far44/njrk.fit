@@ -103,11 +103,13 @@ router.get(
         return res.status(404).json({ error: "User not found" });
       }
 
+      const sanitized = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
       const searchResults = await User.find({
         _id: { $ne: userId },
         $or: [
-          { name: { $regex: query, $options: "i" } },
-          { email: { $regex: query, $options: "i" } },
+          { name: { $regex: sanitized, $options: "i" } },
+          { email: { $regex: sanitized, $options: "i" } },
         ],
       })
         .select("name avatarUrl email")

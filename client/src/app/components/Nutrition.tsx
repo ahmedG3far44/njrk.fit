@@ -291,6 +291,7 @@ export const Nutrition: React.FC = () => {
       const data = await api.post<GenerateResponse>(
         "/nutrition/generate",
         counts || {},
+        { timeout: 300000 },
       );
       setNutritionPlan(data.plan);
       setCurrentMeals(data.plan.meals || []);

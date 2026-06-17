@@ -74,8 +74,10 @@ router.get('/', authMiddleware, async (req, res, next) => {
             const dayIndex = getDayIndexFromStart(planStart, date);
             const targetDayLabel = `Day ${dayIndex}`;
 
+            const targetDayLabelAR = `اليوم ${dayIndex}`;
+
             const mealsForDay = nutritionPlan.meals.filter(
-                (meal: any) => meal.day === targetDayLabel
+                (meal: any) => meal.day === targetDayLabel || meal.day === targetDayLabelAR
             );
 
             mealsForDay.forEach((meal: any) => {

@@ -293,8 +293,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         setVitals([
           {
             label: t("dashboard.waterLabel"),
-            value: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
-            target: `${Math.round(insightsRes.estimatedWaterOz)}oz`,
+            value: insightsRes.estimatedWaterMl >= 1000 ? `${(insightsRes.estimatedWaterMl / 1000).toFixed(1)}L` : `${Math.round(insightsRes.estimatedWaterMl)}ml`,
+            target: insightsRes.estimatedWaterMl >= 1000 ? `${(insightsRes.estimatedWaterMl / 1000).toFixed(1)}L` : `${Math.round(insightsRes.estimatedWaterMl)}ml`,
             icon: Droplets,
             color: "text-blue-500",
             bg: "bg-blue-50",

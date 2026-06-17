@@ -248,7 +248,7 @@ export const Fitness: React.FC = () => {
         trainingDays,
         trainingProgram,
         startDate,
-      });
+      }, { timeout: 300000 });
 
       setWorkoutPlan(response.workoutPlan);
       setHasPlan(true);
@@ -448,7 +448,9 @@ export const Fitness: React.FC = () => {
     if (new Date() >= unlockDate) return { canGenerate: true, message: null };
     return {
       canGenerate: false,
-      message: t("fitness.generationLocked") + ` ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      message:
+        t("fitness.generationLocked") +
+        ` ${unlockDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
     };
   })();
 
@@ -528,18 +530,18 @@ export const Fitness: React.FC = () => {
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-4 sm:mb-6">
                   {[
                     {
-                      label: t('fitness.duration'),
+                      label: t("fitness.duration"),
                       value: selectedWorkout.duration,
                       icon: Clock,
                     },
                     {
-                      label: t('fitness.exercises'),
-                      value: `${selectedWorkout.exercises?.length || 0} ${t('fitness.exerciseCount')}`,
+                      label: t("fitness.exercises"),
+                      value: `${selectedWorkout.exercises?.length || 0} ${t("fitness.exerciseCount")}`,
                       icon: Dumbbell,
                     },
                     {
-                      label: t('fitness.estBurn'),
-                      value: `${selectedWorkout.calories || 0} ${t('fitness.caloriesWithUnit')}`,
+                      label: t("fitness.estBurn"),
+                      value: `${selectedWorkout.calories || 0} ${t("fitness.caloriesWithUnit")}`,
                       icon: Flame,
                     },
                   ].map((s) => (
@@ -551,13 +553,16 @@ export const Fitness: React.FC = () => {
                       <div className="font-bold text-slate-900 text-xs sm:text-sm">
                         {s.value}
                       </div>
-                      <div className="text-[9px] sm:text-xs text-slate-400">{s.label}</div>
+                      <div className="text-[9px] sm:text-xs text-slate-400">
+                        {s.label}
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 <h3 className="font-bold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                  <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" /> {t('fitness.routineBreakdown')}
+                  <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" />{" "}
+                  {t("fitness.routineBreakdown")}
                   {completedExercises.size > 0 && (
                     <span className="ms-2 text-[10px] sm:text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                       {completedExercises.size} {t("fitness.selected")}
@@ -636,7 +641,9 @@ export const Fitness: React.FC = () => {
                               >
                                 {ex.sets}
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">{t("fitness.sets")}</span>
+                              <span className="text-[9px] sm:text-[10px]">
+                                {t("fitness.sets")}
+                              </span>
                             </div>
                             <div className="w-px bg-slate-200" />
                             <div className="flex flex-col items-center">
@@ -645,14 +652,18 @@ export const Fitness: React.FC = () => {
                               >
                                 {ex.reps}
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">{t("fitness.reps")}</span>
+                              <span className="text-[9px] sm:text-[10px]">
+                                {t("fitness.reps")}
+                              </span>
                             </div>
                             <div className="w-px bg-slate-200" />
                             <div className="flex flex-col items-center">
                               <span className="text-orange-500 text-xs sm:text-base font-black">
                                 {ex.restSeconds || 60}s
                               </span>
-                              <span className="text-[9px] sm:text-[10px]">{t("fitness.rest")}</span>
+                              <span className="text-[9px] sm:text-[10px]">
+                                {t("fitness.rest")}
+                              </span>
                             </div>
                           </div>
                         </motion.div>
@@ -672,8 +683,7 @@ export const Fitness: React.FC = () => {
                   const isToday = selectedWorkout.dayOfWeek === today;
                   const isNotTodayMessage = !isToday && (
                     <p className="text-[10px] sm:text-xs text-slate-400 mt-2 sm:mt-3 text-center">
-                      {t("fitness.youCanOnlyCompleteToday")} (
-                      {today})
+                      {t("fitness.youCanOnlyCompleteToday")} ({today})
                     </p>
                   );
 
@@ -701,8 +711,12 @@ export const Fitness: React.FC = () => {
                                   : "bg-slate-300 cursor-not-allowed shadow-none"
                               }`}
                             >
-                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> {t("fitness.completeExercises")}{" "}
-                              {completedExercises.size} {completedExercises.size > 1 ? t("fitness.completePlural") : t("fitness.completeSingle")}
+                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />{" "}
+                              {t("fitness.completeExercises")}{" "}
+                              {completedExercises.size}{" "}
+                              {completedExercises.size > 1
+                                ? t("fitness.completePlural")
+                                : t("fitness.completeSingle")}
                             </motion.button>
                           )}
                           <motion.button
@@ -719,7 +733,8 @@ export const Fitness: React.FC = () => {
                                 : "bg-slate-300 cursor-not-allowed shadow-none"
                             }`}
                           >
-                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> {t("fitness.markSessionComplete")}
+                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />{" "}
+                            {t("fitness.markSessionComplete")}
                           </motion.button>
                         </div>
                       )}
@@ -765,7 +780,9 @@ export const Fitness: React.FC = () => {
                 {gifLoading && (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-                    <span className="text-sm text-slate-400">{t("fitness.loadingGif")}</span>
+                    <span className="text-sm text-slate-400">
+                      {t("fitness.loadingGif")}
+                    </span>
                   </div>
                 )}
                 {gifError && (
@@ -773,7 +790,9 @@ export const Fitness: React.FC = () => {
                     <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center">
                       <Play className="w-8 h-8 text-slate-400" />
                     </div>
-                    <span className="text-sm">{t("fitness.imageNotAvailable")}</span>
+                    <span className="text-sm">
+                      {t("fitness.imageNotAvailable")}
+                    </span>
                   </div>
                 )}
                 <img
@@ -836,7 +855,9 @@ export const Fitness: React.FC = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   <Sparkles className="w-4 h-4" />
-                  {hasPlan ? t('fitness.regeneratePlan') : t('fitness.generateAIPlan')}
+                  {hasPlan
+                    ? t("fitness.regeneratePlan")
+                    : t("fitness.generateAIPlan")}
                 </motion.button>
               </>
             ) : (
@@ -848,7 +869,9 @@ export const Fitness: React.FC = () => {
                   className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Lock className="w-4 h-4" />
-                  {hasPlan ? t('fitness.regeneratePlan') : t('fitness.generateAIPlan')}
+                  {hasPlan
+                    ? t("fitness.regeneratePlan")
+                    : t("fitness.generateAIPlan")}
                 </motion.button>
                 {generationLock.message && (
                   <div className="absolute end-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -871,7 +894,7 @@ export const Fitness: React.FC = () => {
                 title={t("fitness.exportPdfTitle")}
               >
                 <FileDown className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("fitness.pdf")}</span>
+                <span className="hidden sm:inline">{t("PDF")}</span>
               </button>
             )}
           </div>
@@ -897,7 +920,9 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {completedSessions} / {totalSessions}
                   </div>
-                  <div className="text-xs text-slate-500">{t("fitness.sessionsDone")}</div>
+                  <div className="text-xs text-slate-500">
+                    {t("fitness.sessionsDone")}
+                  </div>
                 </div>
               </motion.div>
               <motion.div
@@ -917,7 +942,9 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {totalCalories.toLocaleString()}
                   </div>
-                  <div className="text-xs text-slate-500">{t("fitness.caloriesBurned")}</div>
+                  <div className="text-xs text-slate-500">
+                    {t("fitness.caloriesBurned")}
+                  </div>
                 </div>
               </motion.div>
               <motion.div
@@ -937,7 +964,9 @@ export const Fitness: React.FC = () => {
                   <div className="font-bold text-slate-900">
                     {totalMinutes} min
                   </div>
-                  <div className="text-xs text-slate-500">{t("fitness.activeMinutes")}</div>
+                  <div className="text-xs text-slate-500">
+                    {t("fitness.activeMinutes")}
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -1055,16 +1084,19 @@ export const Fitness: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-yellow-400" />{" "}
-                              {todayWorkout.calories} {t("fitness.caloriesWithUnit")}
+                              {todayWorkout.calories}{" "}
+                              {t("fitness.caloriesWithUnit")}
                             </div>
                             <div className="flex items-center gap-2">
                               <Dumbbell className="w-4 h-4 opacity-70" />{" "}
-                              {todayWorkout.exercises?.length || 0} {t("fitness.exercises")}
+                              {todayWorkout.exercises?.length || 0}{" "}
+                              {t("fitness.exercises")}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <button className="bg-white text-slate-900 px-4 py-2 sm:px-7 sm:py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors shadow-lg text-sm sm:text-xs sm:font-semibold">
-                              <Play className="w-4 h-4 fill-current" /> {t("fitness.viewRoutine")}
+                              <Play className="w-4 h-4 fill-current" />{" "}
+                              {t("fitness.viewRoutine")}
                             </button>
                             {!todayWorkout.isCompleted && (
                               <button
@@ -1092,9 +1124,9 @@ export const Fitness: React.FC = () => {
                       <div className="relative h-48 rounded-3xl overflow-hidden bg-slate-100 flex items-center justify-center">
                         <div className="text-center text-slate-400">
                           <Dumbbell className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                            <p className="font-medium">
-                              {t("fitness.noWorkoutToday")}
-                            </p>
+                          <p className="font-medium">
+                            {t("fitness.noWorkoutToday")}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1104,7 +1136,8 @@ export const Fitness: React.FC = () => {
                       <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                         <div className="flex items-center justify-between mb-5">
                           <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-green-700" /> {t("fitness.thisWeek")}
+                            <Calendar className="w-5 h-5 text-green-700" />{" "}
+                            {t("fitness.thisWeek")}
                           </h3>
                         </div>
 
@@ -1278,8 +1311,8 @@ export const Fitness: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-green-600 bg-green-50 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl w-fit">
-                        <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {completedSessions} /{" "}
-                        {totalSessions} Done
+                        <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />{" "}
+                        {completedSessions} / {totalSessions} Done
                       </div>
                     </div>
                     <div className="divide-y divide-slate-50">

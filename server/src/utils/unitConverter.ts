@@ -24,11 +24,12 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 const parseQuantity = (input: string): { value: number; unit: string } => {
-  const match = input.match(/^([\d\.]+)\s*(g|kg|oz|lb|ml|l|cup|tbsp|tsp|piece|pieces|pcs|dozen)?$/i);
+  const match = input.match(/^([\d\.]+)\s*(g|kg|oz|lb|ml|l|cup|tbsp|tsp|piece|pieces|pcs|dozen|peice)?$/i);
   
   if (match) {
     const value = parseFloat(match[1]);
-    const unit = (match[2] || 'piece').toLowerCase();
+    let unit = (match[2] || 'piece').toLowerCase();
+    if (unit === 'peice') unit = 'piece';
     return { value, unit };
   }
   
@@ -72,16 +73,10 @@ const convertFromBase = (baseValue: number, unitType: 'weight' | 'volume' | 'cou
     if (baseValue >= 1000) {
       return `${(baseValue / 1000).toFixed(1)}L`;
     }
-    if (baseValue >= 240) {
-      return `${(baseValue / 240).toFixed(1)}cup`;
-    }
     return `${Math.round(baseValue)}ml`;
   }
   
-  if (baseValue >= 12) {
-    return `${(baseValue / 12).toFixed(1)}dozen`;
-  }
-  return `${Math.round(baseValue)}pcs`;
+  return `${Math.round(baseValue)} peice`;
 };
 
 const categorizeIngredient = (name: string): string => {
@@ -129,7 +124,7 @@ export const parseAndAggregateIngredients = (
   return Array.from(aggregated.values()).map(item => ({
     name: item.name,
     totalQuantity: item.baseValue,
-    unit: item.unitType === 'weight' ? 'g' : item.unitType === 'volume' ? 'ml' : 'pcs',
+    unit: item.unitType === 'weight' ? 'g' : item.unitType === 'volume' ? 'ml' : 'peice',
     category: item.category,
   }));
 };

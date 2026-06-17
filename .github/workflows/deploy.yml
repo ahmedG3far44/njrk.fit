@@ -32,6 +32,21 @@ jobs:
           API_URL=${{ secrets.API_URL }}
 
           OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+
+          LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL_EN=${{ secrets.LLM_MODEL_EN }}
+          LLM_MODEL_AR=${{ secrets.LLM_MODEL_AR }}
+
+
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} 
+          GEMINI_MODEL_EN=${{ secrets.GEMINI_MODEL_EN }}
+          GEMINI_MODEL_AR=${{ secrets.GEMINI_MODEL_AR }}
+
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL_EN=${{ secrets.OPENAI_MODEL_EN }}
+          OPENAI_MODEL_AR=${{ secrets.OPENAI_MODEL_AR }}
+
+
           RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
 
           STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
@@ -39,6 +54,10 @@ jobs:
 
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}
+
+          JWT_ADMIN_SECRET=${{ secrets.JWT_ADMIN_SECRET }}
+          JWT_ADMIN_EXPIRATION=${{ secrets.JWT_ADMIN_EXPIRATION }}
+
           JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
           JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
 

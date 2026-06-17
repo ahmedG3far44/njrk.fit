@@ -81,7 +81,7 @@ type UserHealthTargetsInput = {
 type UserHealthTargetsResult = {
   estimatedSteps: number;
   estimatedSleepHours: number;
-  estimatedWaterOz: number;
+  estimatedWaterMl: number;
 };
 
 const CALORIES_PER_KG = 7700;
@@ -107,20 +107,14 @@ function estimateSleepHours(age?: number): number {
   return 7;
 }
 
-function estimateWaterOz(
+function estimateWaterMl(
   weightKg: number,
   activityLevel: ActivityLevel = "moderate"
 ): number {
-  /**
-   * Base hydration:
-   * ~35ml per kg body weight
-   */
-
   let waterMl = weightKg * 35;
 
   switch (activityLevel) {
     case "sedentary":
-      waterMl += 0;
       break;
 
     case "light":
@@ -143,8 +137,7 @@ function estimateWaterOz(
       waterMl += 500;
   }
 
-  // Convert ML -> OZ
-  return Math.round(waterMl * 0.033814);
+  return Math.round(waterMl);
 }
 
 export function calculateUserHealthTargets({
@@ -191,11 +184,11 @@ export function calculateUserHealthTargets({
   }
 
   const estimatedSleepHours = estimateSleepHours(age);
-  const estimatedWaterOz = estimateWaterOz(currentWeightKg, activityLevel);
+  const estimatedWaterMl = estimateWaterMl(currentWeightKg, activityLevel);
 
   return {
     estimatedSteps,
     estimatedSleepHours,
-    estimatedWaterOz,
+    estimatedWaterMl,
   };
 }

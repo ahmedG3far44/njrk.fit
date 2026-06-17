@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import dbConnection from "./configs/db";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route";
@@ -26,23 +29,41 @@ import { requestLogger } from "./middlewares/requestLogger";
 const app = express();
 dbConnection;
 
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(compression());
 app.use(requestLogger);
 app.use(cors(corsOptions));
 app.use(cookieParser());
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many authentication attempts, please try again later." },
+});
+
+app.use("/api", generalLimiter);
+app.use("/api/auth", authLimiter);
 
 app.use("/api/webhook", webhooksRoutes);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.send(`
-    <div>
-      <h1>Welcome to the Njerka.FIT Server</h1>
-      <p>API URL: ${env.API_URL}</p>
-      <p>Allowed Origins: ${env.ALLOWED_ORIGINS}</p>
-      <p>Documentation: <a href="/api-docs">/api-docs</a></p>
-    </div>
-    `);
+  res.json({
+    name: "Njerak.fit API",
+    version: "1.0.0",
+    environment: env.NODE_ENV,
+  });
 });
 
 app.get("/health", async (req, res) => {

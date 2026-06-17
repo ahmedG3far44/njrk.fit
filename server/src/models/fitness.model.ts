@@ -7,7 +7,7 @@ interface IExercise {
   durationMin?: number;
   isCompleted?: boolean;
   exerciseId?: string; 
-  gifUrl?: string; // لازم يكون حرف الـ U كابيتال
+  gifUrl?: string;
 }
 
 interface IWorkoutSession {
@@ -38,7 +38,7 @@ const ExerciseSchema = new Schema<IExercise>({
   durationMin: { type: Number },
   isCompleted: { type: Boolean, default: false },
   exerciseId: { type: String }, 
-  gifUrl: { type: String }, // لازم يكون حرف الـ U كابيتال
+  gifUrl: { type: String },
 });
 
 const WorkoutSessionSchema = new Schema<IWorkoutSession>({

@@ -163,8 +163,6 @@ export const registerUser = async (
       break;
   }
 
-  console.log("Stripe customer created: ", customer.id);
-
   const user = await User.create(newUser);
 
   await sendSubscriptionEmail(user.email, user.name);
@@ -305,7 +303,7 @@ export const resetPassword = async (token: string, newPassword: string) => {
 };
 
 export const loginUser = async (email: string, password: string) => {
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
   if (!user || !user.passwordHash) {
     return { success: false, message: "Invalid credentials" };
   }
@@ -342,7 +340,6 @@ export const loginUser = async (email: string, password: string) => {
 
 export const onboardingUser = async (userId: string, data: TOnboarding) => {
   try {
-    console.log("updatting user onboarding data: ", data);
     const user = await User.findById(userId);
     if (!user) {
       return { success: false, message: "User not found" };
@@ -364,9 +361,7 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
       goal: data.userGoal,
     });
 
-    console.log(result);
-
-    const { estimatedSteps, estimatedSleepHours, estimatedWaterOz } = result;
+    const { estimatedSteps, estimatedSleepHours, estimatedWaterMl } = result;
 
     user.weight = data.weight;
     user.height = data.height;
@@ -383,7 +378,7 @@ export const onboardingUser = async (userId: string, data: TOnboarding) => {
     user.onboardingCompleted = true;
     user.estimatedSteps = estimatedSteps;
     user.estimatedSleepHours = estimatedSleepHours;
-    user.estimatedWaterOz = estimatedWaterOz;
+    user.estimatedWaterMl = estimatedWaterMl;
     if (data.language) user.language = data.language;
 
     await user.save();

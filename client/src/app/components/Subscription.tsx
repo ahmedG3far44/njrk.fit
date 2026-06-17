@@ -174,7 +174,7 @@ export const Subscription: React.FC = () => {
       ],
     },
     {
-      id: import.meta.env.VITE_STRIPE_PRO_PRICE_ID as string || 'PRO',
+      id: import.meta.env.VITE_PRO_PLAN_PRICE_ID as string || 'PRO',
       name: t('subscriptions.proTier'),
       price: 19.99,
       period: t('subscriptions.perMonth'),
@@ -191,7 +191,7 @@ export const Subscription: React.FC = () => {
       isCurrent: subscriptionStatus?.subscriptionTier?.toUpperCase() === 'PRO',
     },
     {
-      id: import.meta.env.VITE_STRIPE_FAMILY_PRICE_ID as string || 'family',
+      id: import.meta.env.VITE_FAMILY_PLAN_PRICE_ID as string || 'family',
       name: t('subscriptions.familyTier'),
       price: 29.99,
       period: t('subscriptions.perMonth'),

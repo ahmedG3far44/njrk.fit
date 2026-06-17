@@ -54,7 +54,7 @@ export interface InsightsData {
   pointsToRedeem: number;
   estimatedSteps: number;
   estimatedSleepHours: number;
-  estimatedWaterOz: number;
+  estimatedWaterMl: number;
   userEstimatedSteps: number;
 }
 

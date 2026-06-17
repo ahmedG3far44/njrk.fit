@@ -97,25 +97,19 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           onLogin();
         }
       }
-   } catch (error: any) {
-      // حطينا هذا السطر عشان لو ما ضبطت، تفتح الـ Console في المتصفح وتصور لي وش طلع لك بالضبط
-      console.log("Backend Error Object:", error); 
-
-      // هنا بنحفر ورا الرسالة في كل الأماكن المحتملة اللي ممكن يكون api.ts خباها فيها!
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string }; status?: number }; data?: { error?: string }; message?: string; status?: number };
       const message = 
-        error.response?.data?.error || 
-        error.response?.error || 
-        error.data?.error || 
-        error.message || 
+        err.response?.data?.error || 
+        (err.data as { error?: string } | undefined)?.error || 
+        err.message || 
         'Something went wrong. Please try again.';
 
-      const status = error.response?.status || error.status || 400;
+      const status = err.response?.status || err.status || 400;
 
-      // إذا الخطأ 401 (باسورد غلط) أو 400 (مشكلة توثيق أو غيره)
       if (status === 401) {
         setErrors({ password: 'Invalid email or password' });
-      } else if (status === 400 || message.includes('توثيق')) {
-        // بنعرض الرسالة الجاية من الباك اند تحت مربع الإيميل مباشرة
+      } else if (status === 400) {
         setErrors({ email: message });
       } else {
         toast.error(message);
@@ -134,24 +128,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
 
 
   const handleForgotPassword = async () => {
-    // 1. نتأكد إن اليوزر كاتب إيميله في المربع
     if (!formData.email.trim()) {
-      toast.error('الرجاء كتابة إيميلك في المربع أعلاه أولاً 👆');
-      setErrors({ email: 'مطلوب لإرسال رابط إعادة التعيين' });
+      toast.error(t('auth.forgotPasswordEmailRequired'));
+      setErrors({ email: t('auth.forgotPasswordEmailRequired') });
       return;
     }
 
-    // 2. نرسل الطلب للباك اند
     try {
-      // سوينا توست للتحميل عشان اليوزر يعرف إن فيه شيء جالس يصير
-      toast.info('جاري إرسال الرابط...'); 
+      toast.info(t('auth.sendingResetLink'));
       
       await api.post('/auth/forgot-password', { email: formData.email });
       
-      toast.success('تم إرسال رابط تغيير كلمة المرور بنجاح! شيك إيميلك 🚀');
-    } catch (err: any) {
-      console.log(err);
-      const message = err.data?.error || err.message || 'حدث خطأ، يرجى المحاولة مرة أخرى';
+      toast.success(t('auth.resetLinkSent'));
+    } catch (err: unknown) {
+      const error = err as { data?: { error?: string }; message?: string };
+      const message = error.data?.error || error.message || t('auth.forgotPasswordFailed');
       toast.error(message);
     }
   };

@@ -7,12 +7,14 @@ import {
 import { AuthRequest, authMiddleware } from "../middlewares/authMiddleware";
 import User from "../models/user.model";
 import NutritionPlan from "../models/nutrition.model";
-import { generateMealPlan, refineMeal, regenerateMeal } from "../services/llm.service";
+import {
+  generateMealPlan,
+  refineMeal,
+  regenerateMeal,
+} from "../services/llm.service";
 import { awardPoints } from "../services/gamification.service";
-import { generatePDF } from "../services/pdf.service";
 
 import { UserContext, Meal } from "../types";
-
 
 const router = Router();
 
@@ -25,39 +27,48 @@ router.post(
       const authReq = req as AuthRequest;
       let userId = authReq.user?.userId;
 
-      const targetUserId = req.body.userId;
-      if (targetUserId) {
-        const currentUser = await User.findById(userId);
-        if (
-          !currentUser ||
-          currentUser.subscription.subscriptionTier === "BASIC"
-        ) {
-          return res
-            .status(403)
-            .json({ error: "Premium subscription required for family mode" });
-        }
-        userId = targetUserId;
-      }
+      const { language } = req.body;
+
+      // const targetUserId = req.body.userId;
+
+      // if (targetUserId) {
+      //   const currentUser = await User.findById(userId);
+      //   if (
+      //     !currentUser ||
+      //     currentUser.subscription.subscriptionTier === "BASIC"
+      //   ) {
+      //     return res
+      //       .status(403)
+      //       .json({ error: "Premium subscription required for family mode" });
+      //   }
+      //   userId = targetUserId;
+      // }
 
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const existingPlan = await NutritionPlan.findOne({ userId: user._id }).sort({ createdAt: -1 });
-      if (existingPlan && existingPlan.meals && existingPlan.meals.length > 0) {
-        const weekEnd = new Date(existingPlan.date);
-        weekEnd.setDate(weekEnd.getDate() + 7);
-        if (new Date() < weekEnd) {
-          return res.status(403).json({
-            error: `This meal plan is still active. You can generate a new plan after ${weekEnd.toLocaleDateString()}.`,
-          });
-        }
-      }
+      const existingPlan = await NutritionPlan.findOne({
+        userId: user._id,
+      }).sort({ createdAt: -1 });
 
-      const repeatMeals = req.body.repeatMeals === true || req.body.repeatMeals === 'true';
+      // if (existingPlan && existingPlan.meals && existingPlan.meals.length > 0) {
+      //   const weekEnd = new Date(existingPlan.date);
+      //   weekEnd.setDate(weekEnd.getDate() + 7);
+      //   if (new Date() < weekEnd) {
+      //     return res.status(403).json({
+      //       error: `This meal plan is still active. You can generate a new plan after ${weekEnd.toLocaleDateString()}.`,
+      //     });
+      //   }
+      // }
+
+      const repeatMeals =
+        req.body.repeatMeals === true || req.body.repeatMeals === "true";
       user.preferences.repeatMealsEveryDay = repeatMeals;
       await user.save();
+
+      const targetLanguage = user.language || language || "en";
 
       const userContext: UserContext = {
         name: user.name,
@@ -76,7 +87,7 @@ router.post(
         mealsCount: req.body.mealsCount,
         snacksCount: req.body.snacksCount,
         favoriteFoods: req.body.favoriteFoods,
-        language: user.language || 'en',
+        language: targetLanguage,
       };
 
       const plan = await generateMealPlan(
@@ -85,7 +96,7 @@ router.post(
         req.body.snacksCount,
         req.body.favoriteFoods,
         repeatMeals,
-        user.language || 'en',
+        targetLanguage,
       );
 
       const startDate = req.body.startDate
@@ -111,7 +122,6 @@ router.post(
 
       await nutritionPlan.save();
 
-
       res.status(201).json({ plan: nutritionPlan });
     } catch (error) {
       console.error("Nutrition generate error:", error);
@@ -119,7 +129,6 @@ router.post(
     }
   },
 );
-
 
 router.post(
   "/refine/:mealId",
@@ -130,7 +139,7 @@ router.post(
       const authReq = req as AuthRequest;
       const userId = authReq.user?._id;
       const { mealId } = req.params;
-      const { refinement } = req.body;
+      const { refinement, language } = req.body;
 
       const user = await User.findById(userId);
 
@@ -162,14 +171,14 @@ router.post(
         activityLevel: user.activityLevel,
         fitnessGoals: user.fitnessGoals,
         dietaryRestrictions: user.dietaryRestrictions,
-        language: user.language || 'en',
+        language: user.language || language || "en",
       };
 
       const refinedMeal = await refineMeal(
         currentMeal,
         refinement,
         userContext,
-        user.language || 'en',
+        user.language || language || "en",
       );
 
       const isRepeat = !!user.preferences?.repeatMealsEveryDay;
@@ -179,7 +188,8 @@ router.post(
         nutritionPlan.meals = nutritionPlan.meals.map((m) => {
           const isSameMeal =
             m._id?.toString() === mealId ||
-            (m.time === currentMeal.time && m.mealType === currentMeal.mealType) ||
+            (m.time === currentMeal.time &&
+              m.mealType === currentMeal.mealType) ||
             m.name === currentMeal.name;
 
           if (isSameMeal) {
@@ -228,6 +238,7 @@ router.post(
       const authReq = req as AuthRequest;
       const userId = authReq.user?._id;
       const { mealId } = req.params;
+      const { language } = req.body;
 
       const user = await User.findById(userId);
 
@@ -251,6 +262,8 @@ router.post(
         return res.status(404).json({ error: "Meal not found in plan" });
       }
 
+      const targetLanguage = user.language || language || "en";
+
       const userContext: UserContext = {
         name: user.name,
         weight: user.weight,
@@ -259,10 +272,14 @@ router.post(
         activityLevel: user.activityLevel,
         fitnessGoals: user.fitnessGoals,
         dietaryRestrictions: user.dietaryRestrictions,
-        language: user.language || 'en',
+        language: targetLanguage,
       };
 
-      const regeneratedMeal = await regenerateMeal(currentMeal, userContext, user.language || 'en');
+      const regeneratedMeal = await regenerateMeal(
+        currentMeal,
+        userContext,
+        targetLanguage,
+      );
 
       const isRepeat = !!user.preferences?.repeatMealsEveryDay;
 
@@ -271,7 +288,8 @@ router.post(
         nutritionPlan.meals = nutritionPlan.meals.map((m) => {
           const isSameMeal =
             m._id?.toString() === mealId ||
-            (m.time === currentMeal.time && m.mealType === currentMeal.mealType) ||
+            (m.time === currentMeal.time &&
+              m.mealType === currentMeal.mealType) ||
             m.name === currentMeal.name;
 
           if (isSameMeal) {
@@ -340,9 +358,7 @@ router.get(
       });
 
       if (!nutritionPlan) {
-        return res
-          .status(404)
-          .json({ error: "No nutrition plan found" });
+        return res.status(404).json({ error: "No nutrition plan found" });
       }
 
       let meals = [];
@@ -361,7 +377,9 @@ router.get(
         const currentDayAR = `اليوم ${dayIndex}`;
 
         meals =
-          nutritionPlan.meals.filter((meal) => meal.day === currentDayEN || meal.day === currentDayAR) || [];
+          nutritionPlan.meals.filter(
+            (meal) => meal.day === currentDayEN || meal.day === currentDayAR,
+          ) || [];
       } else {
         meals = nutritionPlan.meals || [];
       }
@@ -370,7 +388,11 @@ router.get(
         return res.status(404).json({ error: "No meals found for this date" });
       }
 
-      res.status(200).json({ meals, targetMacros: nutritionPlan.targetMacros, planDate: nutritionPlan.date });
+      res.status(200).json({
+        meals,
+        targetMacros: nutritionPlan.targetMacros,
+        planDate: nutritionPlan.date,
+      });
     } catch (error) {
       next(error);
     }
@@ -435,7 +457,5 @@ router.post(
     }
   },
 );
-
-
 
 export default router;

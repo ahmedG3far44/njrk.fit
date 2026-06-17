@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, Flame, ChefHat, PlayCircle, Heart, RefreshCw, Sparkles, Send } from 'lucide-react';
 import { Button } from './ui/button';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { MealItem, nutritionService } from '../services/nutritionService';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';

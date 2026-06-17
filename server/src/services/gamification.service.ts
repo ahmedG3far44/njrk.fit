@@ -19,7 +19,7 @@ interface InsightsResult {
     pointsToRedeem: number;
     estimatedSteps: number;
     estimatedSleepHours: number;
-    estimatedWaterOz: number;
+    estimatedWaterMl: number;
     userEstimatedSteps: number;
 }
 
@@ -109,7 +109,7 @@ export const getInsights = async (userId: string): Promise<InsightsResult> => {
     ).length || 0;
 
     const estimatedSteps = calculateEstimatedSteps(user.activityLevel || 'moderate', todaysWorkoutsCompleted);
-    const estimatedWater = Math.round((user.weight || 150) * 0.5) + (user.activityLevel === 'very_active' ? 16 : user.activityLevel === 'active' ? 8 : 0);
+    const estimatedWater = Math.round(((user.weight || 150) * 0.5 + (user.activityLevel === 'very_active' ? 16 : user.activityLevel === 'active' ? 8 : 0)) * 29.5735);
 
     return {
         currentStreak: user.currentStreak,
@@ -118,7 +118,7 @@ export const getInsights = async (userId: string): Promise<InsightsResult> => {
         pointsToRedeem: user.pointsToRedeem || 0,
         estimatedSteps,
         estimatedSleepHours: user.estimatedSleepHours || 7.5,
-        estimatedWaterOz: estimatedWater,
+        estimatedWaterMl: estimatedWater,
         userEstimatedSteps: user.estimatedSteps || 5000,
     };
 };

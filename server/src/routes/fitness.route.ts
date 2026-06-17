@@ -21,7 +21,7 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.user?.userId;
-    const { duration, trainingDays, trainingProgram } = req.body;
+    const { duration, trainingDays, trainingProgram, language } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -39,6 +39,8 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       });
     }
 
+    const targetLanguage = user.language || language || 'en';
+
     const userContext: UserContext = {
       name: user.name,
       weight: user.weight,
@@ -53,7 +55,7 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       equipment: user.equipment,
       trainingDays: trainingDays || user.trainingDays || 3,
       trainingProgram: trainingProgram || user.trainingProgram || 'full_body',
-      language: user.language || 'en',
+      language: targetLanguage,
     };
 
     const plan = await generateWorkoutPlan(
@@ -61,7 +63,7 @@ router.post('/generate', authMiddleware, validate(generateWorkoutPlanSchema), as
       userContext.trainingProgram || 'full_body',
       userContext.trainingDays || 3,
       duration || 60,
-      user.language || 'en',
+      targetLanguage,
     );
 
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -218,7 +220,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response, next:
 
 router.get(
   '/exercise-image/:exerciseId',
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { exerciseId } = req.params;
       
@@ -240,13 +242,11 @@ router.get(
       const buffer = await response.arrayBuffer();
       const contentType = response.headers.get('content-type') || 'image/gif';
       res.setHeader('Content-Type', contentType);
-      // نحفظ الصورة في كاش المتصفح لمدة شهر عشان نوفر استهلاك الـ API
       res.setHeader('Cache-Control', 'public, max-age=2592000'); 
       
       res.send(Buffer.from(buffer));
     } catch (error) {
-      console.error('Error fetching exercise image:', error);
-      res.status(500).json({ message: 'Error fetching image' });
+      next(error);
     }
   }
 );

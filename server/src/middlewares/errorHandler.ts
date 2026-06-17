@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { MulterError } from 'multer';
 
 export class AppError extends Error {
     statusCode: number;
@@ -8,16 +9,15 @@ export class AppError extends Error {
         super(message);
         this.statusCode = statusCode;
         this.isOperational = true;
-
         Error.captureStackTrace(this, this.constructor);
     }
 }
 
 export const errorHandler = (
     err: Error,
-    req: Request,
+    _req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
 ) => {
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
@@ -25,9 +25,30 @@ export const errorHandler = (
         });
     }
 
+    if (err instanceof MulterError) {
+        return res.status(400).json({
+            error: err.code === 'LIMIT_FILE_SIZE'
+                ? 'File too large. Maximum size is 5MB.'
+                : err.message,
+        });
+    }
+
+    if ('type' in err && typeof err.type === 'string' && err.type.startsWith('Stripe')) {
+        const stripeErr = err as Error & { statusCode?: number };
+        return res.status(stripeErr.statusCode || 500).json({
+            error: stripeErr.message,
+        });
+    }
+
     if (err.name === 'ValidationError') {
         return res.status(400).json({
             error: err.message,
+        });
+    }
+
+    if (err.name === 'CastError') {
+        return res.status(400).json({
+            error: 'Invalid resource ID format',
         });
     }
 
@@ -43,7 +64,19 @@ export const errorHandler = (
         });
     }
 
-    console.error('Error:', err);
+    if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+        return res.status(409).json({
+            error: 'This resource already exists with the same identifier',
+        });
+    }
+
+    if (err.name === 'PayloadTooLargeError') {
+        return res.status(413).json({
+            error: 'Request entity too large',
+        });
+    }
+
+    console.error('Unhandled error:', err);
 
     return res.status(500).json({
         error: 'Internal server error',

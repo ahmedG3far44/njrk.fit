@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api, ApiRequestOptions } from '../lib/api';
 
 export interface Exercise {
   _id: string;
@@ -49,8 +49,8 @@ export interface CompleteSessionResponse {
 }
 
 export const fitnessService = {
-  async generate(data: GenerateFitnessData): Promise<{ workoutPlan: WorkoutPlan }> {
-    return api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', data);
+  async generate(data: GenerateFitnessData, options?: ApiRequestOptions): Promise<{ workoutPlan: WorkoutPlan }> {
+    return api.post<{ workoutPlan: WorkoutPlan }>('/fitness/generate', data, options);
   },
 
   async completeSession(sessionId: string, data?: CompleteSessionData): Promise<CompleteSessionResponse> {

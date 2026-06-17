@@ -9,7 +9,7 @@ import {
   activityMultipliers,
 } from "../utils/calculations";
 import { Meal, UserContext } from "../types";
-import { openrouter } from "../configs/llm";
+import { getLLMClientAndModel } from "../configs/llm";
 // import { normalizeMeal } from '../utils/parser';
 
 const ingredientSchema = z.object({
@@ -129,11 +129,12 @@ const callLLMWithRecovery = async <T>(
   prompt: string,
   schema: z.ZodSchema<T>,
   contextValidator?: (data: T) => void,
+  language: string = "en",
 ): Promise<T> => {
   let lastError: any;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const raw = await callOpenRouter(prompt);
+      const raw = await callOpenRouter(prompt, language);
       const parsed = extractJSON(raw!);
       const normalized = normalizeLLMOutput(parsed);
       const data = schema.parse(normalized);
@@ -232,7 +233,7 @@ ${toonContext}
 - أيام التعافي يجب أن تحتوي على: "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, "exercises": [] (مصفوفة فارغة).
 - مدة كل جلسة تدريب نشطة يجب أن تكون بالضبط: ${duration} دقيقة.
 - يجب أن تكون قيمة "dayOfWeek" باللغة الإنجليزية بالضبط (من "Monday" إلى "Sunday") لكي يتم عرضها بشكل صحيح في التطبيق.
-- "type" لجلسات التدريب يجب أن تكون بالإنجليزية بالضبط ومطابقة للمخطط: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery".
+- جميع أيام التدريب النشطة يجب أن يكون "type": "Strength" فقط. لا تستخدم "Cardio" أو "Yoga" أو "Mixed" لأيام التدريب النشطة.
 
 ⚠️ قواعد تسمية التمارين (مهمة جداً للمطابقة مع قاعدة البيانات):
 1. استخدم فقط المصطلحات القياسية والمفردة باللغة الإنجليزية (مثال: استخدم "Squat" وليس "Squats"، واستخدم "Lunge" وليس "Lunges"، واستخدم "Push up" وليس "Push-ups").
@@ -298,23 +299,22 @@ CONSTRAINTS (STRICT — MUST FOLLOW):
 - Recovery days must have "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, and "exercises": [] (empty array).
 - Each active training session duration MUST be exactly: ${duration} minutes.
 - Distribute training days logically across the week (e.g. for a 3-day split: Monday, Wednesday, Friday active; other days recovery).
-- EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING):
+- IMPORTANT: All active training sessions MUST have type: "Strength". Do NOT use "Cardio", "Yoga", or "Mixed" for active training days. Only "Recovery" days may have type: "Recovery".
+- EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING — each name must match ExerciseDB exactly so GIF images can be fetched):
    1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
    2. AVOID complex descriptive names. Use exact terms from our standard database whenever possible:
-      - "Squat"
-      - "Push-up"
-      - "Push up"
-      - "Lunge"
-      - "Deadlift"
-      - "Calf raise"
-      - "Glute bridge"
-      - "Dumbbell row"
-      - "Bent over row"
-      - "Dumbbell press"
-      - "Overhead press"
-      - "Bicep curl"
-      - "Triceps extension"
-      - "Plank"
+      - "Squat" / "Barbell squat" / "Goblet squat"
+      - "Push-up" / "Push up"
+      - "Lunge" / "Dumbbell lunge"
+      - "Deadlift" / "Barbell deadlift" / "Romanian deadlift"
+      - "Calf raise" / "Standing calf raise"
+      - "Glute bridge" / "Hip thrust"
+      - "Dumbbell row" / "Bent over row"
+      - "Dumbbell press" / "Bench press" / "Incline bench press"
+      - "Overhead press" / "Shoulder press"
+      - "Bicep curl" / "Hammer curl"
+      - "Triceps extension" / "Skull crusher"
+      - "Plank" / "Side plank"
       - "High knees"
       - "Mountain climber"
       - "Burpee"
@@ -322,6 +322,15 @@ CONSTRAINTS (STRICT — MUST FOLLOW):
       - "Jumping jack"
       - "Crunch"
       - "Sit up"
+      - "Lat pulldown"
+      - "Pull-up" / "Pull up"
+      - "Cable crossover"
+      - "Leg press"
+      - "Leg extension"
+      - "Leg curl"
+      - "Face pull"
+      - "Lateral raise" / "Side lateral raise"
+      - "Front raise"
    3. Ensure capitalization is clean and matches the above list. Do NOT invent name variations.
 
 OUTPUT REQUIREMENTS:
@@ -330,7 +339,7 @@ OUTPUT REQUIREMENTS:
 - Each session must include:
   - dayOfWeek: "Monday" to "Sunday"
   - name: Workout session name (e.g., "Push Strength Workout" or "Lower Body Focus")
-  - type: "Strength" | "Cardio" | "Yoga" | "Mixed" | "Recovery"
+  - type: "Strength" for active training days, "Recovery" for rest days
   - durationMin: number (use ${duration} for training, 0 for recovery)
   - estimatedCaloriesBurn: number (0 for recovery)
   - exercises: [] (empty array for recovery days)
@@ -349,7 +358,7 @@ OUTPUT VALID JSON ONLY:
       "durationMin": ${duration},
       "estimatedCaloriesBurn": 420,
       "exercises": [
-        {"name": "Bench Press", "sets": 4, "reps": "8-10"},
+        {"name": "Bench press", "sets": 4, "reps": "8-10"},
         {"name": "Overhead press", "sets": 3, "reps": "10"},
         {"name": "Triceps extension", "sets": 3, "reps": "12"}
       ]
@@ -594,6 +603,7 @@ export const generateMealPlan = async (
         );
       }
     },
+    language,
   );
 
   if (repeatMealsEveryDay) {
@@ -628,7 +638,7 @@ export const generateWorkoutPlan = async (
     language,
   );
 
-  return callLLMWithRecovery(prompt, workoutPlanResponseSchema);
+  return callLLMWithRecovery(prompt, workoutPlanResponseSchema, undefined, language);
 };
 
 export const refineMeal = async (
@@ -676,7 +686,7 @@ User request:
 ${refinementPrompt}
 `;
 
-  return callLLMWithRecovery(prompt, mealSchema);
+  return callLLMWithRecovery(prompt, mealSchema, undefined, language);
 };
 
 export const regenerateMeal = async (
@@ -755,7 +765,7 @@ ${Boolean(user.isFasting)}
 ORIGINAL MEAL (TOON format):
 ${encode(meal)}
 `;
-  return callLLMWithRecovery(prompt, mealSchema);
+  return callLLMWithRecovery(prompt, mealSchema, undefined, language);
 };
 // models
 // - inclusionai/ring-2.6-1t:free
@@ -774,13 +784,13 @@ ${encode(meal)}
 // - qwen/qwen3-coder:free
 // - deepseek/deepseek-v4-flash
 
-const callOpenRouter = async (prompt: string) => {
-  console.log("LLM Prompt:", prompt);
+const callOpenRouter = async (prompt: string, language: string = "en") => {
+  const { client, model } = getLLMClientAndModel(language);
 
-  const completion = await openrouter.chat.completions.create({
-    model: env.LLM_MODEL,
+  const completion = await client.chat.completions.create({
+    model: model,
     max_tokens: 12000,
-    temperature: 0.2, // reduce randomness
+    temperature: 0.2,
     messages: [
       {
         role: "system",
@@ -790,17 +800,10 @@ const callOpenRouter = async (prompt: string) => {
       { role: "user", content: prompt },
     ],
   });
-  for (const choice of completion.choices) {
-    console.log(choice.message.content)
-
-
-    if (!choice.message?.content) {
-      throw new Error("LLM did not return any content");
-    }
-    const content = choice.message.content.trim();
-    console.log("LLM Raw Response:", content);
+  const firstChoice = completion.choices[0];
+  if (!firstChoice?.message?.content) {
+    throw new Error("LLM did not return any content");
   }
 
-
-  return completion.choices[0]?.message?.content ?? null;
+  return firstChoice.message.content.trim();
 };

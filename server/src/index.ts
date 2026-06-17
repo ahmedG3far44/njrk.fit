@@ -13,7 +13,7 @@ async function startServer() {
         console.error('Admin seeding failed:', err);
     }
 
-    app.listen(Number(env.PORT), '0.0.0.0', () => {
+    app.listen(env.PORT, '0.0.0.0', () => {
         console.log(`Server is running on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`);
     });
 }

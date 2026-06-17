@@ -122,22 +122,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               {t('landing.navVision')}
             </a>
-            <div className="flex items-center gap-1 border-l pl-4 border-slate-200">
-              <button
-                onClick={() => i18n.changeLanguage('en')}
-                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('en') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => i18n.changeLanguage('ar')}
-                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('ar') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
-              >
-                عربى
-              </button>
-            </div>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language?.startsWith('en') ? 'ar' : 'en')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:border-green-200 hover:bg-green-50/50 bg-white transition-all text-xs font-bold text-slate-700 hover:text-green-700 shadow-sm cursor-pointer"
+              title="Switch Language / تغيير اللغة"
+            >
+              <span>{i18n.language?.startsWith('en') ? 'العربية' : 'English'}</span>
+            </button>
             {user ? (
               <Link
                 to="/dashboard"
@@ -740,33 +733,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     {t('landing.footerFamilyMode')}
                   </a>
                 </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    {t('landing.footerReviews')}
-                  </a>
-                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerCompany')}</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li>
-                  <a href="#" className="hover:text-green-700">
+                  <Link to="/about" className="hover:text-green-700">
                     {t('landing.footerAbout')}
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-green-700">
-                    {t('landing.footerCareers')}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    {t('landing.footerBlog')}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
+                  <a href="mailto:ruxinftw@gmail.com" className="hover:text-green-700">
                     {t('landing.footerContact')}
                   </a>
                 </li>
@@ -776,37 +754,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerLegal')}</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li>
-                  <a href="#" className="hover:text-green-700">
+                  <Link to="/privacy" className="hover:text-green-700">
                     {t('landing.footerPrivacy')}
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-green-700">
-                    {t('landing.footerTerms')}
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-green-700">
-                    {t('landing.footerSecurity')}
-                  </a>
+                  <Link to="/terms-security" className="hover:text-green-700">
+                    {t('landing.footerTermsSecurity')}
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-slate-400">
+          <div className="border-t border-slate-100 pt-8 flex items-center justify-center">
+            <p className="text-sm text-slate-400 text-center">
               {t('landing.footerCopyright')}
             </p>
-            <div className="flex gap-3">
-              {[t('landing.socialTwitter'), t('landing.socialInstagram'), t('landing.socialLinkedIn')].map((s) => (
-                <div
-                  key={s}
-                  className="w-8 h-8 bg-slate-100 hover:bg-green-100 hover:text-green-700 rounded-full flex items-center justify-center text-slate-400 cursor-pointer transition-colors text-xs font-bold"
-                >
-                  {s[0]}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </footer>

@@ -127,7 +127,7 @@ const FitnessModalInner = ({
                   key={program.value}
                   variant={trainingProgram === program.value ? 'primary' : 'ghost'}
                   size="sm"
-                  className={`w-full text-start justify-start flex-col items-start gap-0.5 sm:gap-1 h-auto py-2.5 sm:py-3 border ${trainingProgram === program.value ? 'border-green-500' : 'border-slate-200'}`}
+                  className={`w-full text-start justify-start flex-col items-start gap-0.5 sm:gap-1 h-auto py-2.5 sm:py-3 border ${trainingProgram === program.value ? 'border-green-500' : 'border-slate-200'}  ${trainingProgram === program.value ? 'text-green-50' : 'text-slate-600'}  `}
                   onClick={() => setTrainingProgram(program.value as any)}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -138,7 +138,7 @@ const FitnessModalInner = ({
                       <CheckCircle2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-green-600 flex-shrink-0" />
                     )}
                   </div>
-                  <span className="text-[11px] sm:text-xs text-slate-500 leading-normal sm:leading-snug">
+                  <span className="text-[11px] sm:text-xs leading-normal sm:leading-snug ">
                     {program.desc}
                   </span>
                 </Button>

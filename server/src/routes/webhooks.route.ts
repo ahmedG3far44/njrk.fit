@@ -39,10 +39,8 @@ async function updateUserSubscription(userId: string, data: {
   paidPriceId?: string;
   planTier?: string;
 }) {
-  console.log(`[Stripe Webhook] Updating subscription for user: ${userId}`, data);
   const user = await User.findById(userId);
   if (!user) {
-    console.error(`[Stripe Webhook] User ${userId} not found`);
     return null;
   }
 
@@ -53,11 +51,9 @@ async function updateUserSubscription(userId: string, data: {
     } as any;
   }
 
-  // Prevent out-of-order webhooks from overwriting active subscription with incomplete or past_due statuses
   const currentStatus = user.subscription.status;
   if ((currentStatus === 'active' || currentStatus === 'trialing') && 
       (data.status === 'past_due' || data.status === 'expired')) {
-    console.log(`[Stripe Webhook] Keeping current active/trial status. Ignored status update to '${data.status}' for user ${userId}.`);
   } else {
     user.subscription.status = data.status;
   }
@@ -71,7 +67,6 @@ async function updateUserSubscription(userId: string, data: {
   if (data.planTier) user.subscription.planTier = data.planTier;
 
   await user.save();
-  console.log(`[Stripe Webhook] Saved subscription to DB. User ID: ${userId}, Status: ${user.subscription.status}, Tier: ${user.subscription.subscriptionTier}`);
   return user;
 }
 
@@ -91,25 +86,8 @@ router.post('/', raw({ type: 'application/json' }), async (req: Request, res: Re
   try {
     event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
   } catch (err: any) {
-    console.error('[Stripe Webhook] Signature verification failed:', err.message);
-    
-    // Bypassing signature verification in development mode for easy manual/local testing
-    if (env.NODE_ENV === 'development') {
-      console.log('[Stripe Webhook] Development mode: attempting fallback parse...');
-      try {
-        const rawString = Buffer.isBuffer(payload) ? payload.toString('utf8') : payload;
-        event = typeof rawString === 'string' ? JSON.parse(rawString) : rawString;
-        console.log(`[Stripe Webhook] Fallback parse successful. Event Type: ${event?.type}`);
-      } catch (parseErr: any) {
-        console.error('[Stripe Webhook] Fallback parse also failed:', parseErr.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
-    } else {
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-
-  console.log(`[Stripe Webhook] Processing event: ${event.type}`);
 
   try {
     switch (event.type) {
@@ -124,7 +102,6 @@ router.post('/', raw({ type: 'application/json' }), async (req: Request, res: Re
         }
 
         if (!userId) {
-          console.warn('[Stripe Webhook] No userId found for subscription event, skipping DB update');
           break;
         }
 
@@ -173,7 +150,6 @@ router.post('/', raw({ type: 'application/json' }), async (req: Request, res: Re
         const subscriptionId = session.subscription as string;
 
         if (!userId || !subscriptionId) {
-          console.warn('[Stripe Webhook] checkout.session.completed missing userId or subscriptionId');
           break;
         }
 
@@ -250,7 +226,7 @@ router.post('/', raw({ type: 'application/json' }), async (req: Request, res: Re
             });
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Failed to process invoice.payment_succeeded:', err);
+          break;
         }
         break;
       }
@@ -271,13 +247,14 @@ router.post('/', raw({ type: 'application/json' }), async (req: Request, res: Re
             });
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Failed to process invoice.payment_failed:', err);
+          break;
         }
         break;
       }
     }
   } catch (err) {
-    console.error('[Stripe Webhook] Webhook event processing error:', err);
+    res.status(200).json({ received: true });
+    return;
   }
 
   res.status(200).json({ received: true });

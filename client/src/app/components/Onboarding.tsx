@@ -57,13 +57,13 @@ interface FormErrors {
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const { t, i18n } = useTranslation();
-  const { completeOnboarding, isLoading: authLoading } = useAuth();
+  const { user, completeOnboarding, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [formData, setFormData] = useState<FormData>({
-    name: '',
+    name: user?.name || '',
     age: '',
     gender: '',
     height: '',
@@ -203,8 +203,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       language: formData.language,
     };
 
-    console.log("onboarding data", onboardingData);
-
     try {
       await completeOnboarding(onboardingData);
       toast.success(t('onboarding.onboardingSuccess'));
@@ -240,14 +238,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-1.5 sm:space-y-2">
               <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Username
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Full Name
               </label>
               <input
                 type="text"
                 value={formData.name}
-                onChange={e => { update({ name: e.target.value }); clearError('name'); }}
-                className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.name ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
-                placeholder="e.g. Alex Johnson"
+                readOnly
+                className="w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-sm cursor-not-allowed outline-none"
               />
               {errors.name && <p className="text-red-500 text-[11px] sm:text-xs">{errors.name}</p>}
             </div>

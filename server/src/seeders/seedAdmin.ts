@@ -3,30 +3,21 @@ import { env } from '../configs/env';
 import { hashPassword } from '../services/adminAuth.service';
 
 export const seedAdmins = async () => {
-  const admins = [
-    {
-      email: env.ADMIN_EMAIL_1,
-      password: env.ADMIN_PASSWORD_1,
-      name: env.ADMIN_NAME_1,
-      role: 'super_admin' as const,
-    },
-    {
-      email: env.ADMIN_EMAIL_2,
-      password: env.ADMIN_PASSWORD_2,
-      name: env.ADMIN_NAME_2,
-      role: 'admin' as const,
-    },
+  const adminConfigs = [
+    { email: env.ADMIN_EMAIL_1, password: env.ADMIN_PASSWORD_1, name: env.ADMIN_NAME_1, role: 'super_admin' as const },
+    { email: env.ADMIN_EMAIL_2, password: env.ADMIN_PASSWORD_2, name: env.ADMIN_NAME_2, role: 'admin' as const },
   ];
 
-  for (const adminData of admins) {
-    const existing = await Admin.findOne({ email: adminData.email });
+  for (const config of adminConfigs) {
+    if (!config.email || !config.password || !config.name) continue;
+    const existing = await Admin.findOne({ email: config.email });
     if (existing) continue;
-    const passwordHash = await hashPassword(adminData.password);
+    const passwordHash = await hashPassword(config.password);
     await Admin.create({
-      email: adminData.email,
+      email: config.email,
       passwordHash,
-      name: adminData.name,
-      role: adminData.role,
+      name: config.name,
+      role: config.role,
     });
   }
 };

@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router";
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuthProvider";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const DashboardLayout = lazy(() => import("./pages/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const InsightsPage = lazy(() => import("./pages/InsightsPage").then(m => ({ default: m.InsightsPage })));
@@ -21,6 +22,9 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage").then(m => ({ defa
 const SubscriptionsPage = lazy(() => import("./pages/SubscriptionsPage").then(m => ({ default: m.SubscriptionsPage })));
 const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage").then(m => ({ default: m.PaymentSuccessPage })));
 const CommunityPage = lazy(() => import("./pages/CommunityPage").then(m => ({ default: m.CommunityPage })));
+const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })));
+const TermsSecurityPage = lazy(() => import("./pages/TermsSecurityPage").then(m => ({ default: m.TermsSecurityPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 const AdminLayout = lazy(() => import("./admin/components/AdminLayout").then(m => ({ default: m.AdminLayout })));
@@ -101,6 +105,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <LanguageWatcher />
+      <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route index path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
@@ -136,9 +141,13 @@ const App = () => {
           />
 
           <Route path="/payment/success" element={<Suspense fallback={<PageLoader />}><PaymentSuccessPage /></Suspense>} />
+          <Route path="/about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
+          <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPage /></Suspense>} />
+          <Route path="/terms-security" element={<Suspense fallback={<PageLoader />}><TermsSecurityPage /></Suspense>} />
           <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 };

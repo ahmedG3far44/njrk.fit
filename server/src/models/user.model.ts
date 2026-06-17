@@ -49,7 +49,7 @@ export interface IUser extends Document {
   pointsToRedeem: number;
   estimatedSteps: number;
   estimatedSleepHours: number;
-  estimatedWaterOz: number;
+  estimatedWaterMl: number;
   onboardingCompleted: boolean;
   lastStatsUpdate?: Date;
   preferences: {
@@ -78,7 +78,7 @@ emailVerificationToken?: string;
 
 const UserSchema = new Schema<IUser>({
   email: { type: String, required: true, lowercase: true, unique: true },
-  passwordHash: { type: String },
+  passwordHash: { type: String, select: false },
   googleId: { type: String, sparse: true, unique: true },
   googleRefreshToken: { type: String, select: false },
   googleTokenExpiry: { type: Date },
@@ -134,7 +134,7 @@ const UserSchema = new Schema<IUser>({
   pointsToRedeem: { type: Number, default: 0 },
   estimatedSteps: { type: Number, default: 5000 },
   estimatedSleepHours: { type: Number, default: 7.5 },
-  estimatedWaterOz: { type: Number, default: 64 },
+  estimatedWaterMl: { type: Number, default: 2000 },
   lastStatsUpdate: { type: Date },
   preferences: {
     notifications: { type: Boolean, default: true },

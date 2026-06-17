@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { AuthRequest, authMiddleware } from "../middlewares/authMiddleware";
 import { generatePDF } from "../services/pdf.service";
 
@@ -24,7 +24,7 @@ const sendPDF = (res: Response, buffer: Buffer, filename: string) => {
 
 const pdfController = {
 
-    exportFitnessPlanPDF: async (req: Request, res: Response) => {
+    exportFitnessPlanPDF: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = (req as AuthRequest).user?.userId;
             if (!userId) return res.status(401).json({ message: "Unauthorized" });
@@ -42,12 +42,11 @@ const pdfController = {
             sendPDF(res, pdfBuffer, "workout.pdf");
 
         } catch (error) {
-            console.error("exportFitnessPlanPDF error:", error);
-            res.status(500).json({ message: "Failed to generate PDF" });
+            next(error);
         }
     },
 
-    exportNutritionPlanPDF: async (req: Request, res: Response) => {
+    exportNutritionPlanPDF: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = (req as AuthRequest).user?.userId;
             if (!userId) return res.status(401).json({ message: "Unauthorized" });
@@ -65,12 +64,11 @@ const pdfController = {
             sendPDF(res, pdfBuffer, "meal.pdf");
 
         } catch (error) {
-            console.error("exportNutritionPlanPDF error:", error);
-            res.status(500).json({ message: "Failed to generate PDF" });
+            next(error);
         }
     },
 
-    exportGroceryListPDF: async (req: Request, res: Response) => {
+    exportGroceryListPDF: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = (req as AuthRequest).user?.userId;
             if (!userId) return res.status(401).json({ message: "Unauthorized" });
@@ -92,8 +90,7 @@ const pdfController = {
             sendPDF(res, pdfBuffer, "groceries.pdf");
 
         } catch (error) {
-            console.error("exportGroceryListPDF error:", error);
-            res.status(500).json({ message: "Failed to generate PDF" });
+            next(error);
         }
     }
 

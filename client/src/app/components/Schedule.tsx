@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -40,6 +41,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
   canComplete,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -73,6 +75,14 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
 
   drag(drop(ref));
 
+  const handleClick = () => {
+    if (slot.type === 'meal' || slot.type === 'snack') {
+      navigate('/dashboard/nutrition');
+    } else if (slot.type === 'workout') {
+      navigate('/dashboard/fitness');
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -86,22 +96,17 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
       </div>
 
       <div className="relative flex-1">
-        <div className={`absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 ${
-          slot.completed ? 'bg-green-700 border-green-700' : 'bg-white border-slate-300'
-        } z-10 transition-colors`} />
-
-        <div className={`p-4 rounded-2xl border transition-all ${
-          slot.completed 
-            ? 'bg-green-50 border-green-100 opacity-75' 
-            : 'bg-white border-slate-100 hover:border-green-200 hover:shadow-md'
-        }`}>
+        <div 
+          onClick={handleClick}
+          className="p-4 rounded-2xl border bg-white border-slate-100 hover:border-green-200 hover:shadow-md cursor-pointer transition-all duration-200"
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${getTypeColor(slot.type)}`}>
                 {getTypeIcon(slot.type)}
               </div>
               <div>
-                <h3 className={`font-bold ${slot.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                <h3 className="font-bold text-slate-900">
                   {slot.title}
                 </h3>
                 <span className={`text-xs font-medium ${
@@ -113,23 +118,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                 </span>
               </div>
             </div>
-            {slot.completed ? (
-              <div className="flex items-center gap-1 text-green-600 text-sm font-bold">
-                <CheckCircle2 className="w-4 h-4" /> {t("schedule.done")}
-              </div>
-            ) : canComplete ? (
-              <Button variant="ghost" size="sm" onClick={() => onMarkComplete(slot.id, slot.completed)} disabled={completingId === slot.id}>
-                {completingId === slot.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  t('schedule.markDone')
-                )}
-              </Button>
-            ) : (
-              <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
-                <Circle className="w-4 h-4" /> {t("schedule.future")}
-              </div>
-            )}
+            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
           </div>
           
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pl-12">

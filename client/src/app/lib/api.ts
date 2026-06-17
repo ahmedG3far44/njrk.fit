@@ -3,18 +3,20 @@ type ApiHeaders = Record<string, string>;
 type RequestInterceptor = (config: RequestInit) => RequestInit | Promise<RequestInit>;
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
 
-interface ApiRequestOptions extends RequestInit {
+export interface ApiRequestOptions extends RequestInit {
   skipAuthRefresh?: boolean;
+  timeout?: number;
 }
 
 class ApiError extends Error {
   status: number;
   response: Response;
-  data?: any; // 👈 ضفنا هذي عشان نمسك بيانات الباك اند
+  data?: unknown;
 
-  constructor(response: Response, data?: any) {
-    // 👈 هنا نقوله: خذ رسالة الباك اند، وإذا ما لقيت حط رسالتك القديمة
-    const message = data?.error || data?.message || `API request failed with status ${response.status}`;
+  constructor(response: Response, data?: unknown) {
+    const message = (data && typeof data === 'object' && ('error' in data || 'message' in data))
+      ? String((data as Record<string, unknown>).error || (data as Record<string, unknown>).message)
+      : `API request failed with status ${response.status}`;
     
     super(message);
     this.name = 'ApiError';
@@ -107,14 +109,22 @@ export const api = {
   },
 
   async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { skipAuthRefresh, ...requestOptions } = options;
+    const { skipAuthRefresh, timeout = 30000, ...requestOptions } = options;
     const headers: ApiHeaders = {
       ...(requestOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(requestOptions.headers as ApiHeaders | undefined),
     };
 
-    const config = await applyRequestInterceptors({ ...requestOptions, headers });
-    let response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+    const controller = new AbortController();
+    const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
+
+    const config = await applyRequestInterceptors({ ...requestOptions, headers, signal: controller.signal });
+    let response: Response;
+    try {
+      response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
 
     if (response.status === 401 && !skipAuthRefresh) {
       try {
@@ -125,13 +135,12 @@ export const api = {
         throw new ApiError(response);
       }
     }
-if (!response.ok) {
-      let errorData;
+    if (!response.ok) {
+      let errorData: unknown;
       try {
-        // ننسخ الرد ونحاول نقرأ الـ JSON اللي فيه
         errorData = await response.clone().json();
       } catch {
-        // إذا ما قدر يقرأه (مثلاً مو JSON)، يكمل طبيعي
+        // Non-JSON error response
       }
       throw new ApiError(response, errorData);
     }
