@@ -226,10 +226,10 @@ export const Progress: React.FC = () => {
     <div className="space-y-4 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground leading-tight">
             {t("progress.title")}
           </h1>
-          <p className="text-slate-500 text-xs sm:text-sm">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             {t("progress.subtitle")}
           </p>
         </div>
@@ -246,7 +246,7 @@ export const Progress: React.FC = () => {
                 {t("progress.updateStats")}
               </Button>
               {canUpdateInfo && (
-                <div className="absolute end-0 top-full mt-2 px-3.5 py-2.5 bg-slate-800 text-white text-xs rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute end-0 top-full mt-2 px-3.5 py-2.5 bg-popover text-popover-foreground text-xs rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     {t("progress.progressTooltip")}
@@ -273,7 +273,7 @@ export const Progress: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="bg-white w-full h-full sm:max-w-lg sm:h-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className="bg-card w-full h-full sm:max-w-lg sm:h-auto sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
             >
               {submitted ? (
                 <motion.div
@@ -281,24 +281,24 @@ export const Progress: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="p-8 sm:p-12 text-center my-auto"
                 >
-                  <div className="w-16 h-14 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <div className="w-16 h-14 sm:w-20 sm:h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                     <Check className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1.5 sm:mb-2">
+                  <h3 className="text-xl sm:text-2xl font-bold text-card-foreground mb-1.5 sm:mb-2">
                     {t("progress.statsUpdated")}
                   </h3>
-                  <p className="text-slate-500 text-xs sm:text-sm">
+                  <p className="text-muted-foreground text-xs sm:text-sm">
                     {t("progress.statsUpdatedDesc")}
                   </p>
                 </motion.div>
               ) : (
                 <>
-                  <div className="bg-gradient-to-r from-slate-900 to-green-900 p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
+                  <div className="bg-gradient-to-r from-slate-900 to-green-900 rtl:bg-gradient-to-l p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
                     <div>
                       <h3 className="font-bold text-white text-base sm:text-lg">
                         {t("progress.updateStatsTitle")}
                       </h3>
-                      <p className="text-slate-400 text-xs sm:text-sm">
+                      <p className="text-muted-foreground text-xs sm:text-sm">
                         {t("progress.updateStatsSubtitle")}
                       </p>
                     </div>
@@ -310,23 +310,23 @@ export const Progress: React.FC = () => {
                   <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
                     {/* Current Weight */}
                     <div className="space-y-1.5 sm:space-y-2">
-                      <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t("progress.currentWeight")}
+                      <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                        <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400" /> {t("progress.currentWeight")}
                       </label>
                       <input
                         type="number"
                         value={currentWeight}
                         onChange={(e) => setCurrentWeight(e.target.value)}
                         placeholder={t("progress.weightPlaceholder")}
-                        className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm transition-all bg-white"
+                        className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm transition-all bg-card"
                         step="0.1"
                       />
                     </div>
 
                     {/* AI Feeling */}
                     <div className="space-y-1.5 sm:space-y-2">
-                      <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t("progress.tellAiHowYouFeel")}
+                      <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                        <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400" /> {t("progress.tellAiHowYouFeel")}
                       </label>
                       <div className="relative">
                         <textarea
@@ -334,7 +334,7 @@ export const Progress: React.FC = () => {
                           onChange={(e) => setAiFeeling(e.target.value)}
                           rows={3}
                           placeholder={t("progress.feelingPlaceholder")}
-                          className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm resize-none transition-all pr-10"
+                          className="w-full px-3.5 py-2.5 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm resize-none transition-all pr-10"
                         />
                         <Sparkles className="absolute right-2.5 bottom-2.5 w-3.5 h-3.5 text-green-400" />
                       </div>
@@ -359,8 +359,8 @@ export const Progress: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weight Chart */}
-        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">{t("progress.weightTrend")}</h3>
+        <div className="bg-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border shadow-sm">
+          <h3 className="font-bold text-card-foreground text-sm sm:text-base mb-4 sm:mb-6">{t("progress.weightTrend")}</h3>
           <div className="h-[200px] sm:h-[240px] w-full min-w-0">
             {weightData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -413,7 +413,7 @@ export const Progress: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-slate-400">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
                   <TrendingUp className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
                   <p className="font-medium text-xs sm:text-sm">{t("progress.noWeightData")}</p>
@@ -425,8 +425,8 @@ export const Progress: React.FC = () => {
         </div>
 
         {/* Activity Chart */}
-        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-4 sm:mb-6">{t("progress.dailySteps")}</h3>
+        <div className="bg-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border shadow-sm">
+          <h3 className="font-bold text-card-foreground text-sm sm:text-base mb-4 sm:mb-6">{t("progress.dailySteps")}</h3>
           <div className="h-[200px] sm:h-[240px] w-full min-w-0">
             {isGoogleUser &&
             googleFitData?.connected &&
@@ -474,7 +474,7 @@ export const Progress: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : isGoogleUser && googleFitLoading ? (
-              <div className="flex items-center justify-center h-full text-slate-400">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
@@ -482,7 +482,7 @@ export const Progress: React.FC = () => {
                 />
               </div>
             ) : isGoogleUser && googleFitData?.connected ? (
-              <div className="flex items-center justify-center h-full text-slate-400">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
                   <Smartphone className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
                   <p className="font-medium text-xs sm:text-sm">{t("progress.noStepData")}</p>
@@ -492,11 +492,11 @@ export const Progress: React.FC = () => {
             ) : isGoogleUser ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="text-center mb-3 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 flex-shrink-0">
-                    <Footprints className="w-5 h-5 sm:w-7 sm:h-7 text-green-700" />
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 flex-shrink-0">
+                    <Footprints className="w-5 h-5 sm:w-7 sm:h-7 text-green-400" />
                   </div>
-                  <p className="font-medium text-xs sm:text-sm text-slate-700">{t("progress.trackYourSteps")}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-400">
+                  <p className="font-medium text-xs sm:text-sm text-card-foreground">{t("progress.trackYourSteps")}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {t("progress.connectGoogleFit")}
                   </p>
                 </div>
@@ -504,7 +504,7 @@ export const Progress: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   href={`${import.meta.env.VITE_API_BASE_URL || ""}/auth/google/fit-connect`}
-                  className="inline-flex items-center gap-1.5 bg-gradient-to-r from-green-800 to-green-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl font-bold shadow-md shadow-green-200 hover:opacity-90 transition-all text-xs sm:text-sm"
+                  className="inline-flex items-center gap-1.5 bg-green-900/80 hover:bg-green-800 text-green-300 border border-green-700/50 shadow-sm transition-all duration-200 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm"
                 >
                   <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t("progress.connectGoogleFitButton")}
                 </motion.a>
@@ -512,35 +512,35 @@ export const Progress: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-2">
                 <div className="text-center mb-2.5 sm:mb-3">
-                  <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 flex-shrink-0">
-                    <Footprints className="w-5 h-5 sm:w-7 sm:h-7 text-green-700" />
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 flex-shrink-0">
+                    <Footprints className="w-5 h-5 sm:w-7 sm:h-7 text-green-400" />
                   </div>
-                  <div className="text-xl sm:text-3xl font-black text-slate-900 leading-none">
+                  <div className="text-xl sm:text-3xl font-black text-card-foreground leading-none">
                     {(user?.estimatedSteps || 5000).toLocaleString()}
                   </div>
-                  <div className="text-slate-500 text-[10px] sm:text-sm mt-1">{t("progress.dailyStepsGoal")}</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-sm mt-1">{t("progress.dailyStepsGoal")}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xs px-2">
-                  <div className="bg-green-50 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
-                    <div className="text-xs sm:text-sm font-bold text-green-700">
+                  <div className="bg-green-500/10 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
+                    <div className="text-xs sm:text-sm font-bold text-green-400">
                       {(user?.estimatedSteps || 5000).toLocaleString()}
                     </div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-500">
+                    <div className="text-[8px] sm:text-[10px] text-muted-foreground">
                       {t("progress.dailySteps")}
                     </div>
                   </div>
-                  <div className="bg-amber-50 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
-                    <div className="text-xs sm:text-sm font-bold text-amber-600 truncate">
+                  <div className="bg-amber-500/10 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center">
+                    <div className="text-xs sm:text-sm font-bold text-amber-400 truncate">
                       {(
                         (user?.estimatedSteps || 5000) * getGoalDurationDays()
                       ).toLocaleString()}
                     </div>
-                    <div className="text-[8px] sm:text-[10px] text-slate-500">
+                    <div className="text-[8px] sm:text-[10px] text-muted-foreground">
                       {t("progress.totalSteps")} ({getGoalDurationDays()}d)
                     </div>
                   </div>
                 </div>
-                <p className="text-[9px] sm:text-xs text-slate-400 mt-2.5 sm:mt-3 flex items-center gap-1">
+                <p className="text-[9px] sm:text-xs text-muted-foreground mt-2.5 sm:mt-3 flex items-center gap-1">
                   <Smartphone className="w-3 h-3" /> {t("progress.signInForSteps")}
                 </p>
               </div>
@@ -554,7 +554,7 @@ export const Progress: React.FC = () => {
           {
             label: t('progress.totalWorkouts'),
             val: String(totalWorkouts),
-            icon: <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+            icon: <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
             change:
               totalWorkouts === 0
                 ? t("progress.noWorkouts")
@@ -562,13 +562,13 @@ export const Progress: React.FC = () => {
                   ? `+${totalWorkouts} ${t("progress.thisWeek")}`
                   : `${totalWorkouts} ${t("progress.thisWeek")}`,
             changeColor: "text-green-500",
-            bg: "bg-green-100",
+            bg: "bg-green-500/10",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
           {
             label: t('progress.weightLost'),
             val: `${weightLost > 0 ? weightLost : 0} kg`,
-            icon: <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+            icon: <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
             change:
               weightLost === 0
                 ? t("progress.noChange")
@@ -576,7 +576,7 @@ export const Progress: React.FC = () => {
                   ? `-${weightLost} kg`
                   : `+${Math.abs(weightLost)} kg`,
             changeColor: weightLost > 0 ? "text-green-500" : "text-red-500",
-            bg: weightLost > 0 ? "bg-green-100" : "bg-red-100",
+            bg: weightLost > 0 ? "bg-green-500/10" : "bg-red-500/10",
             changeIcon:
               weightLost > 0 ? (
                 <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -588,41 +588,41 @@ export const Progress: React.FC = () => {
             ? {
                 label: t('progress.avgSteps'),
                 val: `${googleFitData.avgSteps.toLocaleString()}`,
-                icon: <Footprints className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+                icon: <Footprints className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
                 change: t('progress.stepsOnTrack'),
                 changeColor: "text-green-500",
                 note: t('progress.stepsOnTrack'),
-                bg: "bg-green-100",
+                bg: "bg-green-500/10",
                 changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
               }
             : {
                 label: t('progress.dailyGoal'),
                 val: `${(user?.estimatedSteps || 5000).toLocaleString()}`,
-                icon: <Target className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+                icon: <Target className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
                 change: t('progress.onTrack'),
                 note: t('progress.stepsOnTrack'),
                 changeColor: "text-green-500",
-                bg: "bg-green-100",
+                bg: "bg-green-500/10",
                 changeIcon: <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
               },
           {
             label: t('progress.avgProtein'),
             val: `${avgProtein > 0 ? avgProtein : 0}g`,
-            icon: <BeefIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+            icon: <BeefIcon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
             change: t('progress.aboveAvg'),
             changeColor: "text-green-500",
             note: t('progress.keepItUp'),
-            bg: "bg-green-100",
+            bg: "bg-green-500/10",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
           {
             label: t('progress.dailyStreaks'),
             val: String(streakDays),
-            icon: <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />,
+            icon: <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />,
             change: `+${streakDays} ${t("progress.day")}`,
             changeColor: "text-green-500",
             note: t('progress.keepItUp'),
-            bg: "bg-green-100",
+            bg: "bg-green-500/10",
             changeIcon: <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />,
           },
         ]
@@ -632,20 +632,20 @@ export const Progress: React.FC = () => {
               key={stat.label}
               whileHover={{ y: -2 }}
               transition={{ duration: 0.2 }}
-              className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm cursor-default flex flex-col justify-between h-full"
+              className="bg-card p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-border shadow-sm cursor-default flex flex-col justify-between h-full"
             >
               <div>
-                <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-500 font-semibold mb-1.5 sm:mb-2 gap-2">
+                <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground font-semibold mb-1.5 sm:mb-2 gap-2">
                   <span className="truncate">{stat.label}</span>
                   {stat.icon}
                 </div>
-                <div className="text-base sm:text-2xl font-black text-slate-900 leading-tight">
+                <div className="text-base sm:text-2xl font-black text-card-foreground leading-tight">
                   {stat.val}
                 </div>
               </div>
 
               {stat.change && (
-                <div className="text-[10px] sm:text-xs text-slate-400 mt-2 sm:mt-3 flex flex-col gap-0.5 sm:gap-1">
+                <div className="text-[10px] sm:text-xs text-muted-foreground mt-2 sm:mt-3 flex flex-col gap-0.5 sm:gap-1">
                   <div
                     className={`flex items-center gap-1 ${stat.changeColor} font-bold text-[10px] sm:text-xs`}
                   >
@@ -653,7 +653,7 @@ export const Progress: React.FC = () => {
                     <span className="truncate">{stat.change === 0 ? t("progress.noChange") : stat.change}</span>
                   </div>
                   {stat.note && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 sm:mt-1.5 leading-normal">{stat.note}</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1 sm:mt-1.5 leading-normal">{stat.note}</p>
                   )}
                 </div>
               )}

@@ -157,21 +157,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-muted to-emerald-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden"
+        className="bg-card w-full max-w-md rounded-3xl shadow-xl overflow-hidden"
       >
         <div className="p-8 md:p-12">
           <div className="flex justify-center mb-8">
             <NjerkaLogo size="large" />
           </div>
 
-          <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
+          <h2 className="text-3xl font-bold text-center text-card-foreground mb-2">
             {view === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
           </h2>
-          <p className="text-center text-slate-500 mb-8">
+          <p className="text-center text-muted-foreground mb-8">
             {view === 'login'
               ? t('auth.loginSubtitle')
               : t('auth.registerSubtitle')}
@@ -180,15 +180,15 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           <form onSubmit={handleSubmit} className="space-y-4">
             {view === 'register' && (
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">{t('auth.name')}</label>
+                <label className="text-sm font-bold text-card-foreground">{t('auth.name')}</label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => updateField('name', e.target.value)}
                     placeholder={t('auth.namePlaceholder')}
-                    className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-600 outline-none transition-all ${errors.name ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                    className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-600 outline-none transition-all ${errors.name ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-600'
                       }`}
                   />
                 </div>
@@ -199,15 +199,15 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">{t('auth.email')}</label>
+              <label className="text-sm font-bold text-card-foreground">{t('auth.email')}</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   placeholder={t('auth.emailPlaceholder')}
-                  className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                  className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-600'
                     }`}
                 />
               </div>
@@ -217,21 +217,21 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">{t('auth.password')}</label>
+              <label className="text-sm font-bold text-card-foreground">{t('auth.password')}</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => updateField('password', e.target.value)}
                   placeholder={t('auth.passwordPlaceholder')}
-                  className={`w-full pl-12 pr-12 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                  className={`w-full pl-12 pr-12 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-600'
                     }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -262,10 +262,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">{t('auth.orContinueWith')}</span>
+                <span className="px-2 bg-card text-muted-foreground">{t('auth.orContinueWith')}</span>
               </div>
             </div>
 
@@ -278,7 +278,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-slate-500">
+            <p className="text-muted-foreground">
               {view === 'login' ? t('auth.noAccount') : t('auth.hasAccount')}
               <button
                 type="button"

@@ -25,16 +25,16 @@ const NotFoundPage = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
           className="mb-8"
         >
-          <span className="text-[10rem] leading-none font-bold text-slate-900 tracking-tight select-none">
+          <span className="text-[10rem] leading-none font-bold text-card-foreground tracking-tight select-none">
             404
           </span>
         </motion.div>
 
-        <p className="text-lg text-slate-600 mb-2 leading-relaxed">
+        <p className="text-lg text-muted-foreground mb-2 leading-relaxed">
           Somewhere between meals and workouts, this page got lost.
         </p>
 
-        <p className="text-sm text-slate-400 mb-10">
+        <p className="text-sm text-muted-foreground mb-10">
           Let's get you back on track.
         </p>
 
@@ -49,7 +49,7 @@ const NotFoundPage = () => {
           </motion.button>
         </Link>
 
-        <div className="flex items-center justify-center gap-2 mt-12 text-slate-300">
+        <div className="flex items-center justify-center gap-2 mt-12 text-muted-foreground">
           <UtensilsCrossed className="w-4 h-4" />
           <span className="text-xs font-medium">Njerka</span>
           <Dumbbell className="w-4 h-4" />

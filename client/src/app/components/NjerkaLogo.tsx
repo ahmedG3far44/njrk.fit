@@ -5,16 +5,16 @@ const NjerkaLogo = ({ className, text, size }: { className?: string, text?: bool
   const dimensions = size === 'small' ? '40' : size === 'medium' ? '56' : '80';
 
   return (
-    <Link className={`hover:scale-95 duration-300 cursor-pointer flex items-center justify-center gap-2 ${className}`} to="/">
+    <Link className={`group hover:scale-95 duration-300 cursor-pointer flex items-center justify-center gap-2 ${className}`} to="/">
       <img
         src="/logo.png"
         alt="Njerka AI Health Platform Logo"
         width={dimensions}
         height={dimensions}
-        className={`${sizeClass} mix-blend-multiply`}
+        className={`${sizeClass} mix-blend-multiply dark:mix-blend-screen`}
         decoding="async"
       />
-      {text && <span className="font-extrabold text-sm sm:text-xl md:text-2xl p-0 text-green-800 tracking-tight">Njerka</span>}
+      {text && <span className="font-extrabold text-sm sm:text-xl md:text-2xl p-0 text-green-400 group-hover:text-green-300 tracking-tight">Njerka</span>}
     </Link>
   );
 };

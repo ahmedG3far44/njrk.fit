@@ -42,7 +42,7 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
         {/* Mock Camera Feed Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent">
           {/* In a real app this would be the video stream */}
-          <div className="w-full h-full flex items-center justify-center text-slate-700">
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
             <span className="text-sm">Camera Stream Active</span>
           </div>
         </div>
@@ -89,7 +89,7 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
           <motion.div 
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            className="absolute bottom-0 start-0 end-0 bg-white rounded-t-3xl p-6 z-10"
+            className="absolute bottom-0 start-0 end-0 bg-gray-900 rounded-t-3xl p-6 z-10"
           >
             {/* Streak Feedback */}
             <div className="absolute -top-12 start-1/2 ltr:-translate-x-1/2 rtl:translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 animate-bounce">
@@ -97,12 +97,12 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
             </div>
 
             <div className="flex items-start gap-4 mb-6">
-              <div className="bg-green-100 p-3 rounded-xl">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="bg-green-500/10 p-3 rounded-xl">
+                <Check className="w-8 h-8 text-green-400" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Avocado Toast with Egg</h3>
-                <p className="text-slate-500">Confidence: 98%</p>
+                <h3 className="text-xl font-bold text-card-foreground">Avocado Toast with Egg</h3>
+                <p className="text-muted-foreground">Confidence: 98%</p>
               </div>
             </div>
             
@@ -112,9 +112,9 @@ export const FoodCam: React.FC<FoodCamProps> = ({ onClose, onScan }) => {
                 { label: 'Protein', val: '12g' },
                 { label: 'Carbs', val: '45g' },
               ].map((item) => (
-                <div key={item.label} className="bg-slate-50 p-3 rounded-xl text-center">
-                  <div className="text-lg font-bold text-slate-900">{item.val}</div>
-                  <div className="text-xs text-slate-500">{item.label}</div>
+                <div key={item.label} className="bg-gray-800/50 p-3 rounded-xl text-center">
+                  <div className="text-lg font-bold text-card-foreground">{item.val}</div>
+                  <div className="text-xs text-muted-foreground">{item.label}</div>
                 </div>
               ))}
             </div>

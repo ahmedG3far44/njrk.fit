@@ -48,52 +48,52 @@ export const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-muted to-emerald-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden"
+        className="bg-card w-full max-w-md rounded-3xl shadow-xl overflow-hidden"
       >
         <div className="p-8 md:p-12">
           <div className="flex justify-center mb-8">
             <NjerkaLogo size="large" />
           </div>
 
-          <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
+          <h2 className="text-3xl font-bold text-center text-card-foreground mb-2">
             كلمة مرور جديدة
           </h2>
-          <p className="text-center text-slate-500 mb-8">
+          <p className="text-center text-muted-foreground mb-8">
             الرجاء إدخال كلمة المرور الجديدة لحسابك.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">كلمة المرور الجديدة</label>
+              <label className="text-sm font-bold text-card-foreground">كلمة المرور الجديدة</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                    error ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-600'
                   }`}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">تأكيد كلمة المرور</label>
+              <label className="text-sm font-bold text-card-foreground">تأكيد كلمة المرور</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className={`w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 outline-none transition-all ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-green-600'
+                    error ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-green-600'
                   }`}
                 />
               </div>

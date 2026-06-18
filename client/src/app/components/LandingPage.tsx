@@ -97,41 +97,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-green-100 selection:text-green-900">
+    <div className="min-h-screen bg-muted font-sans text-card-foreground selection:bg-green-100 selection:text-green-900">
       {/* Navbar */}
-      <nav className="fixed top-0 start-0 end-0 z-50 bg-peak-white border-b border-limestone">
+      <nav className="fixed top-0 start-0 end-0 z-50 bg-gray-900 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
           <NjerkaLogo />
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500">
+          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-300">
             <a
               href="#features"
-              className="hover:text-green-700 transition-colors"
+              className="hover:text-green-400 transition-colors"
             >
               {t('landing.navFeatures')}
             </a>
             <a
               href="#pricing"
-              className="hover:text-green-700 transition-colors"
+              className="hover:text-green-400 transition-colors"
             >
               {t('landing.navPricing')}
             </a>
             <a
               href="#vision"
-              className="hover:text-green-700 transition-colors"
+              className="hover:text-green-400 transition-colors"
             >
               {t('landing.navVision')}
             </a>
-            <div className="flex items-center gap-1 border-l pl-4 border-slate-200">
+            <div className="flex items-center gap-1 border-l pl-4 border-gray-700">
               <button
                 onClick={() => i18n.changeLanguage('en')}
-                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('en') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
+                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('en') ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'}`}
               >
                 EN
               </button>
               <button
                 onClick={() => i18n.changeLanguage('ar')}
-                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('ar') ? 'bg-green-700 text-white' : 'text-slate-500 hover:text-green-700'}`}
+                className={`px-2 py-1 text-xs font-bold rounded transition-colors ${i18n.language?.startsWith('ar') ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'}`}
               >
                 عربى
               </button>
@@ -141,7 +141,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {user ? (
               <Link
                 to="/dashboard"
-                className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all text-sm"
+                className="bg-green-600 text-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-0.5 transition-all text-sm"
               >
                 {t('landing.goToDashboard')}
               </Link>
@@ -149,13 +149,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <>
                 <button
                   onClick={onLogin}
-                  className="text-trail-gray font-semibold hover:text-forest-canopy transition-colors hidden sm:block text-sm"
+                  className="text-gray-300 font-semibold hover:text-green-400 transition-colors hidden sm:block text-sm"
                 >
                   {t('auth.login')}
                 </button>
                 <button
                   onClick={onClickPlan}
-                  className="bg-forest-canopy text-peak-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-forest-mist hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm"
+                  className="bg-green-600 text-white px-5 py-2.5 rounded-button font-bold hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-0.5 transition-all active:translate-y-0 text-sm"
                 >
                   {t('landing.getStarted')}
                 </button>
@@ -205,7 +205,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           >
             <motion.div
               variants={fadeInUp}
-              className="inline-flex items-center gap-2 bg-white border border-green-100 text-green-800 px-4 py-2 rounded-full font-bold text-sm mb-8 shadow-sm"
+              className="inline-flex items-center gap-2 bg-card border border-green-100 text-green-800 px-4 py-2 rounded-full font-bold text-sm mb-8 shadow-sm"
             >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
@@ -216,7 +216,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <motion.h1
               variants={fadeInUp}
-              className="text-5xl md:text-7xl font-extrabold leading-[1.08] mb-6 tracking-tight text-slate-900"
+              className="text-5xl md:text-7xl font-extrabold leading-[1.08] mb-6 tracking-tight text-card-foreground"
             >
               {t('landing.heroTitle')}{" "}
               <span className="text-forest-canopy">{t('landing.heroTitleAccent')}</span>
@@ -224,7 +224,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <motion.p
               variants={fadeInUp}
-              className="text-xl text-slate-500 mb-10 leading-relaxed max-w-lg"
+              className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-lg"
             >
               {t('landing.heroSubtitle')}
             </motion.p>
@@ -253,7 +253,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <motion.div
               variants={fadeInUp}
-              className="mt-12 flex items-center gap-4 text-sm font-medium text-slate-500"
+              className="mt-12 flex items-center gap-4 text-sm font-medium text-muted-foreground"
             >
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
@@ -276,7 +276,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <span>
                   {t('landing.socialProofLoved')}{" "}
-                  <span className="text-slate-900 font-bold">10,000+</span>{" "}
+                  <span className="text-card-foreground font-bold">10,000+</span>{" "}
                   {t('landing.socialProofFamilies')}
                 </span>
               </div>
@@ -290,7 +290,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 (badge) => (
                   <div
                     key={badge}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full shadow-sm"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-full shadow-sm"
                   >
                     <CheckCircle className="w-3.5 h-3.5 text-green-600" />{" "}
                     {badge}
@@ -320,16 +320,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   duration: 6,
                   ease: [0.77, 0, 0.175, 1],
                 }}
-                className="absolute -bottom-10 -left-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
+                className="absolute -bottom-10 -left-10 bg-card/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
               >
                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-2xl shadow-sm flex-shrink-0">
                   🔥
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
                     {t('landing.heroVisualStreak')}
                   </p>
-                  <p className="font-black text-slate-900 text-lg">
+                  <p className="font-black text-card-foreground text-lg">
                     {t('landing.heroVisualStreakCTA')}
                   </p>
                   <div className="flex gap-0.5 mt-1">
@@ -352,16 +352,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   ease: [0.77, 0, 0.175, 1],
                   delay: 1.5,
                 }}
-                className="absolute -top-10 -right-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
+                className="absolute -top-10 -right-10 bg-card/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/60 flex items-center gap-3 w-60"
               >
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Users className="w-6 h-6 text-green-700" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
                     {t('landing.heroVisualFamilyPlan')}
                   </p>
-                  <p className="font-black text-slate-900">{t('landing.heroVisualComingSoon')}</p>
+                  <p className="font-black text-card-foreground">{t('landing.heroVisualComingSoon')}</p>
                   <p className="text-xs text-green-600 font-semibold mt-0.5">
                     {t('landing.heroVisualEnableSettings')}
                   </p>
@@ -382,7 +382,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* Vision & Mission */}
-      <section id="vision" className="py-24 bg-white relative overflow-hidden">
+      <section id="vision" className="py-24 bg-card relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
             <motion.div
@@ -394,36 +394,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-700 mb-8">
                 <Heart className="w-8 h-8 fill-current" />
               </div>
-              <h2 className="text-4xl font-bold text-slate-900 mb-4">
+              <h2 className="text-4xl font-bold text-card-foreground mb-4">
                 {t('landing.visionTitle')}
               </h2>
               <p className="text-xl text-green-700 font-semibold mb-4">
                 {t('landing.visionSubtitle')}
               </p>
-              <p className="text-lg text-slate-500 mb-6 leading-relaxed">
+              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
                 {t('landing.visionText')}
               </p>
-              <h2 className="text-4xl font-bold text-slate-900 mb-4">
+              <h2 className="text-4xl font-bold text-card-foreground mb-4">
                 {t('landing.missionTitle')}
               </h2>
               <p className="text-xl text-green-600 font-semibold mb-4">
                 {t('landing.missionSubtitle')}
               </p>
-              <p className="text-lg text-slate-500 mb-8 leading-relaxed">
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                 {t('landing.missionText')}
               </p>
               <div className="grid grid-cols-2 gap-6">
                 <div className="border-s-4 border-green-700 ps-6">
-                  <h4 className="font-bold text-2xl text-slate-900 mb-1">
+                  <h4 className="font-bold text-2xl text-card-foreground mb-1">
                     {t('landing.statSuccessRate')}
                   </h4>
-                  <p className="text-slate-500 text-sm">{t('landing.statSuccessLabel')}</p>
+                  <p className="text-muted-foreground text-sm">{t('landing.statSuccessLabel')}</p>
                 </div>
                 <div className="border-s-4 border-green-600 ps-6">
-                  <h4 className="font-bold text-2xl text-slate-900 mb-1">
+                  <h4 className="font-bold text-2xl text-card-foreground mb-1">
                     {t('landing.statMealsPlanned')}
                   </h4>
-                  <p className="text-slate-500 text-sm">{t('landing.statMealsPlannedLabel')}</p>
+                  <p className="text-muted-foreground text-sm">{t('landing.statMealsPlannedLabel')}</p>
                 </div>
               </div>
             </motion.div>
@@ -446,7 +446,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* Features */}
-      <section id="features" className="py-24 bg-slate-50">
+      <section id="features" className="py-24 bg-muted">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -457,10 +457,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <span className="text-green-700 font-bold tracking-wider uppercase text-sm">
               {t('landing.featuresEyebrow')}
             </span>
-            <h2 className="text-4xl font-bold text-slate-900 mb-4 mt-2">
+            <h2 className="text-4xl font-bold text-card-foreground mb-4 mt-2">
               {t('landing.featuresTitle')}
             </h2>
-            <p className="text-slate-500 text-lg">
+            <p className="text-muted-foreground text-lg">
               {t('landing.featuresSubtitle')}
             </p>
           </motion.div>
@@ -502,7 +502,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl ${feature.glow} hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group`}
+                className={`bg-card p-8 rounded-3xl shadow-sm border border-border hover:shadow-xl ${feature.glow} hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group`}
               >
                 <div
                   className={`w-14 h-14 ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-200 ease-out`}
@@ -511,10 +511,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     className: "w-7 h-7",
                   })}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">
+                <h3 className="text-xl font-bold text-card-foreground mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-slate-500 leading-relaxed">{feature.desc}</p>
+                <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -546,7 +546,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 + 0.4 }}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group flex gap-4"
+                className="bg-card p-6 rounded-2xl shadow-sm border border-border hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out group flex gap-4"
               >
                 <div
                   className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}
@@ -556,10 +556,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   })}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 mb-1">
+                  <h3 className="font-bold text-card-foreground mb-1">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {feature.desc}
                   </p>
                 </div>
@@ -570,7 +570,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 bg-white">
+      <section id="pricing" className="py-24 bg-card">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -578,10 +578,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             viewport={{ once: true }}
             className="text-center max-w-2xl mx-auto mb-16"
           >
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">
+            <h2 className="text-4xl font-bold text-card-foreground mb-4">
               {t('landing.pricingTitle')}
             </h2>
-            <p className="text-slate-500 text-lg">
+            <p className="text-muted-foreground text-lg">
               {t('landing.pricingSubtitle')}
             </p>
           </motion.div>
@@ -596,7 +596,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 className={`p-8 rounded-3xl border transition-colors  ${
                   plan.isBest
                     ? "relative bg-green-900 text-white shadow-2xl scale-105 z-10"
-                    : "hover:border-green-200 bg-white text-slate-900"
+                    : "hover:border-green-200 bg-card text-card-foreground"
                 }`}
                 style={
                   plan.isBest
@@ -613,12 +613,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
                 )}
                 <h3
-                  className={`text-xl font-bold mb-2 ${plan.isBest ? "text-white" : "text-slate-900"}`}
+                  className={`text-xl font-bold mb-2 ${plan.isBest ? "text-white" : "text-card-foreground"}`}
                 >
                   {plan.name}
                 </h3>
                 <p
-                  className={`text-sm mb-6 ${plan.isBest ? "text-green-200" : "text-slate-500"}`}
+                  className={`text-sm mb-6 ${plan.isBest ? "text-green-200" : "text-muted-foreground"}`}
                 >
                   {plan.name === t('landing.planBasic') && t('landing.planBasicDesc')}
                   {plan.name === t('landing.planFamily') && t('landing.planFamilyDesc')}
@@ -626,17 +626,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </p>
                 <div className="flex items-baseline gap-1 mb-6">
                   <span
-                    className={`text-4xl font-bold ${plan.isBest ? "text-white" : "text-slate-900"}`}
+                    className={`text-4xl font-bold ${plan.isBest ? "text-white" : "text-card-foreground"}`}
                   >
                     ${plan.price}
                   </span>
-                  <span className={"text-slate-500"}>{t('landing.perMonth')}</span>
+                  <span className={"text-muted-foreground"}>{t('landing.perMonth')}</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((item) => (
                     <li
                       key={item}
-                      className={`flex items-center gap-3 text-sm ${plan.isBest ? "text-green-100" : "text-slate-600"}`}
+                      className={`flex items-center gap-3 text-sm ${plan.isBest ? "text-green-100" : "text-muted-foreground"}`}
                     >
                       <div
                         className={`rounded-full p-0.5 flex-shrink-0 ${plan.isBest ? "bg-green-700" : ""}`}
@@ -653,7 +653,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={onClickPlan}
                   className={`w-full py-3 rounded-xl font-bold transition-colors cursor-pointer hover:opacity-70 ${
                     plan.isBest
-                      ? "bg-white text-green-900 hover:bg-green-50"
+                      ? "bg-card text-green-900 hover:bg-green-50"
                       : "bg-green-50 text-green-700 hover:bg-green-100"
                   }`}
                 >
@@ -674,11 +674,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             viewport={{ once: true }}
             className="bg-gradient-to-r from-green-900 via-green-800 to-green-900 rounded-[2.5rem] p-12 md:p-24 text-center text-white relative overflow-hidden"
           >
-            <div className="absolute top-0 start-0 w-64 h-64 bg-white/10 rounded-full blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute top-0 start-0 w-64 h-64 bg-card/10 rounded-full blur-3xl ltr:-translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 end-0 w-64 h-64 bg-green-600/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(255,255,255,0.05),transparent_70%)]" />
             <div className="relative z-10 max-w-3xl mx-auto">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-bold mb-8 border border-white/20">
+              <div className="inline-flex items-center gap-2 bg-card/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-bold mb-8 border border-white/20">
                 <Leaf className="w-4 h-4" /> {t('landing.ctaBadge')}
               </div>
               <h2 className="text-4xl md:text-6xl font-bold mb-6">
@@ -690,14 +690,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={onGetStarted}
-                  className="bg-white text-green-800 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-green-50 transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2 group"
+                  className="bg-card text-green-800 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-green-50 transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2 group"
                 >
                   {t('landing.ctaButton')}{" "}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={onLogin}
-                  className="bg-white/10 border border-white/30 backdrop-blur-sm text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all"
+                  className="bg-card/10 border border-white/30 backdrop-blur-sm text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-card/20 transition-all"
                 >
                   {t('auth.login')}
                 </button>
@@ -711,20 +711,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 py-16">
+      <footer className="bg-card border-t border-border py-16">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <NjerkaLogo />
               </div>
-              <p className="text-slate-500 text-sm leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {t('landing.footerTagline')}
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerProduct')}</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
+              <h4 className="font-bold text-card-foreground mb-4">{t('landing.footerProduct')}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a href="#features" className="hover:text-green-700">
                     {t('landing.footerFeatures')}
@@ -748,8 +748,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerCompany')}</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
+              <h4 className="font-bold text-card-foreground mb-4">{t('landing.footerCompany')}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a href="#" className="hover:text-green-700">
                     {t('landing.footerAbout')}
@@ -773,8 +773,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 mb-4">{t('landing.footerLegal')}</h4>
-              <ul className="space-y-2 text-sm text-slate-500">
+              <h4 className="font-bold text-card-foreground mb-4">{t('landing.footerLegal')}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a href="#" className="hover:text-green-700">
                     {t('landing.footerPrivacy')}
@@ -793,15 +793,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-slate-400">
+          <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">
               {t('landing.footerCopyright')}
             </p>
             <div className="flex gap-3">
               {[t('landing.socialTwitter'), t('landing.socialInstagram'), t('landing.socialLinkedIn')].map((s) => (
                 <div
                   key={s}
-                  className="w-8 h-8 bg-slate-100 hover:bg-green-100 hover:text-green-700 rounded-full flex items-center justify-center text-slate-400 cursor-pointer transition-colors text-xs font-bold"
+                  className="w-8 h-8 bg-muted hover:bg-green-100 hover:text-green-700 rounded-full flex items-center justify-center text-muted-foreground cursor-pointer transition-colors text-xs font-bold"
                 >
                   {s[0]}
                 </div>

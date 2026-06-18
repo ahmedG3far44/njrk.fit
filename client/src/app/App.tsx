@@ -1,6 +1,8 @@
 ﻿import { useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "./components/ui/sonner";
 import { AdminAuthProvider, useAdminAuth } from "./admin/context/AdminAuthProvider";
 
 const DashboardLayout = lazy(() => import("./pages/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
@@ -32,9 +34,9 @@ const AdminSubscriptionsPage = lazy(() => import("./admin/pages/AdminSubscriptio
 const AdminSettingsPage = lazy(() => import("./admin/pages/AdminSettingsPage").then(m => ({ default: m.AdminSettingsPage })));
 
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+  <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-3">
-      <div className="w-8 h-8 border-2 border-green-700 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-forest-canopy border-t-transparent rounded-full animate-spin" />
     </div>
   </div>
 );
@@ -99,9 +101,11 @@ const LanguageWatcher = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <LanguageWatcher />
-      <Suspense fallback={<PageLoader />}>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Toaster position="top-center" />
+      <BrowserRouter>
+        <LanguageWatcher />
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route index path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
           <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
@@ -140,6 +144,7 @@ const App = () => {
         </Routes>
       </Suspense>
     </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

@@ -48,27 +48,27 @@ function StatusBadge({ status, cancelAtPeriodEnd, currentPeriodEnd }: {
   const { t } = useTranslation();
   const config: Record<string, { bg: string; text: string; icon: React.ReactNode; label: string }> = {
     active: {
-      bg: 'bg-green-100', text: 'text-green-700',
+      bg: 'bg-green-900/30', text: 'text-green-400',
       icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: t('subscriptions.statusActive'),
     },
     past_due: {
-      bg: 'bg-orange-100', text: 'text-orange-700',
+      bg: 'bg-orange-900/30', text: 'text-orange-400',
       icon: <AlertCircle className="w-3.5 h-3.5" />, label: t('subscriptions.statusPastDue'),
     },
     canceled: {
-      bg: 'bg-red-100', text: 'text-red-700',
+      bg: 'bg-red-900/30', text: 'text-red-400',
       icon: <XCircle className="w-3.5 h-3.5" />, label: t('subscriptions.statusCanceled'),
     },
     trialing: {
-      bg: 'bg-blue-100', text: 'text-blue-700',
+      bg: 'bg-blue-900/30', text: 'text-blue-400',
       icon: <Clock className="w-3.5 h-3.5" />, label: t('subscriptions.statusTrial'),
     },
     incomplete: {
-      bg: 'bg-slate-100', text: 'text-slate-700',
+      bg: 'bg-muted', text: 'text-muted-foreground',
       icon: <Clock className="w-3.5 h-3.5" />, label: t('subscriptions.statusIncomplete'),
     },
     none: {
-      bg: 'bg-slate-100', text: 'text-slate-600',
+      bg: 'bg-muted', text: 'text-muted-foreground',
       icon: <CheckCircle2 className="w-3.5 h-3.5" />, label: t('subscriptions.statusFree'),
     },
   };
@@ -82,7 +82,7 @@ function StatusBadge({ status, cancelAtPeriodEnd, currentPeriodEnd }: {
         {c.label}
       </span>
       {cancelAtPeriodEnd && currentPeriodEnd && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-900/30 text-orange-400">
           <Clock className="w-3.5 h-3.5" />
           {t('common.ends')} {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
@@ -94,36 +94,36 @@ function StatusBadge({ status, cancelAtPeriodEnd, currentPeriodEnd }: {
 function LoadingSkeleton() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-pulse">
-      <div className="bg-slate-100 rounded-2xl h-20" />
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-muted rounded-2xl h-20" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-border rounded-xl overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-white px-5 py-4">
-            <div className="h-3 w-16 bg-slate-200 rounded mb-2" />
-            <div className="h-4 w-24 bg-slate-200 rounded" />
+          <div key={i} className="bg-card px-5 py-4">
+            <div className="h-3 w-16 bg-muted rounded mb-2" />
+            <div className="h-4 w-24 bg-muted rounded" />
           </div>
         ))}
       </div>
-      <div className="h-10 w-40 bg-slate-200 rounded-xl" />
+      <div className="h-10 w-40 bg-muted rounded-xl" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-        <div className="border border-slate-200 rounded-xl p-8 space-y-4">
-          <div className="h-5 w-12 bg-slate-200 rounded" />
-          <div className="h-8 w-24 bg-slate-200 rounded" />
+        <div className="border border-border rounded-xl p-8 space-y-4">
+          <div className="h-5 w-12 bg-muted rounded" />
+          <div className="h-8 w-24 bg-muted rounded" />
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-4 w-48 bg-slate-200 rounded" />
+              <div key={i} className="h-4 w-48 bg-muted rounded" />
             ))}
           </div>
-          <div className="h-12 w-full bg-slate-200 rounded-xl" />
+          <div className="h-12 w-full bg-muted rounded-xl" />
         </div>
-        <div className="border border-slate-200 rounded-xl p-8 space-y-4">
-          <div className="h-5 w-16 bg-slate-200 rounded" />
-          <div className="h-8 w-24 bg-slate-200 rounded" />
+        <div className="border border-border rounded-xl p-8 space-y-4">
+          <div className="h-5 w-16 bg-muted rounded" />
+          <div className="h-8 w-24 bg-muted rounded" />
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-4 w-48 bg-slate-200 rounded" />
+              <div key={i} className="h-4 w-48 bg-muted rounded" />
             ))}
           </div>
-          <div className="h-12 w-full bg-slate-200 rounded-xl" />
+          <div className="h-12 w-full bg-muted rounded-xl" />
         </div>
       </div>
     </div>
@@ -300,7 +300,7 @@ export const Subscription: React.FC = () => {
     return (
       <div className="max-w-md mx-auto text-center py-20">
         <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
-        <p className="text-slate-600 font-medium mb-4">{error}</p>
+        <p className="text-muted-foreground font-medium mb-4">{error}</p>
         <Button variant="primary" onClick={fetchSubscriptionStatus}>
           <Loader2 className="w-4 h-4" />
           {t('common.tryAgain')}
@@ -315,15 +315,15 @@ export const Subscription: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-100 rounded-2xl px-6 py-5 flex items-center justify-between flex-wrap gap-3"
+        className="bg-card rounded-2xl px-6 py-5 flex items-center justify-between flex-wrap gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-green-700 flex items-center justify-center">
-            <Crown className="w-4 h-4 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center">
+            <Crown className="w-4 h-4 text-green-400" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 tracking-wide uppercase">{t('subscriptions.currentPlan')}</p>
-            <h2 className="text-lg font-bold text-slate-900">{displayPlanName}</h2>
+            <p className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">{t('subscriptions.currentPlan')}</p>
+            <h2 className="text-lg font-bold text-card-foreground">{displayPlanName}</h2>
           </div>
         </div>
         <StatusBadge
@@ -338,12 +338,12 @@ export const Subscription: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3"
+          className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-3"
         >
-          <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-orange-900 text-sm">{t('subscriptions.pastDueTitle')}</p>
-            <p className="text-sm text-orange-700 mt-0.5">
+            <p className="font-semibold text-orange-300 text-sm">{t('subscriptions.pastDueTitle')}</p>
+            <p className="text-sm text-orange-400 mt-0.5">
               {t('subscriptions.pastDueDesc')}
             </p>
           </div>
@@ -351,38 +351,38 @@ export const Subscription: React.FC = () => {
       )}
 
       {/* Metrics row */}
-      <dl className="grid grid-cols-2 md:grid-cols-5 gap-px bg-slate-200 rounded-xl overflow-hidden">
-        <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.started')}</dt>
-          <dd className="text-sm font-bold text-slate-900 mt-1">
+      <dl className="grid grid-cols-2 md:grid-cols-5 gap-px bg-border rounded-xl overflow-hidden">
+        <div className="bg-card px-5 py-4">
+          <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('subscriptions.started')}</dt>
+          <dd className="text-sm font-bold text-card-foreground mt-1">
             {subscriptionStatus?.subscriptionStartDate
               ? formatDate(subscriptionStatus.subscriptionStartDate)
               : t('subscriptions.na')}
           </dd>
         </div>
-        <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.nextCharge')}</dt>
-          <dd className="text-sm font-bold text-slate-900 mt-1">
+        <div className="bg-card px-5 py-4">
+          <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('subscriptions.nextCharge')}</dt>
+          <dd className="text-sm font-bold text-card-foreground mt-1">
             {subscriptionStatus?.currentPeriodEnd
               ? formatDate(subscriptionStatus.currentPeriodEnd)
               : t('subscriptions.na')}
           </dd>
         </div>
-        <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.amount')}</dt>
-          <dd className="text-sm font-bold text-slate-900 mt-1">
+        <div className="bg-card px-5 py-4">
+          <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('subscriptions.amount')}</dt>
+          <dd className="text-sm font-bold text-card-foreground mt-1">
             {displayPlanPrice === 0 ? t('subscriptions.statusFree') : `$${displayPlanPrice}/mo`}
           </dd>
         </div>
-        <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.billing')}</dt>
-          <dd className="text-sm font-bold text-slate-900 mt-1 capitalize">
+        <div className="bg-card px-5 py-4">
+          <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('subscriptions.billing')}</dt>
+          <dd className="text-sm font-bold text-card-foreground mt-1 capitalize">
             {subscriptionStatus?.status === 'active' ? t('subscriptions.monthly') : t('subscriptions.na')}
           </dd>
         </div>
-        <div className="bg-white px-5 py-4">
-          <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('subscriptions.payment')}</dt>
-          <dd className="text-sm font-bold text-slate-900 mt-1">
+        <div className="bg-card px-5 py-4">
+          <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('subscriptions.payment')}</dt>
+          <dd className="text-sm font-bold text-card-foreground mt-1">
             {subscriptionStatus?.cardLast4 ? `•••• ${subscriptionStatus.cardLast4}` : 'Stripe'}
           </dd>
         </div>
@@ -409,23 +409,23 @@ export const Subscription: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-orange-50 border border-orange-200 rounded-xl p-5 overflow-hidden"
+          className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-5 overflow-hidden"
         >
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-orange-900">
+              <p className="font-semibold text-orange-300">
                 {t('subscriptions.yourSubEnds')}{' '}
                 {subscriptionStatus?.currentPeriodEnd
                   ? formatDate(subscriptionStatus.currentPeriodEnd)
                   : t('subscriptions.na')}
               </p>
-              <p className="text-sm text-orange-700 mt-0.5">{t('subscriptions.keepAccessUntil')}</p>
+              <p className="text-sm text-orange-400 mt-0.5">{t('subscriptions.keepAccessUntil')}</p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <Button variant="destructive" loading={canceling} onClick={handleCancelSubscription}>
                   {canceling ? t('subscriptions.processing') : <><Pause className="w-4 h-4" /> {t('subscriptions.yesCancel')}</>}
                 </Button>
-                <Button variant="secondary" className="border-orange-300 text-orange-800 hover:bg-orange-100" onClick={() => setShowCancelDetails(false)}>
+                <Button variant="secondary" className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10" onClick={() => setShowCancelDetails(false)}>
                   {t('subscriptions.keepMyPlan')}
                 </Button>
               </div>
@@ -437,19 +437,19 @@ export const Subscription: React.FC = () => {
       {/* Upgrade header */}
       {isFamilyPlan ? (
         <div className="pt-4 text-center">
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-card-foreground">
             {t('subscriptions.manageYourPlan')}
           </h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+          <p className="text-sm text-muted-foreground mt-1 max-w-lg mx-auto">
             {t('subscriptions.manageYourPlanDesc')}
           </p>
         </div>
       ) : (
         <div className="pt-4 text-center">
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-card-foreground">
             {isPaidTier ? t('subscriptions.upgradePlan') : t('subscriptions.choosePlan')}
           </h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+          <p className="text-sm text-muted-foreground mt-1 max-w-lg mx-auto">
             {isPaidTier
               ? `${t('subscriptions.onPlan')} ${currentPlan.name}. ${t('subscriptions.unlockMore')}`
               : t('subscriptions.unlockFeatures')}

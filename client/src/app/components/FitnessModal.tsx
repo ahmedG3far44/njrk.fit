@@ -52,7 +52,7 @@ const FitnessModalInner = ({
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        className="bg-white w-full h-full sm:max-w-md sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+        className="bg-card w-full h-full sm:max-w-md sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col"
       >
         <div className="bg-gradient-to-br from-green-900 to-green-700 p-4 sm:p-6 text-white text-center relative overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.12),transparent_70%)]" />
@@ -77,7 +77,7 @@ const FitnessModalInner = ({
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {/* Training Days */}
           <div>
-            <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
+            <label className="text-xs sm:text-sm font-semibold text-card-foreground mb-1.5 sm:mb-2 block">
               {t("fitness.trainingDays")}
             </label>
             <div className="flex items-center gap-3 sm:gap-4">
@@ -87,9 +87,9 @@ const FitnessModalInner = ({
                 max="7"
                 value={trainingDays}
                 onChange={(e) => setTrainingDays(Number(e.target.value))}
-                className="flex-1 h-1.5 sm:h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                className="flex-1 h-1.5 sm:h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-400"
               />
-              <span className="text-base sm:text-lg font-bold text-green-700 w-6 sm:w-8 text-center">
+              <span className="text-base sm:text-lg font-bold text-green-400 w-6 sm:w-8 text-center">
                 {trainingDays}
               </span>
             </div>
@@ -97,7 +97,7 @@ const FitnessModalInner = ({
 
           {/* Duration */}
           <div>
-            <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
+            <label className="text-xs sm:text-sm font-semibold text-card-foreground mb-1.5 sm:mb-2 block">
               {t("fitness.sessionDuration")}
             </label>
             <div className="flex items-center gap-3 sm:gap-4">
@@ -108,9 +108,9 @@ const FitnessModalInner = ({
                 step="5"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="flex-1 h-1.5 sm:h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                className="flex-1 h-1.5 sm:h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-400"
               />
-              <span className="text-base sm:text-lg font-bold text-green-700 w-10 sm:w-12 text-center">
+              <span className="text-base sm:text-lg font-bold text-green-400 w-10 sm:w-12 text-center">
                 {duration}
               </span>
             </div>
@@ -118,7 +118,7 @@ const FitnessModalInner = ({
 
           {/* Training Program Split */}
           <div>
-            <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
+            <label className="text-xs sm:text-sm font-semibold text-card-foreground mb-1.5 sm:mb-2 block">
               {t("fitness.trainingProgram")}
             </label>
             <div className="flex flex-col gap-1.5 sm:gap-2">
@@ -127,7 +127,7 @@ const FitnessModalInner = ({
                   key={program.value}
                   variant={trainingProgram === program.value ? 'primary' : 'ghost'}
                   size="sm"
-                  className={`w-full text-start justify-start flex-col items-start gap-0.5 sm:gap-1 h-auto py-2.5 sm:py-3 border ${trainingProgram === program.value ? 'border-green-500' : 'border-slate-200'}`}
+                  className={`w-full text-start justify-start flex-col items-start gap-0.5 sm:gap-1 h-auto py-2.5 sm:py-3 border ${trainingProgram === program.value ? 'border-green-500' : 'border-border'}`}
                   onClick={() => setTrainingProgram(program.value as any)}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -135,10 +135,10 @@ const FitnessModalInner = ({
                       {program.label}
                     </span>
                     {trainingProgram === program.value && (
-                      <CheckCircle2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-green-600 flex-shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-green-400 flex-shrink-0" />
                     )}
                   </div>
-                  <span className="text-[11px] sm:text-xs text-slate-500 leading-normal sm:leading-snug">
+                  <span className="text-[11px] sm:text-xs text-muted-foreground leading-normal sm:leading-snug">
                     {program.desc}
                   </span>
                 </Button>
@@ -148,18 +148,18 @@ const FitnessModalInner = ({
 
           {/* Start Date */}
           <div>
-            <label className="text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2 block">
+            <label className="text-xs sm:text-sm font-semibold text-card-foreground mb-1.5 sm:mb-2 block">
               {t("fitness.startDate")}
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
+              className="w-full px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
             />
           </div>
 
-          <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-slate-100 flex-shrink-0">
+          <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-border flex-shrink-0">
             <Button variant="secondary" size="default" className="flex-1" onClick={onClose}>
               {t("fitness.cancel")}
             </Button>

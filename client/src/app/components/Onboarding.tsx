@@ -239,35 +239,35 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return (
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Username
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Username
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={e => { update({ name: e.target.value }); clearError('name'); }}
-                className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.name ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
+                className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.name ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-border focus:ring-2 focus:ring-green-600'}`}
                 placeholder="e.g. Alex Johnson"
               />
               {errors.name && <p className="text-red-500 text-[11px] sm:text-xs">{errors.name}</p>}
             </div>
             <div className="flex flex-col gap-3.5 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Age
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Age
                 </label>
                 <input
                   type="number"
                   value={formData.age}
                   onChange={e => { update({ age: e.target.value }); clearError('age'); }}
-                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.age ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
+                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.age ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-border focus:ring-2 focus:ring-green-600'}`}
                   placeholder="25"
                   min={10} max={100}
                 />
                 {errors.age && <p className="text-red-500 text-[11px] sm:text-xs">{errors.age}</p>}
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700">Gender</label>
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground">Gender</label>
                 <div className="flex gap-2">
                   {['Male', 'Female'].map(g => (
                     <button
@@ -275,8 +275,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       type="button"
                       onClick={() => { update({ gender: g }); clearError('gender'); }}
                       className={`flex-1 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all ${formData.gender === g
-                        ? 'border-green-700 bg-green-50 text-green-800'
-                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        ? 'border-forest-canopy bg-forest-canopy/15 text-forest-canopy'
+                        : 'border-border text-muted-foreground hover:border-foreground/20'
                         }`}
                     >
                       {g}
@@ -288,27 +288,27 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <Ruler className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Height (cm)
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                  <Ruler className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Height (cm)
                 </label>
                 <input
                   type="number"
                   value={formData.height}
                   onChange={e => { update({ height: e.target.value }); clearError('height'); }}
-                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.height ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
+                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.height ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-border focus:ring-2 focus:ring-green-600'}`}
                   placeholder="175"
                 />
                 {errors.height && <p className="text-red-500 text-[11px] sm:text-xs">{errors.height}</p>}
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Weight (kg)
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                  <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Weight (kg)
                 </label>
                 <input
                   type="number"
                   value={formData.weight || ''}
                   onChange={e => { update({ weight: Number(e.target.value) }); clearError('weight'); }}
-                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.weight ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
+                  className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.weight ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-border focus:ring-2 focus:ring-green-600'}`}
                   placeholder="70"
                 />
                 {errors.weight && <p className="text-red-500 text-[11px] sm:text-xs">{errors.weight}</p>}
@@ -321,10 +321,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return (
           <div className="space-y-5 sm:space-y-6">
             <div className="space-y-2 sm:space-y-3">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Religion / Fasting Periods
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Religion / Fasting Periods
               </label>
-              <p className="text-[11px] sm:text-xs text-slate-400">Helps us respect your fasting calendars (Ramadan, Lent, etc.)</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">Helps us respect your fasting calendars (Ramadan, Lent, etc.)</p>
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {['Muslim', 'Christian'].map(r => (
                   <button
@@ -332,8 +332,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     type="button"
                     onClick={() => { update({ religion: r }); clearError('religion'); }}
                     className={`py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all text-center ${formData.religion === r
-                      ? 'border-green-600 bg-green-50 text-green-800'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                      ? 'border-forest-canopy bg-forest-canopy/15 text-forest-canopy'
+                      : 'border-border text-muted-foreground hover:border-foreground/20'
                       }`}
                   >
                     {r}
@@ -345,18 +345,18 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <ChefHat className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Food Preferences
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                  <ChefHat className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Food Preferences
                 </label>
-                <span className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                   {formData.foodPreferences.length} selected
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-400">Select the foods you want to include in your diet</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">Select the foods you want to include in your diet</p>
 
               {FOOD_PREFERENCES.map((category) => (
                 <div key={category.category} className="space-y-1.5 sm:space-y-2">
-                  <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">{category.category}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">{category.category}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-2">
                     {category.items.map((food) => (
                       <button
@@ -364,8 +364,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         type="button"
                         onClick={() => toggleFoodPreference(food)}
                         className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg border-[1.5px] sm:border-2 text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-between gap-1 ${formData.foodPreferences.includes(food)
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                          ? 'border-forest-canopy bg-forest-canopy/15 text-forest-canopy'
+                          : 'border-border text-muted-foreground hover:border-foreground/20'
                           }`}
                       >
                         <span className="truncate">{food}</span>
@@ -383,7 +383,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return (
           <div className="space-y-5 sm:space-y-6">
             <div className="space-y-2 sm:space-y-3">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700">Allergies & Intolerances</label>
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground">Allergies & Intolerances</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
                 {['Gluten', 'Dairy', 'Eggs', 'Peanuts', 'Tree Nuts', 'Shellfish', 'Soy', 'Fish', 'None'].map(a => (
                   <button
@@ -392,7 +392,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     onClick={() => toggleAllergy(a)}
                     className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg border-[1.5px] sm:border-2 text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-between gap-1 ${formData.allergies.includes(a)
                       ? 'border-red-400 bg-red-50 text-red-700'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                      : 'border-border text-muted-foreground hover:border-foreground/20'
                       }`}
                   >
                     <span className="truncate">{a}</span>
@@ -404,14 +404,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 type="text"
                 value={formData.customAllergy}
                 onChange={e => update({ customAllergy: e.target.value })}
-                className="w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none transition-all text-xs sm:text-sm"
+                className="w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none transition-all text-xs sm:text-sm"
                 placeholder="Other allergy? Type here (e.g. Sesame, Mustard)..."
               />
             </div>
 
             <div className="space-y-2 sm:space-y-3">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Activity Level
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Activity Level
               </label>
               <div className="space-y-1.5 sm:space-y-2">
                 {[
@@ -426,17 +426,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     type="button"
                     onClick={() => { update({ activityLevel: level.label }); clearError('activityLevel'); }}
                     className={`w-full p-2.5 sm:p-3.5 rounded-lg sm:rounded-xl border-[1.5px] sm:border-2 text-start flex items-center gap-2.5 sm:gap-4 transition-all ${formData.activityLevel === level.label
-                      ? 'border-green-700 bg-green-50'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                      ? 'border-forest-canopy bg-forest-canopy/15'
+                      : 'border-border hover:border-foreground/20 bg-card'
                       }`}
                   >
                     <span className="text-xl sm:text-2xl flex-shrink-0">{level.emoji}</span>
                     <div className="min-w-0 flex-1">
-                      <div className={`font-semibold text-xs sm:text-sm ${formData.activityLevel === level.label ? 'text-green-800' : 'text-slate-800'}`}>{level.label}</div>
-                      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{level.desc}</div>
+                      <div className={`font-semibold text-xs sm:text-sm ${formData.activityLevel === level.label ? 'text-forest-canopy' : 'text-card-foreground'}`}>{level.label}</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{level.desc}</div>
                     </div>
                     {formData.activityLevel === level.label && (
-                      <div className="ms-auto w-4 h-4 sm:w-5 sm:h-5 bg-green-700 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="ms-auto w-4 h-4 sm:w-5 sm:h-5 bg-forest-canopy rounded-full flex items-center justify-center flex-shrink-0">
                         <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                       </div>
                     )}
@@ -453,11 +453,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <div className="space-y-4 sm:space-y-6">
             <div className='grid grid-cols-2 gap-2.5 sm:gap-3'>
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700">Select your goal</label>
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground">Select your goal</label>
                 <select
                   onChange={(e) => { update({ goal: e.target.value }); clearError('goal'); }}
                   value={formData.goal}
-                  className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-slate-700 ${errors.goal ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
+                  className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-card-foreground ${errors.goal ? 'border-red-500' : 'border-border focus:ring-2 focus:ring-green-700'}`}
                 >
                   <option value="">Select goal</option>
                   <option value="lose_weight">Lose Weight</option>
@@ -468,29 +468,29 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
-                <label className="text-xs sm:text-sm font-semibold text-slate-700">Target Weight (kg)</label>
+                <label className="text-xs sm:text-sm font-semibold text-card-foreground">Target Weight (kg)</label>
                 <input
                   onChange={(e) => { update({ targetWeight: Number(e.target.value) }); clearError('targetWeight'); }}
                   type="number"
                   value={formData.targetWeight || ''}
-                  className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-slate-700 ${errors.targetWeight ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
+                  className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-card-foreground ${errors.targetWeight ? 'border-red-500' : 'border-border focus:ring-2 focus:ring-green-700'}`}
                   placeholder="Target weight"
                 />
                 {errors.targetWeight && <p className="text-red-500 text-[11px] sm:text-xs">{errors.targetWeight}</p>}
               </div>
             </div>
             <div className="space-y-1.5 sm:space-y-2 mt-4 sm:mt-5">
-              <label htmlFor="dreamGoal" className="text-xs sm:text-sm font-semibold text-slate-700">Describe Your Dream Body & Health Goal</label>
+              <label htmlFor="dreamGoal" className="text-xs sm:text-sm font-semibold text-card-foreground">Describe Your Dream Body & Health Goal</label>
               <textarea
                 value={formData.dreamGoal}
                 onChange={(e) => { update({ dreamGoal: e.target.value }); clearError('dreamGoal'); }}
-                className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-slate-700 leading-relaxed resize-none ${errors.dreamGoal ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
+                className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-card-foreground leading-relaxed resize-none ${errors.dreamGoal ? 'border-red-500' : 'border-border focus:ring-2 focus:ring-green-700'}`}
                 rows={4}
                 placeholder="e.g. I want to lose 10kg in 3 months without feeling deprived..."
               />
-              <div className="flex justify-between text-[10px] sm:text-xs text-slate-400">
+              <div className="flex justify-between text-[10px] sm:text-xs text-muted-foreground">
                 <span>{formData.dreamGoal.length} characters</span>
-                <span className={formData.dreamGoal.length >= 10 ? 'text-green-500' : ''}>
+                <span className={formData.dreamGoal.length >= 10 ? 'text-forest-canopy' : ''}>
                   {formData.dreamGoal.length >= 10 ? '✓ Great detail!' : 'Minimum 10 characters'}
                 </span>
               </div>
@@ -498,16 +498,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Target Date
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> Target Date
               </label>
-              <p className="text-[11px] sm:text-xs text-slate-400">When do you want to achieve this goal?</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">When do you want to achieve this goal?</p>
               <input
                 type="date"
                 value={formData.goalDate}
                 onChange={(e) => { update({ goalDate: e.target.value }); clearError('goalDate'); }}
                 min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-slate-700 ${errors.goalDate ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
+                className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-card-foreground ${errors.goalDate ? 'border-red-500' : 'border-border focus:ring-2 focus:ring-green-700'}`}
               />
               {errors.goalDate && <p className="text-red-500 text-[11px] sm:text-xs">{errors.goalDate}</p>}
             </div>
@@ -523,7 +523,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   key={suggestion}
                   type="button"
                   onClick={() => update({ dreamGoal: suggestion })}
-                  className="p-2.5 sm:p-3 bg-slate-50 border border-slate-200 rounded-lg sm:rounded-xl text-[10px] sm:text-xs text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-800 transition-all text-start font-medium line-clamp-1"
+                  className="p-2.5 sm:p-3 bg-muted border border-border rounded-lg sm:rounded-xl text-[10px] sm:text-xs text-muted-foreground hover:bg-forest-canopy/10 hover:border-forest-canopy/30 hover:text-forest-canopy transition-all text-start font-medium line-clamp-1"
                 >
                   + {suggestion}
                 </button>
@@ -535,25 +535,25 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return (
           <div className="space-y-6 sm:space-y-8">
             <div className="space-y-3 sm:space-y-4">
-              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> {t('onboarding.language')}
+              <label className="text-xs sm:text-sm font-semibold text-card-foreground flex items-center gap-2">
+                <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-forest-canopy" /> {t('onboarding.language')}
               </label>
-              <p className="text-[11px] sm:text-xs text-slate-400">{t('onboarding.languageSubtext')}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">{t('onboarding.languageSubtext')}</p>
               <p className="text-[11px] sm:text-xs text-amber-600 font-medium">{t('onboarding.languageWarning')}</p>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
                 <button
                   type="button"
                   onClick={() => updateLanguage('en')}
                   className={`flex flex-col items-center gap-3 p-6 sm:p-8 rounded-xl sm:rounded-2xl border-2 transition-all ${formData.language === 'en'
-                    ? 'border-green-600 bg-green-50 text-green-800 shadow-md shadow-green-100'
-                    : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-forest-canopy bg-forest-canopy/15 text-forest-canopy shadow-md shadow-forest-canopy/10'
+                    : 'border-border text-muted-foreground hover:border-foreground/20 hover:bg-muted'
                     }`}
                 >
                   <span className="text-3xl sm:text-4xl">🇬🇧</span>
                   <span className="text-base sm:text-lg font-bold">English</span>
-                  <span className="text-[10px] sm:text-xs text-slate-400 text-center">{t('onboarding.englishDesc')}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground text-center">{t('onboarding.englishDesc')}</span>
                   {formData.language === 'en' && (
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-700 rounded-full flex items-center justify-center mt-1">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-forest-canopy rounded-full flex items-center justify-center mt-1">
                       <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
                     </div>
                   )}
@@ -562,15 +562,15 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   type="button"
                   onClick={() => updateLanguage('ar')}
                   className={`flex flex-col items-center gap-3 p-6 sm:p-8 rounded-xl sm:rounded-2xl border-2 transition-all ${formData.language === 'ar'
-                    ? 'border-green-600 bg-green-50 text-green-800 shadow-md shadow-green-100'
-                    : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-forest-canopy bg-forest-canopy/15 text-forest-canopy shadow-md shadow-forest-canopy/10'
+                    : 'border-border text-muted-foreground hover:border-foreground/20 hover:bg-muted'
                     }`}
                 >
                   <span className="text-3xl sm:text-4xl">🇸🇦</span>
                   <span className="text-base sm:text-lg font-bold">العربية</span>
-                  <span className="text-[10px] sm:text-xs text-slate-400 text-center">{t('onboarding.arabicDesc')}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground text-center">{t('onboarding.arabicDesc')}</span>
                   {formData.language === 'ar' && (
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-700 rounded-full flex items-center justify-center mt-1">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-forest-canopy rounded-full flex items-center justify-center mt-1">
                       <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
                     </div>
                   )}
@@ -589,10 +589,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-slate-100 overflow-hidden"
+        className="w-full max-w-lg bg-card rounded-2xl sm:rounded-3xl shadow-xl border border-border overflow-hidden"
       >
         {/* Progress Bar */}
-        <div className="h-1.5 bg-slate-100">
+        <div className="h-1.5 bg-muted">
           <motion.div
             className="h-full bg-gradient-to-r from-green-800 to-green-600"
             initial={{ width: 0 }}
@@ -602,16 +602,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
 
         {/* Step Indicators */}
-        <div className="flex justify-between items-center px-4 sm:px-8 py-3.5 sm:py-5 border-b border-slate-100">
+        <div className="flex justify-between items-center px-4 sm:px-8 py-3.5 sm:py-5 border-b border-border">
           {STEP_ICONS.map((Icon, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5">
-              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${i < step ? 'bg-green-600 text-white' :
-                i === step ? 'bg-gradient-to-br from-green-800 to-green-700 text-white shadow-lg shadow-green-200' :
-                  'bg-slate-100 text-slate-400'
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${i < step ? 'bg-forest-canopy text-white' :
+                i === step ? 'bg-gradient-to-br from-forest-deep to-forest-canopy text-white shadow-lg shadow-forest-canopy/20' :
+                  'bg-muted text-muted-foreground'
                 }`}>
                 {i < step ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </div>
-              <span className={`text-[10px] font-semibold hidden sm:block ${i === step ? 'text-green-700' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-semibold hidden sm:block ${i === step ? 'text-forest-canopy' : 'text-muted-foreground'}`}>
                 {STEP_LABELS[i]}
               </span>
             </div>
@@ -621,10 +621,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         <div className="p-5 sm:p-8 md:p-10">
           {/* Header */}
           <div className="mb-5 sm:mb-7">
-            <div className="text-xs sm:text-sm font-bold text-green-700 uppercase tracking-wider mb-1.5 sm:mb-2">
+            <div className="text-xs sm:text-sm font-bold text-forest-canopy uppercase tracking-wider mb-1.5 sm:mb-2">
               {t('onboarding.stepLabel')} {step + 1} {t('onboarding.of')} 5
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-card-foreground leading-tight">
               {[
                 t('onboarding.step1Title'),
                 t('onboarding.step2Title'),
@@ -633,7 +633,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 t('onboarding.step5Title')
               ][step]}
             </h1>
-            <p className="text-slate-500 text-xs sm:text-sm mt-1 leading-relaxed">
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1 leading-relaxed">
               {[
                 t('onboarding.step1Desc'),
                 t('onboarding.step2Desc'),
@@ -660,12 +660,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-between items-center mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100">
+          <div className="flex justify-between items-center mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
             <button
               type="button"
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0 || isProcessing}
-              className="flex items-center gap-1.5 text-slate-500 font-semibold hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs sm:text-sm"
+              className="flex items-center gap-1.5 text-muted-foreground font-semibold hover:text-card-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs sm:text-sm"
             >
               <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t('common.back')}

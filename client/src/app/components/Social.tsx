@@ -378,11 +378,11 @@ export const Social: React.FC = () => {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 16, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white w-full h-full sm:max-w-lg sm:h-auto sm:rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col"
+              className="bg-card w-full h-full sm:max-w-lg sm:h-auto sm:rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col"
               onClick={e => e.stopPropagation()}
             >
               <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 flex items-center justify-between flex-shrink-0">
-                <h3 className="font-bold text-slate-900 text-base sm:text-lg">{t('community.createPost')}</h3>
+                <h3 className="font-bold text-card-foreground text-base sm:text-lg">{t('community.createPost')}</h3>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -399,11 +399,11 @@ export const Social: React.FC = () => {
                   onChange={e => setPostContent(e.target.value)}
                   placeholder={t('community.postPlaceholder')}
                   disabled={posting}
-                  className="w-full h-24 sm:h-28 p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none resize-none text-xs sm:text-sm placeholder:text-slate-400 disabled:cursor-not-allowed"
+                  className="w-full h-24 sm:h-28 p-3 rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none resize-none text-xs sm:text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed"
                 />
 
                 {mediaPreview && (
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-100">
+                  <div className="relative rounded-2xl overflow-hidden border border-border">
                     <img src={mediaPreview} alt="Preview" className="w-full h-40 sm:h-48 object-cover" />
                     <Button
                       variant="ghost"
@@ -417,7 +417,7 @@ export const Social: React.FC = () => {
                   </div>
                 )}
 
-                <label className={`flex items-center gap-2 w-fit px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-colors ${posting ? 'pointer-events-none opacity-50' : ''}`}>
+                <label className={`flex items-center gap-2 w-fit px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-border text-xs sm:text-sm font-medium text-muted-foreground hover:bg-muted hover:border-foreground/20 cursor-pointer transition-colors ${posting ? 'pointer-events-none opacity-50' : ''}`}>
                   <Image className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>{t('community.addPhoto')}</span>
                   <input
@@ -430,7 +430,7 @@ export const Social: React.FC = () => {
                 </label>
               </div>
 
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 flex-shrink-0">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-border flex-shrink-0">
                 <Button
                   variant="primary"
                   size="lg"
@@ -457,13 +457,13 @@ export const Social: React.FC = () => {
       </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-3xl font-bold text-slate-900 leading-tight">{t('community.title')}</h1>
-        <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit">
+        <h1 className="text-xl sm:text-3xl font-bold text-card-foreground leading-tight">{t('community.title')}</h1>
+        <div className="flex bg-card p-1 rounded-xl border border-border w-fit">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setActiveTab('feed')}
-            className={`${activeTab === 'feed' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`${activeTab === 'feed' ? 'bg-green-500/20 text-green-400 shadow-sm' : 'text-muted-foreground hover:text-card-foreground'}`}
           >
             {t('community.feed')}
           </Button>
@@ -471,7 +471,7 @@ export const Social: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => setActiveTab('leaderboard')}
-            className={`${activeTab === 'leaderboard' ? 'bg-green-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`${activeTab === 'leaderboard' ? 'bg-green-500/20 text-green-400 shadow-sm' : 'text-muted-foreground hover:text-card-foreground'}`}
           >
             {t('community.leaderboard')}
           </Button>
@@ -484,20 +484,20 @@ export const Social: React.FC = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-lg overflow-hidden"
+            className="bg-card rounded-xl sm:rounded-2xl border border-border shadow-lg overflow-hidden"
           >
-            <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-slate-100 bg-slate-50">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{searchResults.length} {t('community.usersFound')}</p>
+            <div className="px-4 py-2.5 sm:px-5 sm:py-3 border-b border-border bg-muted">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{searchResults.length} {t('community.usersFound')}</p>
             </div>
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-border">
               {searchResults.map(user => (
-                <div key={user.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-slate-50 transition-colors">
+                <div key={user.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-muted transition-colors">
                   {user.avatarUrl && (
                     <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-900 text-xs sm:text-sm">{user.name}</div>
-                    <div className="font-mono text-[10px] sm:text-xs text-green-700">{user.username}</div>
+                    <div className="font-bold text-card-foreground text-xs sm:text-sm">{user.name}</div>
+                    <div className="font-mono text-[10px] sm:text-xs text-green-400">{user.username}</div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <Button
@@ -521,12 +521,12 @@ export const Social: React.FC = () => {
             {/* Feed */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-5">
               {/* Create Post Card */}
-              <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm flex flex-wrap gap-2.5 sm:gap-4">
+              <div className="bg-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-border shadow-sm flex flex-wrap gap-2.5 sm:gap-4">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.name} className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover" />
                 ) : (
-                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
                   </div>
                 )}
                 <input
@@ -534,7 +534,7 @@ export const Social: React.FC = () => {
                   placeholder={t('community.postPlaceholder')}
                   onClick={() => setShowCreateModal(true)}
                   readOnly
-                  className="flex-1 bg-slate-50 rounded-lg sm:rounded-xl px-3 sm:px-4 outline-none focus:ring-2 focus:ring-green-100 transition-all text-xs sm:text-sm cursor-pointer"
+                  className="flex-1 bg-muted rounded-lg sm:rounded-xl px-3 sm:px-4 outline-none focus:ring-2 focus:ring-green-600/50 transition-all text-xs sm:text-sm cursor-pointer"
                 />
                 <Button
                   variant="primary"
@@ -547,9 +547,9 @@ export const Social: React.FC = () => {
 
               {/* Posts */}
               {loading ? (
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-slate-100 shadow-sm text-center">
+                <div className="bg-card rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-border shadow-sm text-center">
                   <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3 animate-spin text-green-600" />
-                  <p className="text-slate-500 text-xs sm:text-sm">{t('community.loadingPosts')}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">{t('community.loadingPosts')}</p>
                 </div>
               ) : posts.length > 0 ? (
                 posts.map(post => (
@@ -557,20 +557,20 @@ export const Social: React.FC = () => {
                     key={post._id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <div className="flex items-center gap-2.5 sm:gap-3">
                         {getUserAvatar(post.userId) ? (
                           <img src={getUserAvatar(post.userId)!} alt={getUserName(post.userId)} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0" />
                         ) : (
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                           </div>
                         )}
                         <div>
-                          <h3 className="font-bold text-slate-900 text-xs sm:text-sm">{getUserName(post.userId)}</h3>
-                          <p className="text-[10px] sm:text-xs text-slate-500">{formatDate(post.createdAt)}</p>
+                          <h3 className="font-bold text-card-foreground text-xs sm:text-sm">{getUserName(post.userId)}</h3>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">{formatDate(post.createdAt)}</p>
                         </div>
                       </div>
                       {isPostOwner(post) && (
@@ -584,10 +584,10 @@ export const Social: React.FC = () => {
                       )}
                     </div>
 
-                    <p className="text-slate-700 mb-3 sm:mb-4 leading-relaxed text-xs sm:text-sm whitespace-pre-wrap">{post.content}</p>
+                    <p className="text-card-foreground mb-3 sm:mb-4 leading-relaxed text-xs sm:text-sm whitespace-pre-wrap">{post.content}</p>
 
                     {post.mediaUrl && (
-                      <div className="rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 bg-slate-50 relative group cursor-pointer h-72 sm:h-96" onClick={() => setLightboxImage(post.mediaUrl!)}>
+                      <div className="rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-4 bg-muted relative group cursor-pointer h-72 sm:h-96" onClick={() => setLightboxImage(post.mediaUrl!)}>
                         <img src={post.mediaUrl} alt="Post" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 text-white p-2 rounded-full">
@@ -597,12 +597,12 @@ export const Social: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4 sm:gap-6 pt-3 sm:pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-4 sm:gap-6 pt-3 sm:pt-4 border-t border-border">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLike(post._id)}
-                        className={`${post.isLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-500'}`}
+                        className={`${post.isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}
                       >
                         <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${post.isLiked ? 'fill-current' : ''}`} />
                         <span className="text-xs sm:text-sm font-medium">{post.likeCount}</span>
@@ -611,7 +611,7 @@ export const Social: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleComments(post._id)}
-                        className={`${expandedPostId === post._id ? 'text-green-600' : 'text-slate-500 hover:text-green-600'}`}
+                        className={`${expandedPostId === post._id ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'}`}
                       >
                         <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="text-xs sm:text-sm font-medium">{post.commentCount}</span>
@@ -625,7 +625,7 @@ export const Social: React.FC = () => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100"
+                          className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border"
                         >
                           {/* Add Comment Input */}
                           <div className="flex gap-2 mb-3.5 sm:mb-4">
@@ -635,7 +635,7 @@ export const Social: React.FC = () => {
                               onChange={e => setNewComment(prev => ({ ...prev, [post._id]: e.target.value }))}
                               onKeyDown={e => e.key === 'Enter' && handleAddComment(post._id)}
                               placeholder={t('community.commentPlaceholder')}
-                              className="flex-1 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
+                              className="flex-1 px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-xs sm:text-sm"
                             />
                             <Button
                               variant="primary"
@@ -650,7 +650,7 @@ export const Social: React.FC = () => {
                           {/* Comments List */}
                           {loadingComments[post._id] ? (
                             <div className="text-center py-3">
-                              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mx-auto animate-spin text-slate-400" />
+                              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mx-auto animate-spin text-muted-foreground" />
                             </div>
                           ) : comments[post._id]?.length > 0 ? (
                             <div className="space-y-2.5 sm:space-y-3">
@@ -659,13 +659,13 @@ export const Social: React.FC = () => {
                                   {comment.userId && typeof comment.userId === 'object' && comment.userId.avatarUrl ? (
                                     <img src={comment.userId.avatarUrl} alt={typeof comment.userId === 'object' ? comment.userId.name || '' : ''} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0" />
                                   ) : (
-                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                                      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                                     </div>
                                   )}
-                                  <div className="flex-1 bg-slate-50 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2">
+                                  <div className="flex-1 bg-muted rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2">
                                     <div className="flex items-center justify-between">
-                                      <span className="font-semibold text-xs sm:text-sm text-slate-900">
+                                      <span className="font-semibold text-xs sm:text-sm text-card-foreground">
                                         {comment.userId && typeof comment.userId === 'object' ? comment.userId.name || 'User' : 'User'}
                                       </span>
                                       {isCommentOwner(comment) && (
@@ -678,16 +678,16 @@ export const Social: React.FC = () => {
                                         </Button>
                                       )}
                                     </div>
-                                    <p className="text-xs sm:text-sm text-slate-600 leading-normal">{comment.content}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground leading-normal">{comment.content}</p>
                                     <div className="flex items-center gap-2.5 sm:gap-3 mt-1 flex-wrap">
-                                      <span className="text-[10px] sm:text-xs text-slate-400">{formatDate(comment.createdAt)}</span>
+                                      <span className="text-[10px] sm:text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                     </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs sm:text-sm text-slate-400 text-center py-2">{t('community.noComments')}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground text-center py-2">{t('community.noComments')}</p>
                           )}
                         </motion.div>
                       )}
@@ -695,7 +695,7 @@ export const Social: React.FC = () => {
                   </motion.div>
                 ))
               ) : (
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-slate-100 shadow-sm text-center text-slate-400">
+                <div className="bg-card rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-border shadow-sm text-center text-muted-foreground">
                   <Users className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-30" />
                   <p className="font-medium text-sm sm:text-base">{t('community.noPosts')}</p>
                   <p className="text-xs sm:text-sm">{t('community.beFirst')}</p>
@@ -714,25 +714,25 @@ export const Social: React.FC = () => {
 
             {/* Sidebar Widgets */}
             <div className="space-y-4 sm:space-y-6">
-              <div className="bg-gradient-to-br from-green-800 to-green-700 p-4 sm:p-6 rounded-2xl sm:rounded-3xl text-white">
+              <div className="bg-gray-800 border border-green-500/20 p-4 sm:p-6 rounded-2xl sm:rounded-3xl text-gray-200">
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
                   <h3 className="font-bold text-base sm:text-lg">{t('community.yourSquad')}</h3>
                 </div>
-                <p className="text-green-200 text-xs sm:text-sm mb-4 sm:mb-5">{t('community.squadDesc')}</p>
+                <p className="text-green-400 text-xs sm:text-sm mb-4 sm:mb-5">{t('community.squadDesc')}</p>
                 <div className="flex items-center justify-center h-8 sm:h-10 mb-4 sm:mb-5">
-                  <span className="text-green-300 text-xs sm:text-sm">{t('community.noActiveTeam')}</span>
+                  <span className="text-green-400 text-xs sm:text-sm">{t('community.noActiveTeam')}</span>
                 </div>
                 <Button variant="secondary" size="sm" className="w-full">
                   {t('community.findATeam')}
                 </Button>
               </div>
 
-              <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm">
-                <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-3 sm:mb-4">{t('community.trendingTopics')}</h3>
+              <div className="bg-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border shadow-sm">
+                <h3 className="font-bold text-card-foreground text-sm sm:text-base mb-3 sm:mb-4">{t('community.trendingTopics')}</h3>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {['#MorningRun', '#HealthyEating', '#YogaLife', '#Keto', '#MarathonPrep', '#Njerka30Day'].map(tag => (
-                    <span key={tag} className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-full hover:bg-green-50 hover:text-green-700 cursor-pointer transition-colors">
+                    <span key={tag} className="text-[10px] sm:text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1.5 rounded-full hover:bg-green-500/10 hover:text-green-400 cursor-pointer transition-colors">
                       {tag}
                     </span>
                   ))}
@@ -743,11 +743,11 @@ export const Social: React.FC = () => {
         ) : (
           /* Leaderboard Tab */
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-5 sm:p-8 bg-gradient-to-r from-green-900 to-green-800 text-center text-white">
+            <div className="bg-card rounded-2xl sm:rounded-3xl border border-border shadow-sm overflow-hidden">
+              <div className="p-5 sm:p-8 bg-gray-900 border-b border-green-500/20 text-center text-gray-200">
                 <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 text-yellow-400 fill-current" />
                 <h2 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">{t('community.leaderboardTitle')}</h2>
-                <p className="text-green-200 text-xs sm:text-sm">{t('community.leaderboardSubtitle')}</p>
+                <p className="text-green-400 text-xs sm:text-sm">{t('community.leaderboardSubtitle')}</p>
                 {/* Scope Toggle */}
                 <div className="flex bg-green-800/30 p-1 rounded-lg sm:rounded-xl border border-white/10 w-fit mx-auto mt-3 sm:mt-4">
                   {(['global', 'family'] as const).map((s) => (
@@ -758,8 +758,8 @@ export const Social: React.FC = () => {
                       onClick={() => setLeaderboardScope(s)}
                       className={`capitalize ${
                         leaderboardScope === s
-                          ? 'bg-white text-green-800 shadow-sm'
-                          : 'text-green-200 hover:text-white'
+                          ? 'bg-card text-green-400 shadow-sm'
+                          : 'text-green-400 hover:text-white'
                       }`}
                     >
                       {s === 'family' ? t('community.family') : t('community.global')}
@@ -770,37 +770,37 @@ export const Social: React.FC = () => {
 
               {/* Current User Stats */}
               {currentUserRank && (
-                <div className="px-4 py-3 sm:px-6 sm:py-4 bg-green-50 border-b border-green-100">
+                <div className="px-4 py-3 sm:px-6 sm:py-4 bg-green-500/10 border-b border-green-500/30">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <img
                         src={currentUserRank.avatarUrl}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-white shadow-sm flex-shrink-0"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-green-500/30 shadow-sm flex-shrink-0"
                         alt={currentUserRank.name}
                       />
                       <div>
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{currentUserRank.name}</p>
-                        <p className="text-[10px] sm:text-xs text-green-600 font-medium">{t('community.yourRank')}{currentUserRank.rank}</p>
+                        <p className="font-bold text-card-foreground text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{currentUserRank.name}</p>
+                        <p className="text-[10px] sm:text-xs text-green-400 font-medium">{t('community.yourRank')}{currentUserRank.rank}</p>
                       </div>
                     </div>
                     <div className="text-end">
-                      <p className="text-lg sm:text-2xl font-black text-green-700 leading-none">{leaderboardStats.percentile}%</p>
-                      <p className="text-[9px] sm:text-xs text-slate-500 mt-1">{t('community.topPercent')} {leaderboardStats.percentile}%</p>
+                      <p className="text-lg sm:text-2xl font-black text-green-400 leading-none">{leaderboardStats.percentile}%</p>
+                      <p className="text-[9px] sm:text-xs text-muted-foreground mt-1">{t('community.topPercent')} {leaderboardStats.percentile}%</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Search Filter */}
-              <div className="px-4 py-2.5 sm:px-6 sm:py-3 border-b border-slate-100">
+              <div className="px-4 py-2.5 sm:px-6 sm:py-3 border-b border-border">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder={t('community.searchPlaceholder')}
                     value={leaderboardSearch}
                     onChange={(e) => setLeaderboardSearch(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none text-xs sm:text-sm"
+                    className="w-full pl-9 pr-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-border focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none text-xs sm:text-sm"
                   />
                   {leaderboardSearch && (
                     <Button
@@ -816,7 +816,7 @@ export const Social: React.FC = () => {
               </div>
 
               {/* Legend */}
-              <div className="px-3 py-2.5 sm:px-6 sm:py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-2.5 sm:px-6 sm:py-3 bg-muted border-b border-border flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 <span className="flex-1">{t('community.rankUser')}</span>
                 <span className="w-16 sm:w-28 text-center flex items-center gap-1 justify-center"><Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-500" /> {t('community.streak')}</span>
                 <span className="w-16 sm:w-28 text-center flex items-center gap-1 justify-center"><TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500" /> {t('community.points')}</span>
@@ -825,7 +825,7 @@ export const Social: React.FC = () => {
               {loadingLeaderboard ? (
                 <div className="p-8 sm:p-12 text-center">
                   <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3 animate-spin text-green-600" />
-                  <p className="text-slate-500 text-xs sm:text-sm">{t('community.loadingLeaderboard')}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">{t('community.loadingLeaderboard')}</p>
                 </div>
               ) : leaderboardData.length > 0 ? (
                 <div className="p-2 sm:p-4 space-y-1">
@@ -838,7 +838,7 @@ export const Social: React.FC = () => {
 
                     if (filteredData.length === 0 && leaderboardSearch) {
                       return (
-                        <div className="p-8 text-center text-slate-400">
+                        <div className="p-8 text-center text-muted-foreground">
                           <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
                           <p className="font-medium text-sm">{t('community.noUsersFound')}</p>
                           <p className="text-xs">{t('community.tryDifferentSearch')}</p>
@@ -854,30 +854,30 @@ export const Social: React.FC = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: user.rank * 0.08 }}
-                          className={`flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl transition-all ${isCurrentUser ? 'bg-green-50 border-2 border-green-200' : 'hover:bg-slate-50'
+                          className={`flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl transition-all ${isCurrentUser ? 'bg-green-500/10 border-2 border-green-500/30' : 'hover:bg-muted'
                             }`}
                         >
-                          <div className="w-6 font-bold text-sm sm:text-lg text-slate-400 flex justify-center flex-shrink-0">
+                          <div className="w-6 font-bold text-sm sm:text-lg text-muted-foreground flex justify-center flex-shrink-0">
                             {user.rank === 1 && <Medal className="w-5.5 h-5.5 sm:w-7 sm:h-7 text-yellow-500 fill-current" />}
-                            {user.rank === 2 && <Medal className="w-5.5 h-5.5 sm:w-7 sm:h-7 text-slate-400 fill-current" />}
+                            {user.rank === 2 && <Medal className="w-5.5 h-5.5 sm:w-7 sm:h-7 text-muted-foreground fill-current" />}
                             {user.rank === 3 && <Medal className="w-5.5 h-5.5 sm:w-7 sm:h-7 text-orange-400 fill-current" />}
-                            {user.rank > 3 && <span className="text-slate-400">{user.rank}</span>}
+                            {user.rank > 3 && <span className="text-muted-foreground">{user.rank}</span>}
                           </div>
 
                           {user.avatarUrl && (
                             <img
                               src={user.avatarUrl}
-                              className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover border border-white shadow-sm flex-shrink-0"
+                              className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover shadow-sm flex-shrink-0"
                               alt={user.name}
                             />
                           )}
 
                           <div className="flex-1 min-w-0">
-                            <h4 className={`font-bold text-xs sm:text-sm truncate ${isCurrentUser ? 'text-green-800' : 'text-slate-900'}`}>
+                            <h4 className={`font-bold text-xs sm:text-sm truncate ${isCurrentUser ? 'text-green-400' : 'text-card-foreground'}`}>
                               {user.name}
-                              {isCurrentUser && <span className="ms-1 text-[10px] sm:text-xs text-green-600">{t('community.you')}</span>}
+                              {isCurrentUser && <span className="ms-1 text-[10px] sm:text-xs text-green-400">{t('community.you')}</span>}
                             </h4>
-                            <div className="text-[10px] sm:text-xs text-slate-400 truncate">
+                            <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                               {leaderboardScope === 'family' ? t('community.familyLeague') : t('community.globalLeague')}
                             </div>
                           </div>
@@ -885,14 +885,14 @@ export const Social: React.FC = () => {
                           <div className="w-16 sm:w-28 text-center flex-shrink-0">
                             <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                               <span className="text-sm sm:text-lg leading-none">🔥</span>
-                              <span className="font-bold text-slate-900 text-xs sm:text-base leading-none">{user.streak}</span>
+                              <span className="font-bold text-card-foreground text-xs sm:text-base leading-none">{user.streak}</span>
                             </div>
-                            <div className="text-[8px] sm:text-[10px] text-slate-400 leading-tight">{t('community.streakValue')}</div>
+                            <div className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">{t('community.streakValue')}</div>
                           </div>
 
                           <div className="w-16 sm:w-28 text-end flex-shrink-0">
-                            <div className="font-bold text-green-700 text-xs sm:text-lg leading-none">{user.points.toLocaleString()}</div>
-                            <div className="text-[9px] sm:text-xs text-slate-400 leading-normal">pts</div>
+                            <div className="font-bold text-green-400 text-xs sm:text-lg leading-none">{user.points.toLocaleString()}</div>
+                            <div className="text-[9px] sm:text-xs text-muted-foreground leading-normal">pts</div>
                           </div>
                         </motion.div>
                       );
@@ -900,7 +900,7 @@ export const Social: React.FC = () => {
                   })()}
                 </div>
               ) : (
-                <div className="p-8 sm:p-12 text-center text-slate-400">
+                <div className="p-8 sm:p-12 text-center text-muted-foreground">
                   <Trophy className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-30" />
                   {leaderboardScope === 'family' ? (
                     <>

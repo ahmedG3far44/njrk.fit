@@ -37,52 +37,52 @@ export default function GoalProgressBar({ user }: { user: any }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-      className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-sm"
+      className="bg-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-border shadow-sm"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-            <Target className="w-4 h-4 text-emerald-600" />
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-900/30 rounded-lg sm:rounded-xl flex items-center justify-center">
+            <Target className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+            <h3 className="font-bold text-card-foreground text-sm sm:text-base leading-tight">
               {t('goalProgress.title')}
             </h3>
           </div>
         </div>
-        <span className="text-xs sm:text-sm font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+        <span className="text-xs sm:text-sm font-bold text-emerald-400 bg-emerald-900/30 px-2.5 py-1 rounded-lg">
           {isComplete
             ? t('goalProgress.goalAchieved')
             : t('goalProgress.daysRemaining', { days: daysRemaining })}
         </span>
       </div>
 
-      <div className="h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2.5 sm:h-3 bg-muted rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-          className={`h-full rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-gradient-to-r from-emerald-400 to-emerald-600'}`}
+          className={`h-full rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-gradient-to-r from-emerald-500 to-emerald-600 rtl:bg-gradient-to-l'}`}
         />
       </div>
 
       <div className="flex items-center justify-between mt-2">
-        <span className="text-[10px] sm:text-xs text-slate-400">
+        <span className="text-[10px] sm:text-xs text-muted-foreground">
           {t('goalProgress.daysElapsed', { days: daysElapsed })}
         </span>
-        <span className="text-[10px] sm:text-xs font-semibold text-slate-500">
+        <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground">
           {Math.round(progress)}% {t('goalProgress.ofDays', { total: totalDays })}
         </span>
       </div>
 
       <div className="flex items-center justify-between mt-1.5">
         {user?.createdAt && (
-          <span className="text-[9px] sm:text-[10px] text-slate-400">
+          <span className="text-[9px] sm:text-[10px] text-muted-foreground">
             {t('goalProgress.startDate', { date: formatDate(user.createdAt) })}
           </span>
         )}
         {user?.goalDate && (
-          <span className="text-[9px] sm:text-[10px] text-slate-400">
+          <span className="text-[9px] sm:text-[10px] text-muted-foreground">
             {t('goalProgress.targetDate', { date: formatDate(user.goalDate) })}
           </span>
         )}

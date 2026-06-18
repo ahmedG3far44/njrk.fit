@@ -219,7 +219,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const notifTypeIcon = (type: string) => {
     if (type === "friend_request")
-      return <UserCheck className="w-4 h-4 text-green-700" />;
+      return <UserCheck className="w-4 h-4 text-green-400" />;
     if (type === "family_invite")
       return <Users className="w-4 h-4 text-green-600" />;
     if (type === "meal_reminder")
@@ -227,15 +227,15 @@ export const Layout: React.FC<LayoutProps> = ({
     if (type === "team_invite")
       return <Target className="w-4 h-4 text-green-500" />;
     if (type === "training_reminder")
-      return <Dumbbell className="w-4 h-4 text-green-700" />;
-    return <Bell className="w-4 h-4 text-slate-500" />;
+      return <Dumbbell className="w-4 h-4 text-green-400" />;
+              return <Bell className="w-4 h-4 text-muted-foreground" />;
   };
   const navItems = [
     {
       id: "insights",
       label: t("layout.sidebarDashboard"),
       icon: LayoutDashboard,
-      color: "text-green-700",
+      color: "text-green-400",
     },
     {
       id: "streaks",
@@ -253,7 +253,7 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "nutrition",
       label: t("layout.sidebarNutrition"),
       icon: Utensils,
-      color: "text-green-700",
+      color: "text-green-400",
     },
     {
       id: "grocery",
@@ -265,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "fitness",
       label: t("layout.sidebarFitness"),
       icon: Dumbbell,
-      color: "text-green-800",
+      color: "text-green-400",
     },
     {
       id: "progress",
@@ -289,7 +289,7 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "settings",
       label: t("layout.sidebarSettings"),
       icon: Settings,
-      color: "text-slate-500",
+      color: "text-muted-foreground",
     },
   ];
 
@@ -318,7 +318,7 @@ export const Layout: React.FC<LayoutProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-muted overflow-hidden font-sans">
       {/* ── Logout Confirmation Dialog ── */}
       <AnimatePresence>
         {showLogoutConfirm && (
@@ -334,21 +334,21 @@ export const Layout: React.FC<LayoutProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
+              className="bg-card rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
             >
-              <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <LogOut className="w-7 h-7 text-red-500" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">
+              <h3 className="text-xl font-bold text-card-foreground mb-2">
                 {t("layout.logoutTitle")}
               </h3>
-              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
                 {t("layout.logoutMessage")}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 py-3 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50 transition-colors text-sm"
+                  className="flex-1 py-3 rounded-xl border border-border font-semibold text-card-foreground hover:bg-muted transition-colors text-sm"
                 >
                   {t("layout.cancel")}
                 </button>
@@ -365,9 +365,9 @@ export const Layout: React.FC<LayoutProps> = ({
       </AnimatePresence>
 
       {/* ── Desktop Sidebar ── */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 h-full relative">
+      <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border h-full relative">
         {/* Logo */}
-        <div className="p-5 pb-3 flex items-start justify-start border-b border-slate-100">
+        <div className="p-5 pb-3 flex items-start justify-start border-b border-border">
           <NjerkaLogo size="small" text={true} />
         </div>
 
@@ -381,21 +381,21 @@ export const Layout: React.FC<LayoutProps> = ({
                 onClick={() => onChangeView(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors relative group ${
                   isActive
-                    ? "bg-green-50 text-green-800"
-                    : "text-slate-500 hover:bg-green-50 cursor-pointer hover:text-slate-900 active:scale-[0.98]"
+                      ? "bg-muted text-forest-canopy"
+                      : "text-muted-foreground hover:bg-muted cursor-pointer hover:text-card-foreground active:scale-[0.98]"
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeNav"
-                    className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-700 rounded-e-full"
+                    className="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-forest-canopy rounded-e-full"
                   />
                 )}
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
                     isActive
-                      ? "bg-green-100"
-                      : "bg-transparent group-hover:bg-slate-100"
+                      ? "bg-forest-canopy/15"
+                      : "bg-transparent group-hover:bg-muted"
                   }`}
                 >
                   <item.icon
@@ -404,7 +404,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
                 <span className="text-sm">{item.label}</span>
                 {isActive && (
-                  <ChevronRight className="w-3.5 h-3.5 ms-auto text-green-500 rtl:rotate-180" />
+                  <ChevronRight className="w-3.5 h-3.5 ms-auto text-forest-canopy rtl:rotate-180" />
                 )}
               </button>
             );
@@ -415,9 +415,9 @@ export const Layout: React.FC<LayoutProps> = ({
         <div className="px-3 pb-3">
           <button
             onClick={handleLogoutClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-all group"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-red-500 hover:bg-red-500/10 hover:text-red-400 transition-all group"
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent group-hover:bg-red-100 transition-colors flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-transparent group-hover:bg-red-500/20 transition-colors flex-shrink-0">
               <LogOut className="w-4 h-4" />
             </div>
             <span className="text-sm">{t("layout.logout")}</span>
@@ -425,15 +425,15 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         {/* Family Plan CTA */}
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-border">
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-gradient-to-br from-green-800 to-green-700 rounded-2xl p-4 text-white relative overflow-hidden cursor-pointer"
+            className="bg-card border border-border hover:border-forest-canopy/30 rounded-2xl p-4 relative overflow-hidden cursor-pointer"
             onClick={() => onChangeView("settings")}
           >
-            <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
-            <div className="flex items-center gap-2 mb-1.5 font-bold text-sm relative z-10">
-              <Users className="w-4 h-4" />{" "}
+            <div className="absolute -top-4 -right-4 w-16 h-16 bg-forest-canopy/5 rounded-full blur-xl" />
+            <div className="flex items-center gap-2 mb-1.5 font-bold text-sm relative z-10 text-card-foreground">
+              <Users className="w-4 h-4 text-forest-canopy" />{" "}
               {user?.subscription?.subscriptionTier === "BASIC"
                 ? t("layout.planFree")
                 : user?.subscription?.subscriptionTier === "PRO"
@@ -441,14 +441,14 @@ export const Layout: React.FC<LayoutProps> = ({
                   : t("layout.planFamily")}{" "}
               {t("layout.planLabel")}
             </div>
-            <p className="text-xs text-green-200 mb-3 relative z-10 leading-relaxed">
+            <p className="text-xs text-muted-foreground mb-3 relative z-10 leading-relaxed">
               {user?.subscription?.subscriptionTier === "BASIC"
                 ? t("layout.planUpgradeBasic")
                 : user?.subscription?.subscriptionTier === "PRO"
                   ? t("layout.planUpgradePro")
                   : t("layout.planUpgradeFamily")}
             </p>
-            <div className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-xs font-bold py-2 px-3 rounded-xl transition-colors w-fit relative z-10">
+            <div className="flex items-center gap-1.5 bg-forest-canopy/10 hover:bg-forest-canopy/20 text-forest-canopy text-xs font-bold py-2 px-3 rounded-xl transition-colors w-fit relative z-10">
               {t("layout.manageProfiles")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
             </div>
           </motion.div>
@@ -458,7 +458,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-white/90 backdrop-blur-xl border-b border-slate-100 px-5 py-3 flex items-center justify-between z-20 relative">
+        <header className="lg:hidden bg-card/90 backdrop-blur-xl border-b border-border px-5 py-3 flex items-center justify-between z-20 relative">
           <NjerkaLogo size="small" text={false} />
 
           <div className="flex items-center gap-2">
@@ -467,14 +467,14 @@ export const Layout: React.FC<LayoutProps> = ({
                 const newLang = i18n.language?.startsWith('ar') ? 'en' : 'ar';
                 i18n.changeLanguage(newLang);
               }}
-              className="p-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer"
               title={i18n.language?.startsWith('ar') ? 'English' : 'العربية'}
             >
               {i18n.language?.startsWith('ar') ? 'EN' : 'AR'}
             </button>
             <button
               onClick={() => setShowNotifications(true)}
-              className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="relative p-2 text-muted-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer"
             >
               <Bell className="w-5 h-5" />
               {notifCount > 0 && (
@@ -485,7 +485,7 @@ export const Layout: React.FC<LayoutProps> = ({
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-card-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer"
             >
               {isMobileMenuOpen ? (
                 <X className="w-5 h-5" />
@@ -504,7 +504,7 @@ export const Layout: React.FC<LayoutProps> = ({
               const newLang = i18n.language?.startsWith('ar') ? 'en' : 'ar';
               i18n.changeLanguage(newLang);
             }}
-            className="flex items-center justify-center w-11 h-11 p-0 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 text-xs font-bold text-slate-600"
+            className="flex items-center justify-center w-11 h-11 p-0 bg-card hover:bg-muted border border-border rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 text-xs font-bold text-card-foreground"
             title={i18n.language?.startsWith('ar') ? 'English' : 'العربية'}
           >
             {i18n.language?.startsWith('ar') ? 'EN' : 'AR'}
@@ -513,9 +513,9 @@ export const Layout: React.FC<LayoutProps> = ({
           {/* Notification Bell */}
           <button
             onClick={() => setShowNotifications(true)}
-            className="relative flex items-center justify-center w-11 h-11 p-0 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+            className="relative flex items-center justify-center w-11 h-11 p-0 bg-card hover:bg-muted border border-border rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
           >
-            <Bell className="w-5 h-5 text-slate-600" />
+            <Bell className="w-5 h-5 text-card-foreground" />
             {notifCount > 0 && (
               <span className="absolute -top-1.5 -end-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
                 {notifCount}
@@ -540,31 +540,31 @@ export const Layout: React.FC<LayoutProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 320 }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
-                className="fixed top-0 end-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl z-50 flex flex-col h-full"
+                className="fixed top-0 end-0 bottom-0 w-full sm:w-96 bg-card shadow-2xl z-50 flex flex-col h-full"
               >
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-green-900 to-green-700 text-white">
+                <div className="p-6 border-b border-border flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-lg">{t("layout.notificationCenter")}</h3>
-                    <p className="text-green-200 text-sm">
+                    <h3 className="font-bold text-lg text-card-foreground">{t("layout.notificationCenter")}</h3>
+                    <p className="text-muted-foreground text-sm">
                       {notifCount} {t("layout.notificationCount")}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowNotifications(false)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                    className="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {loadingInvitations ? (
-                    <div className="text-center py-12 text-slate-400">
-                      <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-green-600" />
+                    <div className="text-center py-12 text-muted-foreground">
+                              <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-forest-canopy" />
                       <p className="font-medium">{t("layout.loadingNotifications")}</p>
                     </div>
                   ) : notifications.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-muted-foreground">
                       <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
                       <p className="font-medium">{t("layout.allCaughtUp")}</p>
                       <p className="text-sm">{t("layout.noNewNotifications")}</p>
@@ -574,10 +574,10 @@ export const Layout: React.FC<LayoutProps> = ({
                       <motion.div
                         key={notif.id}
                         layout
-                        className={`bg-white border rounded-2xl p-4 shadow-sm ${
+                        className={`bg-card border rounded-2xl p-4 shadow-sm ${
                           respondedNotifs[notif.id] || notif.isRead
-                            ? "opacity-60 border-slate-100 bg-slate-50/50"
-                            : "border-slate-200"
+                            ? "opacity-60 border-border bg-muted/50"
+                            : "border-border"
                         }`}
                       >
                         <div className="flex items-start gap-3 mb-1">
@@ -589,30 +589,30 @@ export const Layout: React.FC<LayoutProps> = ({
                                 className="w-10 h-10 rounded-full object-cover"
                               />
                             ) : (
-                              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                              <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                                 {notifTypeIcon(notif.type)}
                               </div>
                             )}
-                            <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 bg-card rounded-full flex items-center justify-center shadow-sm">
                               {notifTypeIcon(notif.type)}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-bold text-slate-900 text-sm">
+                              <span className="font-bold text-card-foreground text-sm">
                                 {notif.title}
                               </span>
                               <button
                                 onClick={() => dismissNotif(notif.id)}
-                                className="text-slate-300 hover:text-slate-500 flex-shrink-0 cursor-pointer"
+                                className="text-muted-foreground hover:text-muted-foreground flex-shrink-0 cursor-pointer"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                            <p className="text-slate-600 text-xs leading-relaxed mt-0.5">
+                            <p className="text-card-foreground text-xs leading-relaxed mt-0.5">
                               {notif.message}
                             </p>
-                            <p className="text-slate-400 text-[10px] mt-1">
+                            <p className="text-muted-foreground text-[10px] mt-1">
                               {notif.time}
                             </p>
                           </div>
@@ -622,7 +622,7 @@ export const Layout: React.FC<LayoutProps> = ({
                           <div className="mt-3 flex justify-end">
                             <button
                               onClick={() => handleMarkAsRead(notif.id)}
-                              className="px-2.5 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1 bg-forest-canopy/10 hover:bg-forest-canopy/20 text-forest-canopy rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                             >
                               <Check className="w-3 h-3" /> {t("layout.markAsRead")}
                             </button>
@@ -631,8 +631,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
                         {notif.isLocal && notif.isRead && (
                           <div className="mt-3 flex justify-end">
-                            <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 select-none">
-                              <Check className="w-3 h-3 text-slate-400" /> {t("layout.read")}
+                            <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 select-none">
+                              <Check className="w-3 h-3 text-muted-foreground" /> {t("layout.read")}
                             </span>
                           </div>
                         )}
@@ -645,7 +645,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                   handleNotifResponse(notif.id, "accepted")
                                 }
                                 disabled={respondingId === notif.id}
-                                className="flex-1 py-2 bg-green-700 text-white rounded-xl text-xs font-bold hover:bg-green-800 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
+                                className="flex-1 py-2 bg-forest-canopy text-white rounded-xl text-xs font-bold hover:bg-forest-deep transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
                               >
                                 {respondingId === notif.id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -660,7 +660,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                   handleNotifResponse(notif.id, "declined")
                                 }
                                 disabled={respondingId === notif.id}
-                                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+                                className="flex-1 py-2 bg-muted text-card-foreground rounded-xl text-xs font-bold hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
                               >
                                 {respondingId === notif.id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -673,7 +673,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
                         {respondedNotifs[notif.id] && (
                           <div
-                            className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === "accepted" ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-400"}`}
+                            className={`text-xs font-bold text-center py-1.5 rounded-xl mt-3 ${respondedNotifs[notif.id] === "accepted" ? "bg-green-500/10 text-green-400" : "bg-muted text-muted-foreground"}`}
                           >
                             {respondedNotifs[notif.id] === "accepted"
                               ? t("layout.accepted")
@@ -697,7 +697,7 @@ export const Layout: React.FC<LayoutProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-              className="absolute top-[61px] start-0 end-0 bottom-0 bg-white/95 backdrop-blur-xl z-20 lg:hidden overflow-y-auto"
+              className="absolute top-[61px] start-0 end-0 bottom-0 bg-card/95 backdrop-blur-xl z-20 lg:hidden overflow-y-auto"
             >
               <nav className="p-4 space-y-1 pb-28">
                 {navItems.map((item, i) => {
@@ -718,20 +718,20 @@ export const Layout: React.FC<LayoutProps> = ({
                       }}
                       className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium transition-all ${
                         isActive
-                          ? "bg-green-50 text-green-800"
-                          : "text-slate-600 hover:bg-slate-50"
+                          ? "bg-muted text-forest-canopy"
+                          : "text-card-foreground hover:bg-muted"
                       }`}
                     >
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive ? "bg-green-100" : "bg-slate-100"}`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isActive ? "bg-forest-canopy/15" : "bg-muted"}`}
                       >
                         <item.icon
-                          className={`w-5 h-5 ${isActive ? item.color : "text-slate-400"}`}
+                          className={`w-5 h-5 ${isActive ? item.color : "text-muted-foreground"}`}
                         />
                       </div>
                       <span className="font-semibold">{item.label}</span>
                       {isActive && (
-                        <div className="ms-auto w-2 h-2 bg-green-600 rounded-full" />
+                        <div className="ms-auto w-2 h-2 bg-forest-canopy rounded-full" />
                       )}
                     </motion.button>
                   );
@@ -750,9 +750,9 @@ export const Layout: React.FC<LayoutProps> = ({
                     setIsMobileMenuOpen(false);
                     handleLogoutClick();
                   }}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium text-red-500 hover:bg-red-50 transition-all"
+                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium text-red-500 hover:bg-red-500/10 transition-all"
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-50">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-500/10">
                     <LogOut className="w-5 h-5" />
                   </div>
                   <span className="font-semibold">{t("layout.logout")}</span>
@@ -777,7 +777,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
         {/* ── Mobile Bottom Tab Bar ── */}
         <div className="lg:hidden fixed bottom-0 start-0 end-0 z-30">
-          <div className="bg-white/90 backdrop-blur-xl border-t border-slate-100 px-2 pt-2 pb-4 shadow-2xl shadow-slate-900/10">
+          <div className="bg-card/90 backdrop-blur-xl border-t border-border px-2 pt-2 pb-4 shadow-2xl shadow-border/10">
             <div className="flex items-center justify-around">
               {bottomNavItems.map((item) => {
                 const isActive = currentView === item.id; // Treat "insights" as "home" for bottom nav
@@ -793,16 +793,16 @@ export const Layout: React.FC<LayoutProps> = ({
                     {isActive && (
                       <motion.div
                         layoutId="bottomNavActive"
-                        className="absolute inset-0 bg-green-50 rounded-2xl"
+                        className="absolute inset-0 bg-muted rounded-2xl"
                       />
                     )}
                     <div className="relative z-10">
                       <item.icon
-                        className={`w-5 h-5 transition-colors ${isActive ? "text-green-700" : "text-slate-400"}`}
+                        className={`w-5 h-5 transition-colors ${isActive ? "text-forest-canopy" : "text-muted-foreground"}`}
                       />
                     </div>
                     <span
-                      className={`text-[10px] font-bold relative z-10 transition-colors ${isActive ? "text-green-700" : "text-slate-400"}`}
+                      className={`text-[10px] font-bold relative z-10 transition-colors ${isActive ? "text-forest-canopy" : "text-muted-foreground"}`}
                     >
                       {item.label}
                     </span>
@@ -818,18 +818,18 @@ export const Layout: React.FC<LayoutProps> = ({
                 {isMobileMenuOpen && (
                   <motion.div
                     layoutId="bottomNavActive"
-                    className="absolute inset-0 bg-slate-100 rounded-2xl"
+                    className="absolute inset-0 bg-muted rounded-2xl"
                   />
                 )}
                 <div className="relative z-10">
                   {isMobileMenuOpen ? (
-                    <X className="w-5 h-5 text-slate-700" />
+                    <X className="w-5 h-5 text-card-foreground" />
                   ) : (
-                    <MoreHorizontal className="w-5 h-5 text-slate-400" />
+                    <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
                 <span
-                  className={`text-[10px] font-bold relative z-10 ${isMobileMenuOpen ? "text-slate-700" : "text-slate-400"}`}
+                  className={`text-[10px] font-bold relative z-10 ${isMobileMenuOpen ? "text-card-foreground" : "text-muted-foreground"}`}
                 >
                   {t("layout.bottomNavMore")}
                 </span>

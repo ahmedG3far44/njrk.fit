@@ -81,19 +81,19 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
       }`}
       style={{ cursor: 'grab' }}
     >
-      <div className="flex items-center justify-center w-8 text-slate-300 hover:text-slate-500">
+      <div className="flex items-center justify-center w-8 text-slate-300 hover:text-muted-foreground">
         <GripVertical className="w-5 h-5" />
       </div>
 
       <div className="relative flex-1">
         <div className={`absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 ${
-          slot.completed ? 'bg-green-700 border-green-700' : 'bg-white border-slate-300'
+          slot.completed ? 'bg-green-700 border-green-700' : 'bg-card border-muted-foreground/30'
         } z-10 transition-colors`} />
 
         <div className={`p-4 rounded-2xl border transition-all ${
           slot.completed 
-            ? 'bg-green-50 border-green-100 opacity-75' 
-            : 'bg-white border-slate-100 hover:border-green-200 hover:shadow-md'
+            ? 'bg-green-500/10 border-green-500/30 opacity-75' 
+            : 'bg-card border-border hover:border-green-500/30 hover:shadow-md'
         }`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
@@ -101,7 +101,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                 {getTypeIcon(slot.type)}
               </div>
               <div>
-                <h3 className={`font-bold ${slot.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                <h3 className={`font-bold ${slot.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
                   {slot.title}
                 </h3>
                 <span className={`text-xs font-medium ${
@@ -114,7 +114,7 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
               </div>
             </div>
             {slot.completed ? (
-              <div className="flex items-center gap-1 text-green-600 text-sm font-bold">
+              <div className="flex items-center gap-1 text-green-400 text-sm font-bold">
                 <CheckCircle2 className="w-4 h-4" /> {t("schedule.done")}
               </div>
             ) : canComplete ? (
@@ -126,13 +126,13 @@ const DraggableTimelineItem: React.FC<DraggableItemProps> = ({
                 )}
               </Button>
             ) : (
-              <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
+              <div className="flex items-center gap-1 text-muted-foreground text-sm font-medium">
                 <Circle className="w-4 h-4" /> {t("schedule.future")}
               </div>
             )}
           </div>
           
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pl-12">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground ps-12">
             {slot.calories && (
               <span className={slot.type === 'workout' ? 'text-orange-500 font-medium' : ''}>
                 {slot.type === 'workout' ? '🔥 Burn ' : '🔥 '}
@@ -325,10 +325,10 @@ export const Schedule: React.FC = () => {
   };
 
   const getTypeColor = (type: 'meal' | 'snack' | 'workout') => {
-    if (type === 'meal') return 'bg-orange-100 text-orange-600';
-    if (type === 'snack') return 'bg-amber-100 text-amber-600';
-    if (type === 'workout') return 'bg-blue-100 text-blue-600';
-    return 'bg-purple-100 text-purple-600';
+    if (type === 'meal') return 'bg-orange-500/10 text-orange-400';
+    if (type === 'snack') return 'bg-amber-500/10 text-amber-400';
+    if (type === 'workout') return 'bg-blue-500/10 text-blue-400';
+    return 'bg-purple-500/10 text-purple-400';
   };
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
@@ -338,10 +338,10 @@ export const Schedule: React.FC = () => {
     <div className="space-y-8 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t("schedule.title")}</h1>
-          <p className="text-slate-500">{t("schedule.subtitle")}</p>
+          <h1 className="text-3xl font-bold text-card-foreground">{t("schedule.title")}</h1>
+          <p className="text-muted-foreground">{t("schedule.subtitle")}</p>
         </div>
-        <div className="flex bg-white rounded-xl border border-slate-200 p-1">
+        <div className="flex bg-card rounded-xl border border-border p-1">
           <Button variant="ghost" size="icon" onClick={() => navigateDate('prev')}>
             {i18n.dir() === 'rtl' ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
           </Button>
@@ -356,15 +356,15 @@ export const Schedule: React.FC = () => {
       </div>
 
       {/* Week Strip */}
-      <div className="flex justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
+      <div className="flex justify-between bg-card p-4 rounded-2xl border border-border shadow-sm overflow-x-auto">
         {getWeekDays().map((item, i) => (
           <div 
             key={i} 
             onClick={() => handleDayClick(item.fullDate)}
             className={`flex flex-col items-center justify-center min-w-[60px] h-20 rounded-xl cursor-pointer transition-all ${
               item.fullDate.toDateString() === selectedDate.toDateString()
-                ? 'bg-green-700 text-white shadow-lg shadow-green-200' 
-                : 'hover:bg-slate-50 text-slate-500'
+                ? 'bg-green-500/20 text-green-400 shadow-sm' 
+                : 'hover:bg-muted text-muted-foreground'
             }`}
           >
             <span className="text-xs font-medium mb-1">{item.day}</span>
@@ -372,8 +372,8 @@ export const Schedule: React.FC = () => {
               item.fullDate.toDateString() === selectedDate.toDateString() 
                 ? 'text-white' 
                 : item.fullDate.toDateString() === new Date().toDateString()
-                  ? 'text-green-600'
-                  : 'text-slate-900'
+                  ? 'text-green-400'
+                  : 'text-card-foreground'
             }`}>{item.date}</span>
             {item.fullDate.toDateString() === new Date().toDateString() && (
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2" />
@@ -383,15 +383,15 @@ export const Schedule: React.FC = () => {
       </div>
 
       {/* Timeline */}
-      <div className="flex-1 bg-white rounded-3xl border border-slate-100 shadow-sm p-8 relative overflow-hidden">
+      <div className="flex-1 bg-card rounded-3xl border border-border shadow-sm p-8 relative overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600 mb-3" />
-            <p className="text-slate-500">{t("schedule.loading")}</p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin text-green-400 mb-3" />
+            <p className="text-muted-foreground">{t("schedule.loading")}</p>
           </div>
         ) : timeSlots.length > 0 ? (
           <>
-            <div className="absolute top-0 bottom-0 left-4 w-px bg-slate-100" />
+            <div className="absolute top-0 bottom-0 left-4 w-px bg-muted" />
             
             <div className="space-y-6 relative z-10">
               <AnimatePresence>
@@ -419,7 +419,7 @@ export const Schedule: React.FC = () => {
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Calendar className="w-16 h-16 mb-4 opacity-30" />
             <p className="font-medium text-lg">{t("schedule.noScheduleTitle")} {formatDisplayDate().toLowerCase()}</p>
             <p className="text-sm">{t("schedule.noScheduleDesc")}</p>

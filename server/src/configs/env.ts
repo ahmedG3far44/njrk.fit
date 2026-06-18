@@ -90,7 +90,7 @@ const envSchema = z.object({
     .default(process.env.GOOGLE_CLIENT_SECRET || ""),
 
   OPENROUTER_API_KEY: z.string().default(process.env.OPENROUTER_API_KEY || ""),
-  LLM_MODEL: z.string().default(process.env.LLM_MODEL || "google/gemma-2-9b-it:free"),
+  LLM_MODEL: z.string().default(process.env.LLM_MODEL || "openrouter/free"),
 
   CLOUDINARY_NAME: z.string().default(process.env.CLOUDINARY_NAME || ""),
   CLOUDINARY_API_KEY: z.string().default(process.env.CLOUDINARY_API_KEY || ""),

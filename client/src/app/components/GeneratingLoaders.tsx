@@ -69,7 +69,7 @@ export function MealPlanLoader() {
     }, []);
 
     return (
-        <div className="relative flex flex-col items-center justify-center gap-6 rounded-2xl px-8 py-12 overflow-hidden mt-20 bg-white border border-green-200 text-green-900 shadow-sm">
+        <div className="relative flex flex-col items-center justify-center gap-6 rounded-2xl px-8 py-12 overflow-hidden mt-20 bg-card border border-forest-canopy/20 text-forest-canopy shadow-sm">
             {MEAL_PARTICLES.map((p, i) => (
                 <span
                     key={i}
@@ -200,7 +200,7 @@ export function FitnessPlanLoader() {
     }, []);
 
     return (
-        <div className="relative flex flex-col items-center justify-center gap-6 rounded-2xl px-8 py-12 overflow-hidden bg-white border border-green-200 text-green-900 shadow-sm">
+        <div className="relative flex flex-col items-center justify-center gap-6 rounded-2xl px-8 py-12 overflow-hidden bg-card border border-forest-canopy/20 text-forest-canopy shadow-sm">
             {/* Particles */}
             {FITNESS_PARTICLES.map((p, i) => (
                 <span

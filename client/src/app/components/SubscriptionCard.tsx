@@ -40,14 +40,14 @@ export default function SubscriptionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.08 }}
-            className={`relative rounded-xl border-2 transition-all bg-white flex flex-col h-full ${plan.isPopular
-                    ? 'border-green-700 shadow-md'
-                    : 'border-slate-200 hover:border-slate-300'
+            className={`relative rounded-xl border-2 transition-all bg-card flex flex-col h-full ${plan.isPopular
+                    ? 'border-forest-canopy/60 shadow-[0_20px_60px_-30px_rgba(74,222,128,0.45)]'
+                    : 'border-border hover:border-foreground/20'
                 }`}
         >
             {/* Popular Badge */}
             {plan.isPopular && !plan.isCurrent && (
-                <div className="absolute -top-3 left-6 bg-green-700 text-white text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                <div className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full border border-green-500/20 bg-card px-3 py-1 text-[11px] font-bold text-green-400 shadow-sm backdrop-blur-sm">
                     <Sparkles className="w-3 h-3" />
                     {t('subscriptions.mostPopular')}
                 </div>
@@ -57,20 +57,20 @@ export default function SubscriptionCard({
             <div className="p-6 flex flex-col flex-1">
 
                 {/* Header */}
-                <h3 className="text-base font-bold text-slate-900">{plan.name}</h3>
+                <h3 className="text-base font-bold text-card-foreground">{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-3xl font-bold text-slate-900">${plan.price}</span>
-                    <span className="text-sm text-slate-500">/{plan.period}</span>
+                    <span className="text-3xl font-bold text-card-foreground">${plan.price}</span>
+                    <span className="text-sm text-muted-foreground">/{plan.period}</span>
                 </div>
 
                 {/* Features List */}
                 <ul className="mt-6 mb-8 space-y-3 flex-1">
                     {plan.features.map((feat, i) => (
-                        <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
+                        <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
                             <div
                                 className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${plan.isPopular
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-slate-100 text-slate-500'
+                                        ? 'bg-green-500/10 text-green-400'
+                                        : 'bg-muted text-muted-foreground'
                                     }`}
                             >
                                 {feat.icon || <Check className="w-3.5 h-3.5" />}

@@ -35,14 +35,14 @@ export const VerifyEmailPage = () => {
 
   return (
     <div className="min-h-screen bg-stone flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-sm max-w-md w-full text-center">
+      <div className="bg-card p-8 rounded-2xl shadow-sm max-w-md w-full text-center">
         
         {/* حالة التحميل */}
         {status === "loading" && (
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-forest-canopy border-t-transparent rounded-full animate-spin mx-auto" />
-            <h2 className="text-xl font-semibold text-gray-800">جاري التوثيق...</h2>
-            <p className="text-gray-500">الرجاء الانتظار قليلاً</p>
+            <h2 className="text-xl font-semibold text-card-foreground">جاري التوثيق...</h2>
+            <p className="text-muted-foreground">الرجاء الانتظار قليلاً</p>
           </div>
         )}
 
@@ -52,8 +52,8 @@ export const VerifyEmailPage = () => {
             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">تم التوثيق!</h2>
-            <p className="text-gray-600">{message}</p>
+            <h2 className="text-2xl font-bold text-card-foreground">تم التوثيق!</h2>
+            <p className="text-muted-foreground">{message}</p>
             <Link to="/login" className="mt-6 inline-block w-full bg-forest-canopy text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
               تسجيل الدخول
             </Link>
@@ -66,8 +66,8 @@ export const VerifyEmailPage = () => {
             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">عذراً</h2>
-            <p className="text-gray-600">{message}</p>
+            <h2 className="text-2xl font-bold text-card-foreground">عذراً</h2>
+            <p className="text-muted-foreground">{message}</p>
             <Link to="/login" className="mt-6 inline-block w-full border border-forest-canopy text-forest-canopy py-3 rounded-lg font-medium hover:bg-stone transition-colors">
               العودة لتسجيل الدخول
             </Link>

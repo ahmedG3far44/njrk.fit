@@ -4,15 +4,15 @@ import { cn } from "./utils";
 
 const variantStyles = {
   primary:
-    "bg-green-700 text-white hover:bg-green-800 active:bg-green-900 shadow-sm hover:shadow-md",
+    "bg-green-900/80 hover:bg-green-800 text-green-300 border border-green-700/50 shadow-sm transition-all duration-200",
   secondary:
-    "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100",
+    "bg-card text-card-foreground border border-border hover:bg-muted active:bg-muted",
   destructive:
     "bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-sm hover:shadow-md",
   ghost:
-    "text-slate-600 hover:bg-slate-100 active:bg-slate-200",
+    "text-muted-foreground hover:bg-muted active:bg-muted",
   outline:
-    "bg-transparent text-green-700 border border-green-700 hover:bg-green-50 active:bg-green-100",
+    "bg-transparent text-green-300 border border-green-700/50 hover:bg-green-900/30 active:bg-green-900/50",
 } as const;
 
 const sizeStyles = {
@@ -50,7 +50,7 @@ function Button({
         "transition-all duration-200",
         "hover:scale-[1.02] active:scale-[0.98]",
         "disabled:opacity-50 disabled:pointer-events-none disabled:scale-100",
-        "outline-none focus-visible:ring-2 focus-visible:ring-green-600/50 focus-visible:ring-offset-2",
+        "outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 focus-visible:ring-offset-2",
         variantStyles[variant],
         sizeStyles[size],
         className,

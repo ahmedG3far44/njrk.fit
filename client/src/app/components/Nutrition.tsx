@@ -80,21 +80,21 @@ const MealCard: React.FC<MealCardProps> = ({
         duration: 0.25,
         ease: [0.23, 1, 0.32, 1],
       }}
-      className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden mb-4"
+      className="group bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all overflow-hidden mb-4"
     >
       <div className="p-5 flex flex-col justify-between">
         <div>
           <div className="flex justify-between items-start mb-2">
             <div className="cursor-pointer" onClick={onViewRecipe}>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-green-700 transition-colors">
+              <h3 className="text-lg font-bold text-card-foreground group-hover:text-green-400 transition-colors">
                 {meal.name}
               </h3>
-              <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" /> {meal.time || t("nutrition.anyTime")}
                 </div>
                 {meal.mealType === "snack" && (
-                  <div className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-bold">
+                  <div className="flex items-center gap-1 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded text-xs font-bold">
                     {t("nutrition.snack")}
                   </div>
                 )}
@@ -103,7 +103,7 @@ const MealCard: React.FC<MealCardProps> = ({
                   {meal.macros?.calories || 0} {t("nutrition.kcal")}
                 </div>
                 {isFamilyMode && activeProfileId !== "me" && (
-                  <div className="flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-bold">
+                  <div className="flex items-center gap-1 text-green-400 bg-green-500/10 px-2 py-0.5 rounded text-xs font-bold">
                     <img
                       src={activeUser.avatarUrl}
                       alt={activeUser.name}
@@ -148,7 +148,7 @@ const MealCard: React.FC<MealCardProps> = ({
             ].map((nut) => (
               <div
                 key={nut.label}
-                className="px-3 py-1 bg-slate-50 rounded-lg text-xs font-medium text-slate-600"
+                className="px-3 py-1 bg-muted rounded-lg text-xs font-medium text-muted-foreground"
               >
                 {nut.label}: {nut.val} ({nut.percent}%)
               </div>
@@ -162,8 +162,8 @@ const MealCard: React.FC<MealCardProps> = ({
             disabled={!canInteract}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${
               canInteract
-                ? "text-slate-600 bg-slate-50 hover:bg-slate-100"
-                : "text-slate-400 bg-slate-100 cursor-not-allowed"
+                ? "text-muted-foreground bg-muted hover:bg-muted"
+                : "text-muted-foreground bg-muted cursor-not-allowed"
             }`}
           >
             <Utensils className="w-3.5 h-3.5" /> {t("nutrition.viewRecipe")}
@@ -614,14 +614,14 @@ export const Nutrition: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="bg-white rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
+            className="bg-card rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
           >
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-6 border-b border-border flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">
+                <h3 className="font-bold text-card-foreground text-lg">
                   {t("nutrition.addFamilyMember")}
                 </h3>
-                <p className="text-slate-500 text-sm">
+                <p className="text-muted-foreground text-sm">
                   {t("nutrition.searchFamilyMember")}
                 </p>
               </div>
@@ -631,36 +631,36 @@ export const Nutrition: React.FC = () => {
                   setSearchQuery("");
                   setSearchResults([]);
                 }}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                className="p-2 hover:bg-muted rounded-full transition-colors"
               >
-                <X className="w-5 h-5 text-slate-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
                   placeholder={t("nutrition.searchPlaceholder")}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                 />
               </div>
 
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {isSearching ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <div className="w-6 h-6 border-2 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-2" />
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="w-6 h-6 border-2 border-border border-t-green-600 rounded-full animate-spin mx-auto mb-2" />
                     <p className="text-sm">{t("nutrition.searching")}</p>
                   </div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors border border-transparent hover:border-border"
                     >
                       {user.avatarUrl ? (
                         <img
@@ -669,27 +669,27 @@ export const Nutrition: React.FC = () => {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-400" />
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-muted-foreground" />
                         </div>
                       )}
                       <div className="flex-1">
-                        <div className="font-semibold text-slate-900 text-sm">
+                        <div className="font-semibold text-card-foreground text-sm">
                           {user.name}
                         </div>
-                        <div className="text-xs text-slate-400 font-mono">
+                        <div className="text-xs text-muted-foreground font-mono">
                           {user.username}
                         </div>
                       </div>
                       {inviteStatus[user.id] === "sent" ? (
-                        <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 px-3 py-1.5 rounded-xl">
+                        <div className="flex items-center gap-1 text-xs text-green-400 font-bold bg-green-500/10 px-3 py-1.5 rounded-xl">
                           <Check className="w-3 h-3" /> {t("nutrition.sent")}
                         </div>
                       ) : (
                         <button
                           onClick={() => sendInvite(user.id)}
                           disabled={inviteStatus[user.id] === "sending"}
-                          className="text-xs bg-green-700 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-green-800 transition-colors disabled:opacity-50"
+                          className="text-xs bg-green-900/80 hover:bg-green-800 text-green-300 border border-green-700/50 shadow-sm transition-all duration-200 px-3 py-1.5 rounded-xl font-semibold disabled:opacity-50"
                         >
                           {inviteStatus[user.id] === "sending"
                             ? t("nutrition.sending")
@@ -699,12 +699,12 @@ export const Nutrition: React.FC = () => {
                     </div>
                   ))
                 ) : searchQuery.length >= 2 ? (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">{t("nutrition.noUserFound")} "{searchQuery}"</p>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">
                       {t("nutrition.typeToSearch")}
@@ -729,21 +729,21 @@ export const Nutrition: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
-            className="bg-white rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
+            className="bg-card rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-slate-900 to-green-900 p-6">
+            <div className="bg-gradient-to-r from-slate-900 to-green-900 rtl:bg-gradient-to-l p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-white text-lg">
                     {t("nutrition.generateModalTitle")}
                   </h3>
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {t("nutrition.generateModalSubtitle")}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowGenerateModal(false)}
-                  className="p-2 text-slate-400 hover:text-white transition-colors"
+                  className="p-2 text-muted-foreground hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -753,7 +753,7 @@ export const Nutrition: React.FC = () => {
             <div className="p-6 space-y-6">
               {/* Meals Counter */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                <label className="text-sm font-semibold text-card-foreground mb-2 block">
                   {t("nutrition.numberOfMeals")}
                 </label>
                 <div className="flex items-center gap-4">
@@ -762,11 +762,11 @@ export const Nutrition: React.FC = () => {
                       setMealsCount((prev) => Math.max(1, prev - 1))
                     }
                     disabled={mealsCount <= 1}
-                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
                   >
-                    <Minus className="w-4 h-4 text-slate-700" />
+                    <Minus className="w-4 h-4 text-card-foreground" />
                   </button>
-                  <span className="text-2xl font-bold text-slate-900 w-8 text-center">
+                  <span className="text-2xl font-bold text-card-foreground w-8 text-center">
                     {mealsCount}
                   </span>
                   <button
@@ -774,16 +774,16 @@ export const Nutrition: React.FC = () => {
                       setMealsCount((prev) => Math.min(5, prev + 1))
                     }
                     disabled={mealsCount >= 5}
-                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
                   >
-                    <Plus className="w-4 h-4 text-slate-700" />
+                    <Plus className="w-4 h-4 text-card-foreground" />
                   </button>
                 </div>
               </div>
 
               {/* Snacks Counter */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                <label className="text-sm font-semibold text-card-foreground mb-2 block">
                   {t("nutrition.numberOfSnacks")}
                 </label>
                 <div className="flex items-center gap-4">
@@ -792,11 +792,11 @@ export const Nutrition: React.FC = () => {
                       setSnacksCount((prev) => Math.max(0, prev - 1))
                     }
                     disabled={snacksCount <= 0}
-                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
                   >
-                    <Minus className="w-4 h-4 text-slate-700" />
+                    <Minus className="w-4 h-4 text-card-foreground" />
                   </button>
-                  <span className="text-2xl font-bold text-slate-900 w-8 text-center">
+                  <span className="text-2xl font-bold text-card-foreground w-8 text-center">
                     {snacksCount}
                   </span>
                   <button
@@ -804,28 +804,28 @@ export const Nutrition: React.FC = () => {
                       setSnacksCount((prev) => Math.min(3, prev + 1))
                     }
                     disabled={snacksCount >= 3}
-                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
                   >
-                    <Plus className="w-4 h-4 text-slate-700" />
+                    <Plus className="w-4 h-4 text-card-foreground" />
                   </button>
                 </div>
               </div>
 
               {/* Favorite Foods */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                <label className="text-sm font-semibold text-card-foreground mb-2 block">
                   {t("nutrition.favoriteFoods")}
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {favoriteFoods.map((food) => (
                     <span
                       key={food}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-semibold"
                     >
                       {food}
                       <button
                         onClick={() => removeFavoriteFood(food)}
-                        className="hover:text-green-900"
+                        className="hover:text-green-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -838,37 +838,37 @@ export const Nutrition: React.FC = () => {
                   onChange={(e) => setFoodInput(e.target.value)}
                   onKeyDown={handleFoodKeyDown}
                   placeholder={t("nutrition.foodInputPlaceholder")}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all"
                 />
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t("nutrition.pressEnterToAdd")}
                 </p>
               </div>
 
               {/* Repeat Meals Option */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-2xl border border-border">
                 <div>
-                  <label className="text-sm font-bold text-slate-900 block">
+                  <label className="text-sm font-bold text-card-foreground block">
                     {t("nutrition.repeatMeals")}
                   </label>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {t("nutrition.repeatMealsDesc")}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setRepeatMeals(!repeatMeals)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${repeatMeals ? "bg-green-600" : "bg-slate-200"}`}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${repeatMeals ? "bg-green-800" : "bg-muted"}`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${repeatMeals ? "ltr:translate-x-5 rtl:-translate-x-5" : "ltr:translate-x-0 rtl:translate-x-0"}`}
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out ${repeatMeals ? "ltr:translate-x-5 rtl:-translate-x-5" : "ltr:translate-x-0 rtl:translate-x-0"}`}
                   />
                 </button>
               </div>
 
               <button
                 onClick={handleGenerateWithConfig}
-                className="w-full py-4 bg-gradient-to-r from-green-800 to-green-700 text-white rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-green-800 to-green-700 rtl:bg-gradient-to-l text-white rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-5 h-5" /> {t("nutrition.generatePlanButton")}
               </button>
@@ -880,10 +880,10 @@ export const Nutrition: React.FC = () => {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground">
               {t("nutrition.title")}
             </h1>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {t("nutrition.subtitle")}
             </p>
           </div>
@@ -898,7 +898,7 @@ export const Nutrition: React.FC = () => {
                         setIsFamilyMode(!isFamilyMode);
                         setActiveProfileId("me");
                       }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-500"}`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isFamilyMode ? "bg-green-500/10 text-green-400" : "bg-muted text-muted-foreground"}`}
                     >
                       {isFamilyMode ? (
                         <Users className="w-4 h-4" />
@@ -911,17 +911,17 @@ export const Nutrition: React.FC = () => {
                     </button>
                   )}
 
-                  <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <div className="flex bg-muted p-1 rounded-xl">
                     <button
                       onClick={() => handleViewModeChange("today")}
-                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "today" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "today" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"}`}
                     >
                       <Clock className="w-3.5 h-3.5" />{" "}
                       <span className="hidden sm:inline">{t('nutrition.today')}</span>
                     </button>
                     <button
                       onClick={() => handleViewModeChange("week")}
-                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "week" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+                      className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "week" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"}`}
                     >
                       <CalendarDays className="w-3.5 h-3.5" />{" "}
                       <span className="hidden sm:inline">{t('nutrition.fullWeek')}</span>
@@ -946,7 +946,7 @@ export const Nutrition: React.FC = () => {
                     setShowGenerateModal(true);
                   }}
                   disabled={isGenerating}
-                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-green-200/50 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base cursor-pointer"
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-800 to-green-700 rtl:bg-gradient-to-l text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-semibold shadow-lg shadow-black/20 disabled:opacity-50 relative overflow-hidden group text-sm sm:text-base cursor-pointer"
                 >
                   {isGenerating ? (
                     <>
@@ -963,7 +963,7 @@ export const Nutrition: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rtl:bg-gradient-to-l -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                       <Sparkles className="w-4 h-4" />
                       {t('nutrition.generate')} {viewMode === 'today' ? t('nutrition.today') : t('nutrition.fullWeek')}
                     </>
@@ -975,13 +975,13 @@ export const Nutrition: React.FC = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     disabled
-                    className="flex items-center gap-2 bg-slate-300 text-slate-500 px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
+                    className="flex items-center gap-2 bg-muted text-muted-foreground px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"
                   >
                     <Lock className="w-4 h-4" />
                     {t('nutrition.generate')} {viewMode === 'today' ? t('nutrition.today') : t('nutrition.fullWeek')}
                   </motion.button>
                   {generationLock.message && (
-                    <div className="absolute end-0 top-full mt-2 px-4 py-3 bg-slate-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    <div className="absolute end-0 top-full mt-2 px-4 py-3 bg-popover text-popover-foreground text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                       <div className="flex items-center gap-2">
                         <CalendarDays className="w-4 h-4" />
                         {generationLock.message}
@@ -997,7 +997,7 @@ export const Nutrition: React.FC = () => {
                     window.open(`${API_URL}/export/nutrition/pdf`, "_blank")
                   }
                   disabled={generationLock.canGenerate}
-                  className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-green-700 hover:border-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-500 disabled:hover:border-slate-200"
+                  className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-muted-foreground bg-card border border-border hover:bg-muted hover:text-green-400 hover:border-green-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-card disabled:hover:text-muted-foreground disabled:hover:border-border"
                   title={t("nutrition.exportPdfTitle")}
                 >
                   <FileDown className="w-4 h-4" />
@@ -1024,20 +1024,20 @@ export const Nutrition: React.FC = () => {
                     onClick={() => handleProfileChange("me")}
                       className={`shrink-0 flex items-center gap-2 sm:gap-3 ps-2 pe-3 sm:pe-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] ${
                        activeProfileId === "me"
-                          ? "border-green-600 bg-green-50 ring-2 ring-green-200"
-                          : "border-slate-200 hover:bg-slate-50 bg-white"
-                      }`}
-                  >
-                    <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-100 flex items-center justify-center">
-                      <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-700" />
+                           ? "border-green-600 bg-green-500/10 ring-1 ring-green-500/30"
+                           : "border-border hover:bg-muted bg-card"
+                       }`}
+                   >
+                     <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-green-500/10 flex items-center justify-center">
+                       <User className="w-4 sm:w-5 h-4 sm:h-5 text-green-400" />
                     </div>
                     <div className="text-start">
                       <div
-                        className={`font-bold text-xs sm:text-sm ${activeProfileId === "me" ? "text-slate-900" : "text-slate-600"}`}
+                        className={`font-bold text-xs sm:text-sm ${activeProfileId === "me" ? "text-card-foreground" : "text-muted-foreground"}`}
                       >
                         You
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                      <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">
                         {totals.calories} {t("nutrition.kcal")}
                       </div>
                     </div>
@@ -1050,8 +1050,8 @@ export const Nutrition: React.FC = () => {
                       onClick={() => handleProfileChange(member.id, member)}
                       className={`shrink-0 flex items-center gap-2 sm:gap-3 ps-2 pe-3 sm:pe-5 py-1.5 sm:py-2 rounded-full border transition-all min-w-[120px] sm:min-w-[140px] cursor-pointer ${
                         activeProfileId === member.id
-                          ? "border-green-600 bg-green-50 ring-2 ring-green-200"
-                          : "border-slate-200 hover:bg-slate-50 bg-white"
+                          ? "border-green-600 bg-green-500/10 ring-1 ring-green-500/30"
+                          : "border-border hover:bg-muted bg-card"
                       }`}
                     >
                       {member.avatarUrl ? (
@@ -1061,17 +1061,17 @@ export const Nutrition: React.FC = () => {
                           className="w-7 sm:w-9 h-7 sm:h-9 rounded-full object-cover border-2 border-white shadow-sm"
                         />
                       ) : (
-                        <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-slate-200 flex items-center justify-center">
-                          <User className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
+                        <div className="w-7 sm:w-9 h-7 sm:h-9 rounded-full bg-muted flex items-center justify-center">
+                          <User className="w-4 sm:w-5 h-4 sm:h-5 text-muted-foreground" />
                         </div>
                       )}
                       <div className="text-start">
                         <div
-                          className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? "text-slate-900" : "text-slate-600"}`}
+                          className={`font-bold text-xs sm:text-sm ${activeProfileId === member.id ? "text-card-foreground" : "text-muted-foreground"}`}
                         >
                           {member.name}
                         </div>
-                        <div className="text-[9px] sm:text-[10px] font-medium text-slate-400">
+                        <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">
                           {member.calories} {t("nutrition.kcal")}
                         </div>
                       </div>
@@ -1079,7 +1079,7 @@ export const Nutrition: React.FC = () => {
                   ))}
 
                   {isFamilyMode && (
-                    <div className="shrink-0 w-10 sm:w-14 h-10 sm:h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-white hover:bg-green-100 cursor-pointer">
+                    <div className="shrink-0 w-10 sm:w-14 h-10 sm:h-14 flex items-center justify-center rounded-full border transition-all duration-300 bg-card hover:bg-green-500/10 cursor-pointer">
                       <button
                         onClick={() => setShowInviteModal(true)}
                         className="flex items-center gap-2 p-2 text-sm font-semibold text-green-500 rounded-full transition-color cursor-pointer"
@@ -1127,7 +1127,7 @@ export const Nutrition: React.FC = () => {
                     current: totals.carbs,
                     target: targetMacros.carbs,
                     unit: "g",
-                    color: "bg-green-600",
+                    color: "bg-green-800",
                   },
                   {
                     label: t('nutrition.fats'),
@@ -1140,25 +1140,25 @@ export const Nutrition: React.FC = () => {
                   return (
                     <div
                       key={macro.label}
-                      className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm"
+                      className="bg-card p-4 rounded-2xl border border-border shadow-sm"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-slate-500 text-sm font-medium">
+                        <span className="text-muted-foreground text-sm font-medium">
                           {macro.label}
                         </span>
-                        <Info className="w-4 h-4 text-slate-300" />
+                        <Info className="w-4 h-4 text-muted-foreground" />
                       </div>
-                      <div className="text-2xl font-bold text-slate-900 mb-2">
+                      <div className="text-2xl font-bold text-card-foreground mb-2">
                         {macro.current}
-                        <span className="text-sm font-normal text-slate-400">
+                        <span className="text-sm font-normal text-muted-foreground">
                           {" "}
                           / {macro.unit}
                         </span>
                       </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div className={`h-full ${macro.color}`} />
                       </div>
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         {getCalories(macro.label.toLowerCase(), macro.current)}{" "}
                         {t("nutrition.kcal")}
                       </div>
@@ -1170,8 +1170,8 @@ export const Nutrition: React.FC = () => {
 
             <div className="space-y-4">
               {isLoadingMeals ? (
-                <div className="text-center py-12 text-slate-400">
-                  <div className="w-8 h-8 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin mx-auto mb-3" />
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="w-8 h-8 border-4 border-border border-t-green-600 rounded-full animate-spin mx-auto mb-3" />
                   <p className="font-medium">{t('nutrition.loadingMeals')}</p>
                 </div>
               ) : currentMeals.length > 0 ? (
@@ -1217,8 +1217,8 @@ export const Nutrition: React.FC = () => {
                                   .map((dayGroup, dayIndex) => (
                                     <div key={dayGroup.day || dayIndex}>
                                       <div className="flex items-center gap-3 my-4">
-                                        <div className="h-px flex-1 bg-slate-200" />
-                                        <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                                        <div className="h-px flex-1 bg-muted" />
+                                        <span className="text-sm font-bold text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
                                           {(() => {
                                             const dayNum = parseInt(
                                               (dayGroup.day || "").split(
@@ -1263,7 +1263,7 @@ export const Nutrition: React.FC = () => {
                                             );
                                           })()}
                                         </span>
-                                        <div className="h-px flex-1 bg-slate-200" />
+                                        <div className="h-px flex-1 bg-muted" />
                                       </div>
                                       {dayGroup.meals.map((meal, mealIndex) => (
                                         <MealCard
@@ -1290,11 +1290,11 @@ export const Nutrition: React.FC = () => {
                               <>
                                 {mealsWithDay.length > 0 && (
                                   <div className="flex items-center gap-3 my-4">
-                                    <div className="h-px flex-1 bg-slate-200" />
-                                    <span className="text-sm font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full">
+                                    <div className="h-px flex-1 bg-muted" />
+                                    <span className="text-sm font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full">
                                       {t("nutrition.otherMeals")}
                                     </span>
-                                    <div className="h-px flex-1 bg-slate-200" />
+                                    <div className="h-px flex-1 bg-muted" />
                                   </div>
                                 )}
                                 {mealsWithoutDay.map((meal, index) => (
@@ -1338,7 +1338,7 @@ export const Nutrition: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-green-900 via-green-800 to-green-700 p-6 sm:p-10 text-white text-center"
                 >
-                  <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none" />
+                  <div className="absolute top-0 end-0 w-64 h-64 bg-card/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none" />
                   <div className="absolute bottom-0 start-0 w-48 h-48 bg-green-700/30 rounded-full blur-2xl -ms-10 -mb-10 pointer-events-none" />
 
                   <div className="relative z-10">
@@ -1349,7 +1349,7 @@ export const Nutrition: React.FC = () => {
                         duration: 3,
                         ease: "easeInOut",
                       }}
-                      className="w-14 h-14 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl"
+                      className="w-14 h-14 sm:w-20 sm:h-20 bg-card/20 backdrop-blur-sm rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl"
                     >
                       <Utensils className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
                     </motion.div>
@@ -1364,7 +1364,7 @@ export const Nutrition: React.FC = () => {
                       whileTap={{ scale: 0.96 }}
                       onClick={() => setShowGenerateModal(true)}
                       disabled={isGenerating}
-                      className="cursor-pointer bg-white text-green-800 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg flex items-center gap-2.5 sm:gap-3 mx-auto hover:bg-green-50 transition-colors shadow-xl disabled:opacity-50"
+                      className="cursor-pointer bg-card text-green-400 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base md:text-lg flex items-center gap-2.5 sm:gap-3 mx-auto hover:bg-green-500/10 transition-colors shadow-xl disabled:opacity-50"
                     >
                       {isGenerating ? (
                         <>{t("nutrition.generating")}</>

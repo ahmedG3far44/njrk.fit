@@ -241,7 +241,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
         <div className="flex flex-col md:flex-row min-h-full">
           {/* Image Side */}
           <div className="md:w-1/2 relative h-[250px] sm:h-[400px] md:min-h-screen">
-            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 end-4 z-30 bg-white/90 shadow-sm">
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 end-4 z-30 bg-card/90 shadow-sm">
               <X className="w-6 h-6" />
             </Button>
             <AnimatePresence mode="wait">
@@ -304,14 +304,14 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
           </div>
 
           {/* Content Side */}
-          <div className="md:w-1/2 md:overflow-y-auto bg-white">
+          <div className="md:w-1/2 md:overflow-y-auto bg-card">
             <div className="p-5 sm:p-8">
               {/* Macros */}
               <div className="flex gap-3 mb-6">
                 {[
-                  { label: t('recipeDetail.protein'), val: data.protein, color: 'bg-blue-50 text-blue-700' },
-                  { label: t('recipeDetail.carbs'), val: data.carbs, color: 'bg-green-50 text-green-700' },
-                  { label: t('recipeDetail.fat'), val: data.fat, color: 'bg-orange-50 text-orange-700' },
+                  { label: t('recipeDetail.protein'), val: data.protein, color: 'bg-blue-500/10 text-blue-400' },
+                  { label: t('recipeDetail.carbs'), val: data.carbs, color: 'bg-green-500/10 text-green-400' },
+                  { label: t('recipeDetail.fat'), val: data.fat, color: 'bg-orange-500/10 text-orange-400' },
                 ].map((nut) => (
                   <div key={nut.label} className={`flex-1 p-3 rounded-xl text-center ${nut.color}`}>
                     <div className="font-bold text-lg">{nut.val}</div>
@@ -323,12 +323,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
               <div className="space-y-6">
                 {/* Ingredients */}
                 <div>
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <ChefHat className="w-5 h-5 text-green-700" /> {t('recipeDetail.ingredients')}
+                  <h3 className="font-bold text-card-foreground mb-4 flex items-center gap-2">
+                    <ChefHat className="w-5 h-5 text-green-400" /> {t('recipeDetail.ingredients')}
                   </h3>
                   <ul className="grid grid-cols-2 gap-2">
                     {data?.ingredients?.map((ing: MealItem, i: number) => (
-                      <li key={i} className="flex items-center gap-2 text-slate-600 text-sm">
+                      <li key={i} className="flex items-center gap-2 text-muted-foreground text-sm">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
                         {ing?.quantity && ing?.unit ? `${ing.name} (${ing.quantity}${ing.unit})` : ing.name}
                       </li>
@@ -338,27 +338,27 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
 
                 {/* Instructions */}
                 <div>
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <PlayCircle className="w-5 h-5 text-green-700" /> {t('recipeDetail.instructions')}
+                  <h3 className="font-bold text-card-foreground mb-4 flex items-center gap-2">
+                    <PlayCircle className="w-5 h-5 text-green-400" /> {t('recipeDetail.instructions')}
                   </h3>
                   <div className="space-y-3">
                     {data.steps.map((step: string, i: number) => (
                       <div key={i} className="flex gap-3">
-                        <div className="w-7 h-7 rounded-full bg-green-50 text-green-700 flex items-center justify-center font-bold flex-shrink-0 text-xs">
+                        <div className="w-7 h-7 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center font-bold flex-shrink-0 text-xs">
                           {i + 1}
                         </div>
-                        <p className="text-slate-600 text-sm leading-relaxed mt-1">{step}</p>
+                        <p className="text-muted-foreground text-sm leading-relaxed mt-1">{step}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {canRefine && (
-                <div className="border-t border-slate-100 pt-6">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-green-600" /> {t('recipeDetail.refineWithAI')}
+                <div className="border-t border-border pt-6">
+                  <h3 className="font-bold text-card-foreground mb-3 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-green-400" /> {t('recipeDetail.refineWithAI')}
                   </h3>
-                  <p className="text-xs text-slate-400 mb-3">{t('recipeDetail.refineSubtext')}</p>
+                  <p className="text-xs text-muted-foreground mb-3">{t('recipeDetail.refineSubtext')}</p>
 
                   {/* Quick Suggestions */}
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -383,7 +383,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                       onKeyDown={e => e.key === 'Enter' && handleRefine()}
                       disabled={replacementsLeft <= 0 || isRegenerating}
                       placeholder={replacementsLeft <= 0 ? t('recipeDetail.refinePlaceholderLocked') : t('recipeDetail.refinePlaceholder')}
-                      className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-3 rounded-xl border border-border focus:ring-2 focus:ring-green-600 outline-none text-sm transition-all disabled:opacity-50 disabled:bg-muted disabled:cursor-not-allowed"
                     />
                     <Button variant="primary" size="icon" onClick={handleRefine} disabled={!aiInstruction.trim() || isRegenerating || replacementsLeft <= 0}>
                       <Send className="w-5 h-5" />
@@ -391,7 +391,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({ onClose, onMealRefin
                   </div>
 
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-muted-foreground">
                       {t('recipeDetail.replacementsLeft')} <strong>{replacementsLeft}</strong>/3
                     </span>
                   </div>

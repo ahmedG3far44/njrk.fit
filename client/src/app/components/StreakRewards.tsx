@@ -139,8 +139,8 @@ export const StreakRewards: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('streaks.title')}</h1>
-          <p className="text-slate-500">
+          <h1 className="text-3xl font-bold text-card-foreground">{t('streaks.title')}</h1>
+          <p className="text-muted-foreground">
             {t('streaks.subtitle')}
           </p>
         </div>
@@ -157,23 +157,23 @@ export const StreakRewards: React.FC = () => {
       )}
 
       {/* Main Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-xl shadow-orange-200">
-        <div className="absolute top-0 end-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -me-16 -mt-16 pointer-events-none" />
-        <div className="absolute bottom-0 start-0 w-48 h-48 bg-yellow-400/20 rounded-full blur-2xl -ms-12 -mb-12 pointer-events-none" />
+      <div className="relative rounded-3xl bg-gray-800 text-gray-200 ring-1 ring-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.15)] overflow-hidden">
+        <div className="absolute top-0 end-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl -me-16 -mt-16 pointer-events-none" />
+        <div className="absolute bottom-0 start-0 w-48 h-48 bg-orange-500/10 rounded-full blur-2xl -ms-12 -mb-12 pointer-events-none" />
 
         <div className="p-6 md:p-12 text-center relative z-10">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center justify-center p-6 bg-white/20 backdrop-blur-md rounded-full mb-6 ring-4 ring-white/10"
+            className="inline-flex items-center justify-center p-6 bg-orange-500/10 backdrop-blur-md rounded-full mb-6 ring-4 ring-orange-500/20"
           >
-            <Flame className="w-16 h-16 text-yellow-300 fill-yellow-300" />
+            <Flame className="w-16 h-16 text-orange-500 fill-orange-500" />
           </motion.div>
 
-          <h2 className="text-5xl sm:text-6xl font-bold mb-2">
+          <h2 className="text-5xl sm:text-6xl font-bold mb-2 text-orange-500">
             {streakData.currentStreak} Days
           </h2>
-          <p className="text-xl text-orange-100 font-medium mb-8">
+          <p className="text-xl text-orange-300/70 font-medium mb-8">
             {streakData.currentStreak > 0
               ? t('streaks.onFire')
               : t('streaks.startStreak')}
@@ -184,11 +184,11 @@ export const StreakRewards: React.FC = () => {
               <div key={i} className="flex flex-col items-center gap-2">
                 <div
                   className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base font-bold border-2 transition-all ${
-                    d.status === "complete"
-                      ? "bg-amber-100 text-orange-700 border-amber-100"
-                      : d.status === "current"
-                        ? "bg-green-600 border-white text-white ring-2 ring-green-200 ring-offset-2 ring-offset-orange-500"
-                        : "bg-transparent border-white/30 text-white/50"
+                      d.status === "complete"
+                        ? "bg-amber-500/10 text-orange-400 border-amber-500/30"
+                        : d.status === "current"
+                          ? "bg-green-500/20 text-green-400 border-green-500/30 ring-1 ring-green-500/30 ring-offset-2 ring-offset-gray-800"
+                        : "bg-muted border-border text-muted-foreground"
                   }`}
                 >
                   {d.status === "complete" ? (
@@ -203,7 +203,7 @@ export const StreakRewards: React.FC = () => {
         </div>
 
         {/* Footer of Hero */}
-        <div className="bg-black/10 backdrop-blur-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-gray-900/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 px-4">
             <div className="p-2 bg-blue-400/20 rounded-lg text-blue-200">
               <Shield className="w-5 h-5" />
@@ -217,7 +217,7 @@ export const StreakRewards: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="h-8 w-px bg-white/10" />
+          <div className="h-8 w-px bg-card/10" />
           <div className="flex items-center gap-3 px-4">
             <div className="p-2 bg-yellow-400/20 rounded-lg text-yellow-200">
               <Trophy className="w-5 h-5" />
@@ -233,20 +233,20 @@ export const StreakRewards: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-slate-200">
+      <div className="flex gap-4 border-b border-border">
         <button
           onClick={() => setActiveTab("status")}
           className={`pb-4 px-4 font-bold transition-all relative ${
             activeTab === "status"
-              ? "text-green-700"
-              : "text-slate-500 hover:text-slate-800"
+              ? "text-green-400"
+              : "text-muted-foreground hover:text-card-foreground"
           }`}
         >
           {t('streaks.tabCalendar')}
           {activeTab === "status" && (
             <motion.div
               layoutId="tab"
-              className="absolute bottom-0 start-0 end-0 h-0.5 bg-green-700"
+              className="absolute bottom-0 start-0 end-0 h-0.5 bg-green-400"
             />
           )}
         </button>
@@ -254,8 +254,8 @@ export const StreakRewards: React.FC = () => {
           onClick={() => setActiveTab("rewards")}
           className={`pb-4 px-4 font-bold transition-all relative ${
             activeTab === "rewards"
-              ? "text-green-700"
-              : "text-slate-500 hover:text-slate-800"
+              ? "text-green-400"
+              : "text-muted-foreground hover:text-card-foreground"
           }`}
         >
           {t('streaks.tabRewards')}
@@ -279,13 +279,13 @@ export const StreakRewards: React.FC = () => {
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             {/* Calendar */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+            <div className="bg-card p-6 rounded-3xl border border-border shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-green-700" />
+                <h3 className="font-bold text-card-foreground flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-green-400" />
                   {t('streaks.activityLog')}
                 </h3>
-                <span className="text-sm font-semibold text-slate-500">
+                <span className="text-sm font-semibold text-muted-foreground">
                   {activityData.length > 0
                     ? `${activityData.length} ${t('streaks.entries')}`
                     : t('streaks.thisMonth')}
@@ -295,7 +295,7 @@ export const StreakRewards: React.FC = () => {
                 {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
                   <div
                     key={i}
-                    className="text-center text-xs font-bold text-slate-400 mb-2"
+                    className="text-center text-xs font-bold text-muted-foreground mb-2"
                   >
                     {d}
                   </div>
@@ -335,12 +335,12 @@ export const StreakRewards: React.FC = () => {
                         title={dayTitle}
                         className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
                           isToday
-                            ? "bg-green-600 text-white ring-2 ring-green-300 ring-offset-1"
+                            ? "bg-green-500/20 text-green-400 ring-1 ring-green-500/30 ring-offset-1"
                             : activityType === "freeze"
-                              ? "bg-blue-100 text-blue-700"
+                              ? "bg-blue-500/10 text-blue-400"
                               : activityType === "check-in"
-                                ? "bg-amber-100 text-orange-700"
-                                : "bg-slate-50 text-slate-400"
+                                ? "bg-amber-500/10 text-orange-400"
+                                : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {dayNumber}
@@ -353,37 +353,37 @@ export const StreakRewards: React.FC = () => {
 
             {/* Stats */}
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-400">
                   <Flame className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-slate-500 text-sm font-medium">
+                  <p className="text-muted-foreground text-sm font-medium">
                     {t('streaks.longestStreak')}
                   </p>
-                  <p className="text-2xl font-bold text-slate-900">
+                  <p className="text-2xl font-bold text-card-foreground">
                     {streakData.longestStreak} Days
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700">
+              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center text-green-400">
                   <Check className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-slate-500 text-sm font-medium">
+                  <p className="text-muted-foreground text-sm font-medium">
                     {t('streaks.totalPoints')}
                   </p>
-                  <p className="text-2xl font-bold text-slate-900">
+                  <p className="text-2xl font-bold text-card-foreground">
                     {streakData.totalPoints.toLocaleString()} {t('streaks.pts')}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
-                <h4 className="font-bold text-blue-900 mb-2">{t('streaks.didYouKnow')}</h4>
-                <p className="text-sm text-blue-700 leading-relaxed">
+              <div className="bg-forest-canopy/10 p-6 rounded-3xl border border-forest-canopy/20">
+                <h4 className="font-bold text-forest-canopy mb-2">{t('streaks.didYouKnow')}</h4>
+                <p className="text-sm text-forest-deep leading-relaxed">
                   {t('streaks.didYouKnowText')}
                 </p>
               </div>
@@ -404,16 +404,16 @@ export const StreakRewards: React.FC = () => {
                   key={i}
                   className={`group relative p-6 rounded-2xl border transition-all ${
                     milestone.unlocked
-                      ? "bg-white border-green-200 shadow-sm"
-                      : "bg-slate-50 border-slate-100 opacity-80"
+                      ? "bg-card border-green-500/30 shadow-sm"
+                      : "bg-muted border-border opacity-80"
                   }`}
                 >
                   <div className="flex items-center gap-6">
                     <div
                       className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${
                         milestone.unlocked
-                          ? "bg-green-100 text-green-600"
-                          : "bg-slate-200 text-slate-400"
+                          ? "bg-green-500/10 text-green-400"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <milestone.icon className="w-8 h-8" />
@@ -422,21 +422,21 @@ export const StreakRewards: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <h3
-                          className={`text-lg font-bold ${milestone.unlocked ? "text-slate-900" : "text-slate-500"}`}
+                          className={`text-lg font-bold ${milestone.unlocked ? "text-card-foreground" : "text-muted-foreground"}`}
                         >
                           {milestone.reward}
                         </h3>
                         {milestone.unlocked ? (
-                          <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                          <span className="bg-green-500/10 text-green-400 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                             <Check className="w-3 h-3" /> {t('streaks.unlocked')}
                           </span>
                         ) : (
-                          <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                          <span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                             <Lock className="w-3 h-3" /> {t('streaks.locked')}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         {t('streaks.reachA')}{" "}
                         <span className="font-bold">{milestone.days} {t('streaks.day')}</span>{" "}
                         {t('streaks.streak')}
@@ -445,15 +445,15 @@ export const StreakRewards: React.FC = () => {
 
                     {!milestone.unlocked && (
                       <div className="hidden md:block">
-                        <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-green-600"
+                            className="h-full bg-green-800"
                             style={{
                               width: `${(streakData.currentStreak / milestone.days) * 100}%`,
                             }}
                           />
                         </div>
-                        <p className="text-end text-xs text-slate-400 mt-1 font-mono">
+                        <p className="text-end text-xs text-muted-foreground mt-1 font-mono">
                           {streakData.currentStreak}/{milestone.days}
                         </p>
                       </div>
@@ -468,7 +468,7 @@ export const StreakRewards: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center text-slate-400">
+              <div className="bg-card rounded-3xl border border-border shadow-sm p-12 text-center text-muted-foreground">
                 <Gift className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">{t('streaks.noRewards')}</p>
                 <p className="text-sm">

@@ -62,43 +62,86 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
+  /* --- Backgrounds: 3 layers for depth --- */
+  --background: #101824;           /* page / outermost layer */
+  --sidebar: #0b0f17;              /* darker than page bg — distinct layer */
+  --card: #161b25;                 /* surfaces, cards — lighter than bg */
+  --input-background: #0b0f17;     /* inset fields — recessed look */
+  --popover: #161b25;
+
+  /* --- Foregrounds --- */
+  --foreground: #e8ecf0;
+  --card-foreground: #e8ecf0;
+  --popover-foreground: #e8ecf0;
+
+  /* --- Muted / secondary text: two clear levels --- */
+  --muted: #161b25;
+  --muted-foreground: #7e8a9a;     /* secondary — clearly distinct from primary */
+
+  /* --- Borders: visible separation --- */
+  --border: rgba(255, 255, 255, 0.08);
+
+  /* --- Inputs --- */
+  --input: rgba(255, 255, 255, 0.05);
+  --switch-background: #2d3748;
+
+  /* --- Primary / interactive --- */
+  --primary: #e8ecf0;
+  --primary-foreground: #0b0f17;
+
+  /* --- Secondary --- */
+  --secondary: #1e2636;
+  --secondary-foreground: #e8ecf0;
+
+  /* --- Accent --- */
+  --accent: #1e2636;
+  --accent-foreground: #e8ecf0;
+
+  /* --- Destructive --- */
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fca5a5;
+
+  /* --- Ring / focus --- */
+  --ring: rgba(255, 255, 255, 0.2);
+
+  /* --- Charts --- */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+
+  /* --- Sidebar --- */
+  --sidebar-foreground: #e8ecf0;
+  --sidebar-primary: #4ade80;
+  --sidebar-primary-foreground: #0b0f17;
+  --sidebar-accent: #161b25;
+  --sidebar-accent-foreground: #e8ecf0;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: rgba(255, 255, 255, 0.2);
+
+  /* --- Forest palette: bright green that pops on dark --- */
+  --forest-canopy: #4ade80;        /* bright green for icons, badges, accents */
+  --forest-deep: #86efac;          /* lighter green text */
+  --forest-floor: #052e16;         /* dark green tinted surface */
+  --forest-mist: rgba(74, 222, 128, 0.15); /* translucent for badge fills */
+
+  /* --- Neutral palette: dark equivalents --- */
+  --peak-white: #e8ecf0;
+  --summit-black: #cbd5e1;
+  --trail-gray: #7e8a9a;
+  --gravel: #6b7280;
+  --dust: #4b5563;
+  --limestone: #1e2636;
+  --stone: #161b25;
+  --pebble: #0b0f17;
+
+  /* --- Semantic --- */
+  --ember: #f87171;
+  --warning-amber: #F59E0B;
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -159,16 +202,16 @@
   --radius-sm: 0.5rem;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+}
 
-  body {
-    @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /**
@@ -228,7 +271,6 @@ html[lang="ar"] body,
 html[lang="ar"] {
   font-family: 'Cairo', sans-serif;
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
