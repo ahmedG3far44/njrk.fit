@@ -605,7 +605,7 @@ export const Nutrition: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed min-h-screen w-full start-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) =>
             e.target === e.currentTarget && setShowInviteModal(false)
           }
@@ -614,9 +614,9 @@ export const Nutrition: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="bg-white rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
+            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-h-[90vh] sm:h-auto sm:max-w-md shadow-2xl overflow-hidden flex flex-col"
           >
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">
                   {t("nutrition.addFamilyMember")}
@@ -637,7 +637,7 @@ export const Nutrition: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 max-h-[60vh] sm:max-h-[450px]">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
@@ -720,7 +720,7 @@ export const Nutrition: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed min-h-screen w-full start-0 top-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) =>
             e.target === e.currentTarget && setShowGenerateModal(false)
           }
@@ -729,9 +729,9 @@ export const Nutrition: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
-            className="bg-white rounded-none sm:rounded-3xl w-full h-screen sm:h-auto sm:max-w-md shadow-2xl overflow-hidden"
+            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-h-[90vh] sm:h-auto sm:max-w-md shadow-2xl overflow-hidden flex flex-col"
           >
-            <div className="bg-gradient-to-r from-slate-900 to-green-900 p-6">
+            <div className="bg-gradient-to-r from-slate-900 to-green-900 p-6 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-white text-lg">
@@ -750,7 +750,7 @@ export const Nutrition: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1 max-h-[60vh] sm:max-h-[500px]">
               {/* Meals Counter */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 block">
