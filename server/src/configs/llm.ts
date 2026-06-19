@@ -2,7 +2,7 @@ import OpenAI from "openai";
 
 import { env } from './env';
 
-const cleanKey = (key: string): string => {
+export const cleanKey = (key: string): string => {
   if (!key) return "";
   return key.trim().replace(/^"|"$/g, "");
 };

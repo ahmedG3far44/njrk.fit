@@ -9,7 +9,8 @@ import {
   activityMultipliers,
 } from "../utils/calculations";
 import { Meal, UserContext } from "../types";
-import { getLLMClientAndModel } from "../configs/llm";
+import { cleanKey } from "../configs/llm";
+import OpenAI from "openai";
 // import { normalizeMeal } from '../utils/parser';
 
 const ingredientSchema = z.object({
@@ -101,7 +102,7 @@ const extractJSON = (text: string): any => {
   throw new Error("Failed to extract valid JSON from LLM");
 };
 
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 1;
 
 function schemaToExample(schema: z.ZodSchema): string {
   const inner = (s: z.ZodTypeAny): any => {
@@ -214,157 +215,79 @@ const generateWorkoutPlanPrompt = (
     },
   });
 
-  const langPrompt = isArabic ? `
-أنت مدرب لياقة بدنية محترف. قم بإنشاء خطة تمرين أسبوعية منظمة.
+  const exercisesByDuration: Record<number, number> = {
+    30: 4, 45: 5, 60: 7, 75: 8, 90: 10,
+  };
+  const targetExercises = exercisesByDuration[duration] || Math.round(duration / 9);
 
-السياق (TOON):
+  const exerciseDBList = [
+    "bench press", "incline bench press", "deadlift", "romanian deadlift",
+    "overhead press", "shoulder press", "lateral raise", "front raise",
+    "barbell row", "bent over row", "dumbbell row", "pull up", "lat pulldown",
+    "bicep curl", "hammer curl",
+    "triceps extension", "skull crusher",
+    "squat", "barbell squat", "goblet squat", "leg press",
+    "leg extension", "leg curl", "lunge", "dumbbell lunge",
+    "calf raise", "standing calf raise", "glute bridge", "hip thrust",
+    "plank", "side plank", "crunch", "sit up",
+    "push up", "mountain climber", "burpee", "jumping jack", "high knees",
+    "dumbbell step up", "cable crossover", "face pull", "dumbbell press",
+  ];
+
+  const programDescriptions: Record<string, string> = {
+    "push_pull_legs": isArabic ? "دفع (صدر+كتف+ترايسبس) | سحب (ظهر+بايسيبس) | أرجل (كواد+هاسترينغ+غلوتس+كاف)" : "Push: Chest+Shoulders+Triceps | Pull: Back+Biceps | Legs: Quads+Hamstrings+Glutes+Calves",
+    "upper_lower": isArabic ? "علوي (صدر+ظهر+كتف+ذراعين) | سفلي (أرجل+غلوتس+بطن)" : "Upper: Chest+Back+Shoulders+Arms | Lower: Legs+Glutes+Core",
+    "anterior_posterior": isArabic ? "أمامي (صدر+كواد+كتف+بطن) | خلفي (ظهر+هاسترينغ+غلوتس+كاف+ترايسبس)" : "Anterior: Chest+Quads+Shoulders+Abs | Posterior: Back+Hamstrings+Glutes+Calves+Triceps",
+    "arnold_split": isArabic ? "صدر+ظهر | كتف+ذراعين | أرجل" : "Chest+Back | Shoulders+Arms | Legs",
+    "full_body": isArabic ? "كامل الجسم في كل يوم تدريب" : "Full body each training day",
+    "mixed": isArabic ? "مزيج من التقسيمات أعلاه" : "Mix of the above splits",
+  };
+
+  const langPrompt = isArabic ? `
+أنت مدرب لياقة. أنشئ خطة أسبوعية 7 أيام.
+
 ${toonContext}
 
-قواعد تقسيم البرنامج:
-1. "push_pull_legs": دفع (صدر، كتف، ترايسبس)، سحب (ظهر، بايسيبس)، أرجل
-2. "upper_lower": تبادل بين الجزء العلوي والسفلي
-3. "anterior_posterior": أمامي (صدر، كواد، كتف، بطن) وخلفي (ظهر، هامسترينغ، غلوتس، كاف، ترايسبس)
-4. "arnold_split": صدر/ظهر، كتف/ذراعين، أرجل
-5. "full_body": كل يوم تمرين لكامل الجسم
+البرنامج: "${training_program}"
+الوصف: ${programDescriptions[training_program] || programDescriptions["mixed"]}
 
-قيود صارمة (يجب اتباعها بدقة):
-- عدد الأيام الإجمالي في الخطة: 7 أيام (من Monday إلى Sunday)
-- يجب أن يكون هناك بالضبط ${training_days} أيام تدريب. الأيام المتبقية (${7 - training_days} أيام) يجب تصنيفها كأيام تعافي "Recovery".
-- أيام التعافي يجب أن تحتوي على: "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, "exercises": [] (مصفوفة فارغة).
-- مدة كل جلسة تدريب نشطة يجب أن تكون بالضبط: ${duration} دقيقة.
-- يجب أن تكون قيمة "dayOfWeek" باللغة الإنجليزية بالضبط (من "Monday" إلى "Sunday") لكي يتم عرضها بشكل صحيح في التطبيق.
-- جميع أيام التدريب النشطة يجب أن يكون "type": "Strength" فقط. لا تستخدم "Cardio" أو "Yoga" أو "Mixed" لأيام التدريب النشطة.
+EXERCISE DB (استخدم فقط من هذه القائمة):
+${exerciseDBList.join(", ")}
 
-⚠️ قواعد تسمية التمارين (مهمة جداً للمطابقة مع قاعدة البيانات):
-1. استخدم فقط المصطلحات القياسية والمفردة باللغة الإنجليزية (مثال: استخدم "Squat" وليس "Squats"، واستخدم "Lunge" وليس "Lunges"، واستخدم "Push up" وليس "Push-ups").
-2. تجنب الأسماء المعقدة أو الوصفية الطويلة. استخدم المصطلحات الدقيقة باللغة الإنجليزية مثل:
-   - "Squat"
-   - "Push-up"
-   - "Push up"
-   - "Lunge"
-   - "Deadlift"
-   - "Calf raise"
-   - "Glute bridge"
-   - "Dumbbell row"
-   - "Bent over row"
-   - "Dumbbell press"
-   - "Overhead press"
-   - "Bicep curl"
-   - "Triceps extension"
-   - "Plank"
-   - "High knees"
-   - "Mountain climber"
-   - "Burpee"
-   - "Dumbbell step-up"
-   - "Jumping jack"
-   - "Crunch"
-   - "Sit up"
-3. تأكد من أن حالة الأحرف نظيفة ومطابقة للقائمة أعلاه. لا تخترع أسماء تمارين جديدة.
-- أسماء جلسات التمرين فقط تكون بالعربية.
-
-⚠️ مهم جداً: مفاتيح JSON كلها بالإنجليزية. فقط قيم النصوص المحددة (مثل name لجلسة التمرين) تكون بالعربية.
+قواعد صارمة:
+- بالضبط ${training_days} أيام تدريب + ${7 - training_days} أيام تعافي (type=Recovery, exercises=[])
+- اتبع البرنامج بدقة: ${programDescriptions[training_program] || training_program}
+- ${duration} دقيقة لكل جلسة تدريب = بالضبط ${targetExercises} تمرين
+- نوع التمرين: Strength فقط (ممنوع Cardio/Yoga/Mixed لأيام التدريب)
+- dayOfWeek: Monday-Sunday بالإنجليزية
+- أسماء التمارين: اختر من ExerciseDB أعلاه فقط, تطابق تام
+- أسماء جلسات التمرين بالعربية
+- 3 مجموعات لكل تمرين, \`reps\` كنطاق (مثل "8-12" أو "10-15")
 
 أخرج JSON فقط:
-{
-  "sessions": [
-    {
-      "dayOfWeek": "Monday",
-      "name": "تمرين القوة - دفع",
-      "type": "Strength",
-      "durationMin": ${duration},
-      "estimatedCaloriesBurn": 420,
-      "exercises": [
-        {"name": "Bench Press", "sets": 4, "reps": "8-10"}
-      ]
-    }
-  ]
-}
+{"sessions":[{"dayOfWeek":"Monday","name":"","type":"Strength","durationMin":${duration},"estimatedCaloriesBurn":0,"exercises":[{"name":"","sets":3,"reps":"8-12"}]}]}
 ` : `
-You are a professional fitness coach. Generate a structured weekly workout plan.
+You are a fitness coach. Generate a 7-day weekly plan.
 
-CONTEXT (TOON):
 ${toonContext}
 
+Program: "${training_program}"
+Description: ${programDescriptions[training_program] || programDescriptions["mixed"]}
 
-PROGRAM SPLIT RULES:
-1. "push_pull_legs": Alternate Push (chest, shoulders, triceps), Pull (back, biceps), and Legs (quads, hamstrings, glutes, calves).
-2. "upper_lower": Alternate Upper Body and Lower Body training days.
-3. "anterior_posterior": Alternate Anterior (front body muscles: chest, quads, shoulders, abs) and Posterior (back body muscles: back, hamstrings, glutes, calves, triceps).
-4. "arnold_split": Split by Chest/Back, Shoulders/Arms, and Legs.
-5. "full_body": Each training day exercises the whole body (Legs, Chest, Back, Shoulders, Arms, Core).
+EXERCISE DB (use ONLY from this list):
+${exerciseDBList.join(", ")}
 
-CONSTRAINTS (STRICT — MUST FOLLOW):
-- Total days in plan: 7 (Monday → Sunday)
-- Exactly ${training_days} days MUST be training days. The rest (${7 - training_days} days) MUST be flagged as "Recovery" days.
-- Recovery days must have "type": "Recovery", "durationMin": 0, "estimatedCaloriesBurn": 0, and "exercises": [] (empty array).
-- Each active training session duration MUST be exactly: ${duration} minutes.
-- Distribute training days logically across the week (e.g. for a 3-day split: Monday, Wednesday, Friday active; other days recovery).
-- IMPORTANT: All active training sessions MUST have type: "Strength". Do NOT use "Cardio", "Yoga", or "Mixed" for active training days. Only "Recovery" days may have type: "Recovery".
-- EXERCISE NAMING RULES (CRITICAL FOR DATABASE MATCHING — each name must match ExerciseDB exactly so GIF images can be fetched):
-   1. ONLY use singular, standard gym terminology (e.g., use "Squat" not "Squats", "Lunge" not "Lunges", "Push up" not "Push-ups").
-   2. AVOID complex descriptive names. Use exact terms from our standard database whenever possible:
-      - "Squat" / "Barbell squat" / "Goblet squat"
-      - "Push-up" / "Push up"
-      - "Lunge" / "Dumbbell lunge"
-      - "Deadlift" / "Barbell deadlift" / "Romanian deadlift"
-      - "Calf raise" / "Standing calf raise"
-      - "Glute bridge" / "Hip thrust"
-      - "Dumbbell row" / "Bent over row"
-      - "Dumbbell press" / "Bench press" / "Incline bench press"
-      - "Overhead press" / "Shoulder press"
-      - "Bicep curl" / "Hammer curl"
-      - "Triceps extension" / "Skull crusher"
-      - "Plank" / "Side plank"
-      - "High knees"
-      - "Mountain climber"
-      - "Burpee"
-      - "Dumbbell step-up"
-      - "Jumping jack"
-      - "Crunch"
-      - "Sit up"
-      - "Lat pulldown"
-      - "Pull-up" / "Pull up"
-      - "Cable crossover"
-      - "Leg press"
-      - "Leg extension"
-      - "Leg curl"
-      - "Face pull"
-      - "Lateral raise" / "Side lateral raise"
-      - "Front raise"
-   3. Ensure capitalization is clean and matches the above list. Do NOT invent name variations.
+STRICT RULES:
+- Exactly ${training_days} training days + ${7 - training_days} Recovery days (type=Recovery, exercises=[])
+- Follow the program split precisely: ${programDescriptions[training_program] || training_program}
+- ${duration}min per session = exactly ${targetExercises} exercises
+- Training type: Strength only (no Cardio/Yoga/Mixed)
+- dayOfWeek: Monday-Sunday
+- Exercise names: pick EXACT MATCHES from Exercise DB list above, no variations
+- 3 sets per exercise, reps as range (e.g. "8-12" or "10-15")
 
-OUTPUT REQUIREMENTS:
-- Always return exactly 7 sessions (one per day, Monday through Sunday)
-- Respect training_days count strictly (e.g., if 4 → only 4 non-recovery sessions)
-- Each session must include:
-  - dayOfWeek: "Monday" to "Sunday"
-  - name: Workout session name (e.g., "Push Strength Workout" or "Lower Body Focus")
-  - type: "Strength" for active training days, "Recovery" for rest days
-  - durationMin: number (use ${duration} for training, 0 for recovery)
-  - estimatedCaloriesBurn: number (0 for recovery)
-  - exercises: [] (empty array for recovery days)
-
-EXERCISE FORMAT:
-- exercises: [{ name: string, sets: number, reps: string }]
-- Use realistic sets/reps based on goal and experience
-
-OUTPUT VALID JSON ONLY:
-{
-  "sessions": [
-    {
-      "dayOfWeek": "Monday",
-      "name": "Push Strength Focus",
-      "type": "Strength",
-      "durationMin": ${duration},
-      "estimatedCaloriesBurn": 420,
-      "exercises": [
-        {"name": "Bench press", "sets": 4, "reps": "8-10"},
-        {"name": "Overhead press", "sets": 3, "reps": "10"},
-        {"name": "Triceps extension", "sets": 3, "reps": "12"}
-      ]
-    }
-  ]
-}
+Output JSON only:
+{"sessions":[{"dayOfWeek":"Monday","name":"","type":"Strength","durationMin":${duration},"estimatedCaloriesBurn":0,"exercises":[{"name":"","sets":3,"reps":"8-12"}]}]}
 `;
 
   return langPrompt;
@@ -419,147 +342,57 @@ const generateMealPlanPrompt = (
   });
 
   const langPrompt = isArabic ? `
-أنت خبير تغذية محترف. قم بإنشاء خطة وجبات مخصصة لمدة ${daysToGenerate} أيام.
+أنت خبير تغذية. أنشئ خطة ${daysToGenerate} أيام.
 
-سياق المستخدم (TOON):
 ${toonContext}
 
-قواعد صارمة (يجب اتباعها — بدون استثناءات):
+قواعد صارمة:
+- بالضبط ${totalItemsCount} عنصر (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
+- الغطاء: ${repeatMealsEveryDay ? "اليوم 1 فقط" : "اليوم 1 إلى 7"}
+- mealType: "meal" للوجبات، "snack" للوجبات الخفيفة
+- ~${calories} سعرة/يوم (±50)
+- ${totalItemsPerDay} عنصر/يوم (وجبات 70-80%, وجبات خفيفة 20-30%)
+- ضبط المغذيات حسب الهدف
+- لا تستخدم مكونات من قائمة الحساسية
+- الحالات المزمنة (السكري, الضغط, مقاومة الأنسولين..الخ): قدّم وجبات مناسبة لكل حالة (مثلاً قليل السكر للسكري, قليل الملح للضغط)
+- الدين "muslim": لا لحم خنزير, لا كحول, حلال فقط
+- الدين "christian" والصيام: نباتي 100%
+${repeatMealsEveryDay ? "- كرر اليوم 1 فقط" : "- تنويع يومي"}
+- المكونات: 4-8 للوجبة, 1-3 للوجبة الخفيفة
+- التعليمات: 3 خطوات كحد أقصى
+- التوقيت: فطور 08:00, غداء 12:30, عشاء 19:00${snacksCount > 0 ? ", وجبات خفيفة 10:30, 15:30" : ""}
+- أسماء الوجبات والمكونات والتعليمات بالعربية
+- أضف تصنيف الوجبة قبل الاسم: "فطور: " للإفطار، "غداء: " للغداء، "عشاء: " للعشاء، "وجبة خفيفة: " للوجبات الخفيفة
+- مثال: "فطور: عجة البيض مع توست وأفوكادو" وليس "عجة البيض مع توست وأفوكادو"
+- مفاتيح JSON بالإنجليزية, القيم بالعربية
 
-⚠️ هام جداً — عدد العناصر (أولوية قصوى):
-   - قم بتوليد ${totalItemsCount} عنصر بالضبط (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
-   - يجب أن تغطي الخطة الأيام التالية بالضبط: ${repeatMealsEveryDay ? "اليوم 1 فقط" : "من اليوم 1 إلى اليوم 7"}
-   - استخدم "mealType": "meal" للوجبات و "mealType": "snack" للوجبات الخفيفة
-   - هذه القاعدة تلغي جميع القواعد الأخرى.
-
-1. السعرات والمغذيات:
-   - كل يوم يجب أن يصل إلى ~${calories} سعرة حرارية (±50)
-   - وزع السعرات على ${totalItemsPerDay} عنصر في اليوم
-   - الوجبات: 70-80% من السعرات، الوجبات الخفيفة: 20-30%
-   - ضبط المغذيات حسب الهدف
-
-2. الحساسية (هام):
-   - لا تستخدم أبداً أي مكون موجود في قائمة الحساسية
-
-3. القواعد الدينية (هام):
-   - إذا كان الدين = "muslim": يمنع منعاً باتاً لحم الخنزير والكحول وأي مكونات غير حلال
-   - إذا كان الدين = "christian" AND الصيام = true: يمنع كل المنتجات الحيوانية، يجب أن تكون الوجبات نباتية 100%
-
-4. جودة الطعام والتنسيق المختصر:
-   - استخدم وجبات واقعية ومناسبة ثقافياً للعالم العربي
-   - قم بتسمية الوجبات والمكونات والتعليمات باللغة العربية
-   ${repeatMealsEveryDay ? "- بما أن تكرار الوجبات يومياً مفعل، قم بإخراج اليوم 1 فقط." : "- قم بتنويع الوجبات طوال الأسبوع. كل يوم يجب أن يكون مختلفاً."}
-   - قائمة المكونات: 4-8 للوجبة، 1-3 للوجبة الخفيفة
-   - التعليمات: 3 خطوات قصيرة كحد أقصى
-
-5. الهيكل الزمني:
-   - الإفطار → "08:00 صباحاً"
-   - الغداء → "12:30 مساءً"
-   - العشاء → "07:00 مساءً"
-   ${snacksCount > 0 ? `- الوجبات الخفيفة → "10:30 صباحاً", "03:30 مساءً"` : ""}
-
-⚠️ تذكير — عدد العناصر بالضبط:
-- ${totalItemsCount} عنصر (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
-
-يجب أن تكون أسماء الوجبات والمكونات والتعليمات باللغة العربية.
-
-⚠️ مهم جداً: مفاتيح JSON يجب أن تكون بالإنجليزية — لا تترجم "calories" أو "protein" أو "carbs" أو "fats" أو "mealType" أو "day" أو "name" أو "time" أو "macros" أو "ingredients" أو "instructions" إلى العربية. فقط القيم (النصوص داخل المفاتيح) تكون بالعربية.
-
-أخرج JSON فقط — بدون نص إضافي:
-{
-  "meals": [
-    {
-      "day": "اليوم 1",
-      "name": "اسم الوجبة",
-      "time": "08:00 صباحاً",
-      "mealType": "meal",
-      "macros": { "calories": 0, "protein": 0, "carbs": 0, "fats": 0 },
-      "ingredients": [ { "name": "المكون", "quantity": 100, "unit": "g" } ],
-      "instructions": ["الخطوة 1", "الخطوة 2"]
-    }
-  ],
-  "targetMacros": { "calories": ${calories}, "protein": ${protein}, "carbs": ${carbs}, "fats": ${fats} }
-}
+أخرج JSON فقط:
+{"meals":[{"day":"اليوم 1","name":"فطور: اسم الوجبة","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
 ` : `
-You are a professional nutritionist. Generate a personalized ${daysToGenerate}-day meal plan.
+You are a nutritionist. Generate a ${daysToGenerate}-day meal plan.
 
-USER CONTEXT (TOON):
 ${toonContext}
 
-STRICT RULES (MUST FOLLOW — NO EXCEPTIONS):
+STRICT RULES:
+- EXACTLY ${totalItemsCount} items (${expectedMeals} meals + ${expectedSnacks} snacks)
+- Cover: ${repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7"}
+- mealType: "meal" or "snack"
+- ~${calories} kcal/day (±50), ${totalItemsPerDay} items/day
+- Meals 70-80% of calories, snacks 20-30%
+- Adjust macros by goal (lose: high protein, gain: high carb+protein, balance: even)
+- NEVER use listed allergens
+- Chronic conditions (diabetes, hypertension, insulin resistance, etc): tailor meals accordingly (low sugar for diabetes, low sodium for hypertension, etc)
+- muslim: NO pork/alcohol, halal only
+- christian + fasting: 100% vegan
+${repeatMealsEveryDay ? "- Repeat Day 1 only" : "- Vary daily, no repeats"}
+- Ingredients: 4-8/meal, 1-3/snack (exclude salt, spices, oil)
+- Instructions: max 3 short steps
+- Times: Breakfast 08:00, Lunch 12:30, Dinner 19:00${snacksCount > 0 ? ", Snacks 10:30, 15:30" : ""}
+- Prefix meal names with type label: "Breakfast: ", "Lunch: ", "Dinner: ", "Snack: "
+- Example: "Breakfast: Omelet Eggs with Toast and Avocado" not just "Omelet Eggs with Toast and Avocado"
 
-⚠️ CRITICAL — ITEM COUNT (HIGHEST PRIORITY):
-   - Generate EXACTLY ${totalItemsCount} items total across the entire response (${expectedMeals} meals + ${expectedSnacks} snacks)
-   - The plan MUST cover EXACTLY the following days: ${repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7"}
-   - Set "mealType": "meal" for meals and "mealType": "snack" for snacks
-   - THIS RULE OVERRIDES ALL OTHERS. If you must choose between item count and any other rule, preserve the item count.
-
-1. CALORIES & MACROS:
-   - Each day MUST total ~${calories} kcal (±50 kcal)
-   - Distribute calories across ${totalItemsPerDay} items per day
-   - Meals should be larger (approx 70-80% of daily calories), snacks lighter (20-30%)
-   - Adjust macro distribution based on goal:
-     - lose_weight → higher protein, moderate fats, lower carbs
-     - gain_weight → higher carbs + protein
-     - balance_weight → balanced macros
-
-2. ALLERGIES (CRITICAL):
-   - NEVER include any ingredient listed in allergies
-   - If common protein sources are restricted, substitute with safe alternatives
-   - Adapt macro sources intelligently (e.g., legumes, plant protein, fish if allowed)
-
-3. RELIGION RULES (CRITICAL):
-   - If religion = "muslim":
-     - STRICTLY FORBIDDEN: pork, alcohol, any non-halal ingredients
-   - If religion = "christian" AND isFasting = true:
-     - STRICTLY FORBIDDEN: ALL animal products (meat, chicken, fish, eggs, dairy, cheese, milk, butter)
-     - Meals MUST be 100% plant-based (vegan)
-
-4. FOOD QUALITY & CONCISE FORMAT (CRITICAL FOR PERFORMANCE & LATENCY):
-   - Use realistic, culturally neutral meals
-   - Prefer whole foods over processed foods
-   ${repeatMealsEveryDay ? "- Since repeatMealsEveryDay is true, you only need to output Day 1. It will be duplicated programmatically." : "- Enforce variety throughout the week. Avoid repeating the same meals from day to day. Every day should have a unique and different menu."}
-   - Keep ingredient lists concise (4-8 per meal, 1-3 per snack). ONLY include substantial ingredients with meaningful nutritional value. EXCLUDE salt, pepper, individual spices/herbs, cooking oil, vinegar, garlic, etc.
-   - Keep instructions extremely concise: maximum 3 simple, short steps per meal (e.g., "Boil pasta", "Mix with tuna", "Serve"). Avoid long descriptive paragraphs. This dramatically reduces latency.
-
-5. STRUCTURE:
-   - Meal times (approximate):
-     - Breakfast → "08:00 AM"
-     - Lunch → "12:30 PM"
-     - Dinner → "07:00 PM"
-     ${snacksCount > 0 ? `- Snacks → "10:30 AM", "03:30 PM" (distribute snacks across day)` : ""}
-
-⚠️ REMINDER — COUNT YOUR OUTPUT:
-- You MUST output EXACTLY ${totalItemsCount} total items (${expectedMeals} meals + ${expectedSnacks} snacks)
-- Verify your count before responding. Wrong count will be rejected.
-
-OUTPUT FORMAT (STRICT JSON ONLY — NO TEXT):
-{
-  "meals": [
-    {
-      "day": "Day 1",
-      "name": "Meal name",
-      "time": "08:00 AM",
-      "mealType": "meal",
-      "macros": {
-        "calories": 0,
-        "protein": 0,
-        "carbs": 0,
-        "fats": 0
-      },
-      "ingredients": [
-        { "name": "ingredient", "quantity": 100, "unit": "g" }
-      ],
-      "instructions": ["step 1", "step 2"]
-    }
-  ],
-  "targetMacros": {
-    "calories": ${calories},
-    "protein": ${protein},
-    "carbs": ${carbs},
-    "fats": ${fats}
-  }
-}
+Output JSON ONLY:
+{"meals":[{"day":"Day 1","name":"Breakfast: meal name","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
 `;
 
   return langPrompt;
@@ -785,25 +618,53 @@ ${encode(meal)}
 // - deepseek/deepseek-v4-flash
 
 const callOpenRouter = async (prompt: string, language: string = "en") => {
-  const { client, model } = getLLMClientAndModel(language);
+  const isArabic = language.toLowerCase() === "ar";
 
-  const completion = await client.chat.completions.create({
-    model: model,
-    max_tokens: 12000,
-    temperature: 0.2,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a strict JSON API. Return ONLY valid JSON. No markdown, no text.",
-      },
-      { role: "user", content: prompt },
-    ],
-  });
-  const firstChoice = completion.choices[0];
-  if (!firstChoice?.message?.content) {
-    throw new Error("LLM did not return any content");
+  const providers = [
+    {
+      client: new OpenAI({
+        apiKey: cleanKey(env.GEMINI_API_KEY),
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+      }),
+      model: isArabic ? env.GEMINI_MODEL_AR : env.GEMINI_MODEL_EN,
+    },
+    {
+      client: new OpenAI({
+        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: cleanKey(env.OPENROUTER_API_KEY),
+        defaultHeaders: { "X-Title": "NJrk.Fit" },
+      }),
+      model: isArabic ? env.LLM_MODEL_AR : env.LLM_MODEL_EN,
+    },
+  ];
+
+  let lastError: any;
+  for (const { client, model } of providers) {
+    try {
+      const completion = await client.chat.completions.create({
+        model,
+        max_tokens: 3000,
+        temperature: 0.2,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a strict JSON API. Return ONLY valid JSON. No markdown, no text.",
+          },
+          { role: "user", content: prompt },
+        ],
+      });
+      const firstChoice = completion.choices[0];
+      if (!firstChoice?.message?.content) {
+        throw new Error("LLM did not return any content");
+      }
+      return firstChoice.message.content.trim();
+    } catch (err) {
+      lastError = err;
+      if (providers.length > 1) {
+        console.error(`LLM provider "${model}" failed, trying next:`, (err as Error).message);
+      }
+    }
   }
-
-  return firstChoice.message.content.trim();
+  throw lastError;
 };

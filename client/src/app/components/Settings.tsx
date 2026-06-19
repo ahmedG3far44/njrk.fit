@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router';
 import { User, Bell, Shield, Scale, Ruler, Target, CreditCard, Users, Stethoscope, Sparkles, UtensilsCrossed, ChevronRight, Save, LogOut, Loader2, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -598,9 +599,9 @@ export const Settings: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               <p className="text-[10px] sm:text-xs text-slate-500 truncate">{t('settings.privacyDesc')}</p>
             </div>
           </div>
-          <button className="flex items-center gap-0.5 text-green-700 font-bold text-xs sm:text-sm hover:underline flex-shrink-0">
+          <Link to="/terms-security" className="flex items-center gap-0.5 text-green-700 font-bold text-xs sm:text-sm hover:underline flex-shrink-0">
             {t('settings.view')} <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
-          </button>
+          </Link>
         </div>
       </div>
 

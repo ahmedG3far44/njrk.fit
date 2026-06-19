@@ -15,6 +15,12 @@ interface OnboardingProps {
 const STEP_ICONS = [User, Heart, Activity, Target, Languages];
 const STEP_LABELS = ['The Basics', 'Personalization', 'Health & Activity', 'Your Goal', 'Language'];
 
+const CHRONIC_CONDITIONS = [
+  'Insulin Resistance', 'Type 1 Diabetes', 'Type 2 Diabetes',
+  'Hypertension', 'PCOS', 'Thyroid Disorders', 'Heart Disease',
+  'High Cholesterol', 'Asthma', 'Anemia',
+];
+
 const FOOD_PREFERENCES = [
   { category: 'Proteins', items: ['Chicken', 'Beef', 'Fish', 'Eggs', 'Tofu', 'Lentils', 'Beans'] },
   { category: 'Carbs', items: ['Rice', 'Bread', 'Potato', 'Pasta', 'Oats', 'Quinoa'] },
@@ -106,10 +112,28 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
     if (currentStep === 0) {
       if (!formData.name.trim()) newErrors.name = 'Name is required';
-      if (!formData.age || Number(formData.age) < 13 || Number(formData.age) > 100) newErrors.age = 'Please enter a valid age (13-100)';
+      if (!formData.age) {
+        newErrors.age = 'Age is required';
+      } else {
+        const age = Number(formData.age);
+        if (age < 10) newErrors.age = 'You must be at least 10 years old';
+        else if (age > 100) newErrors.age = 'Age must be 100 or less';
+      }
       if (!formData.gender) newErrors.gender = 'Please select your gender';
-      if (!formData.height || Number(formData.height) < 100 || Number(formData.height) > 250) newErrors.height = 'Please enter a valid height (100-250 cm)';
-      if (!formData.weight || formData.weight < 10 || formData.weight > 200) newErrors.weight = 'Please enter a valid weight (10-200 kg)';
+      if (!formData.height) {
+        newErrors.height = 'Height is required';
+      } else {
+        const height = Number(formData.height);
+        if (height < 130) newErrors.height = 'Height must be at least 130 cm';
+        else if (height > 240) newErrors.height = 'Height must be 240 cm or less';
+      }
+      if (!formData.weight) {
+        newErrors.weight = 'Weight is required';
+      } else if (formData.weight < 40) {
+        newErrors.weight = 'Weight must be at least 40 kg';
+      } else if (formData.weight > 300) {
+        newErrors.weight = 'Weight must be 300 kg or less';
+      }
     }
 
     if (currentStep === 1) {
@@ -122,27 +146,55 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
     if (currentStep === 3) {
       if (!formData.goal) newErrors.goal = 'Please select your main goal';
-      if (!formData.targetWeight) newErrors.targetWeight = 'Please enter your target weight';
-      if (formData.goal === 'lose_weight' && formData.targetWeight >= formData.weight) {
-        newErrors.targetWeight = 'Target weight must be less than current weight';
+      if (formData.goal === 'lose_weight' && formData.weight && formData.targetWeight && formData.targetWeight >= formData.weight) {
+        newErrors.targetWeight = 'Target weight must be less than your current weight';
       }
-      if (formData.goal === 'gain_weight' && formData.targetWeight <= formData.weight) {
-        newErrors.targetWeight = 'Target weight must be greater than current weight';
+      if (formData.goal === 'gain_muscle' && formData.weight && formData.targetWeight && formData.targetWeight <= formData.weight) {
+        newErrors.targetWeight = 'Target weight must be greater than your current weight';
+      }
+      if (formData.goal === 'maintain_weight' && formData.weight && formData.targetWeight && Math.abs(formData.targetWeight - formData.weight) > 5) {
+        newErrors.targetWeight = 'Target weight should be close to your current weight (±5 kg)';
+      }
+      if (!formData.targetWeight) {
+        newErrors.targetWeight = 'Please enter your target weight';
+      } else if (formData.targetWeight < 40) {
+        newErrors.targetWeight = 'Target weight must be at least 40 kg';
+      } else if (formData.targetWeight > 300) {
+        newErrors.targetWeight = 'Target weight must be 300 kg or less';
       }
       if (formData.dreamGoal.length < 10) newErrors.dreamGoal = 'Please describe your goal in at least 10 characters';
-      if (!formData.goalDate) newErrors.goalDate = 'Please set a target date for your goal';
+      if (!formData.goalDate) {
+        newErrors.goalDate = 'Please set a target date for your goal';
+      } else {
+        const selected = new Date(formData.goalDate);
+        const minDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        if (selected < minDate) {
+          newErrors.goalDate = 'Target date must be at least 1 week from today';
+        }
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const isValid = () => {
-    if (step === 0) return formData.name && formData.age && formData.gender && formData.height && formData.weight;
-    if (step === 1) return formData.religion;
-    if (step === 2) return formData.activityLevel;
-    if (step === 3) return formData.goal && formData.targetWeight && formData.dreamGoal.length >= 10 && formData.goalDate;
-    if (step === 4) return true; // Language always has a default
+  const isFieldValid = (): boolean => {
+    if (step === 0) {
+      const age = Number(formData.age);
+      const height = Number(formData.height);
+      return !!(formData.name.trim() && age >= 10 && age <= 100 && formData.gender && height >= 130 && height <= 240 && formData.weight >= 40 && formData.weight <= 300);
+    }
+    if (step === 1) return !!formData.religion;
+    if (step === 2) return !!formData.activityLevel;
+    if (step === 3) {
+      const validTarget = formData.targetWeight >= 40 && formData.targetWeight <= 300;
+      if (!validTarget) return false;
+      if (formData.goal === 'lose_weight') return formData.targetWeight < formData.weight;
+      if (formData.goal === 'gain_muscle') return formData.targetWeight > formData.weight;
+      if (formData.goal === 'maintain_weight') return Math.abs(formData.targetWeight - formData.weight) <= 5;
+      return false;
+    }
+    if (step === 4) return true;
     return true;
   };
 
@@ -259,7 +311,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   onChange={e => { update({ age: e.target.value }); clearError('age'); }}
                   className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.age ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
                   placeholder="25"
-                  min={10} max={100}
+                  min={10} max={100} step={1}
                 />
                 {errors.age && <p className="text-red-500 text-[11px] sm:text-xs">{errors.age}</p>}
               </div>
@@ -294,6 +346,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   onChange={e => { update({ height: e.target.value }); clearError('height'); }}
                   className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.height ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
                   placeholder="175"
+                  min={130} max={240} step={1}
                 />
                 {errors.height && <p className="text-red-500 text-[11px] sm:text-xs">{errors.height}</p>}
               </div>
@@ -307,6 +360,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   onChange={e => { update({ weight: Number(e.target.value) }); clearError('weight'); }}
                   className={`w-full px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border outline-none transition-all text-sm ${errors.weight ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-600'}`}
                   placeholder="70"
+                  min={40} max={300} step={0.5}
                 />
                 {errors.weight && <p className="text-red-500 text-[11px] sm:text-xs">{errors.weight}</p>}
               </div>
@@ -408,6 +462,29 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
             <div className="space-y-2 sm:space-y-3">
               <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" /> Chronic Conditions
+              </label>
+              <p className="text-[11px] sm:text-xs text-slate-400">Select any conditions you have so we can tailor your meal plan accordingly</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                {CHRONIC_CONDITIONS.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleAllergy(c)}
+                    className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg border-[1.5px] sm:border-2 text-[11px] sm:text-xs font-semibold transition-all flex items-center justify-between gap-1 ${formData.allergies.includes(c)
+                      ? 'border-red-400 bg-red-50 text-red-700'
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                      }`}
+                  >
+                    <span className="truncate">{c}</span>
+                    {formData.allergies.includes(c) && <Check className="w-3 h-3 flex-shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 sm:space-y-3">
+              <label className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-700" /> Activity Level
               </label>
               <div className="space-y-1.5 sm:space-y-2">
@@ -472,6 +549,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   value={formData.targetWeight || ''}
                   className={`w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border outline-none transition-all text-xs sm:text-sm text-slate-700 ${errors.targetWeight ? 'border-red-500' : 'border-slate-200 focus:ring-2 focus:ring-green-700'}`}
                   placeholder="Target weight"
+                  min={40} max={300} step={0.5}
                 />
                 {errors.targetWeight && <p className="text-red-500 text-[11px] sm:text-xs">{errors.targetWeight}</p>}
               </div>
@@ -671,7 +749,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <button
               type="button"
               onClick={handleNavigation}
-              disabled={!isValid() || isProcessing}
+              disabled={isProcessing}
               className="flex items-center gap-1.5 bg-gradient-to-r from-green-800 to-green-700 hover:from-green-900 hover:to-green-800 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2 sm:px-7 sm:py-2.5 rounded-lg sm:rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-green-200 text-xs sm:text-sm"
             >
               {isProcessing ? (

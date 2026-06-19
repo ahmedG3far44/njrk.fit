@@ -290,8 +290,7 @@ export const Nutrition: React.FC = () => {
     try {
       const data = await api.post<GenerateResponse>(
         "/nutrition/generate",
-        counts || {},
-        { timeout: 300000 },
+        counts || {}
       );
       setNutritionPlan(data.plan);
       setCurrentMeals(data.plan.meals || []);
@@ -320,7 +319,7 @@ export const Nutrition: React.FC = () => {
     generatePlan({ mealsCount, snacksCount, favoriteFoods, repeatMeals });
     setMealsCount(3);
     setSnacksCount(0);
-    setFavoriteFoods([]);
+    setFavoriteFoods([user?.dietaryRestrictions || []].flat() as string[]);
     setFoodInput("");
   };
 
@@ -1110,6 +1109,7 @@ export const Nutrition: React.FC = () => {
               >
                 {[
                   {
+                    key: 'calories',
                     label: t('nutrition.calories'),
                     current: totals.calories,
                     target: targetMacros.calories,
@@ -1117,6 +1117,7 @@ export const Nutrition: React.FC = () => {
                     color: "bg-orange-500",
                   },
                   {
+                    key: 'protein',
                     label: t('nutrition.protein'),
                     current: totals.protein,
                     target: targetMacros.protein,
@@ -1124,6 +1125,7 @@ export const Nutrition: React.FC = () => {
                     color: "bg-blue-500",
                   },
                   {
+                    key: 'carbs',
                     label: t('nutrition.carbs'),
                     current: totals.carbs,
                     target: targetMacros.carbs,
@@ -1131,6 +1133,7 @@ export const Nutrition: React.FC = () => {
                     color: "bg-green-600",
                   },
                   {
+                    key: 'fats',
                     label: t('nutrition.fats'),
                     current: totals.fats,
                     target: targetMacros.fats,
@@ -1140,7 +1143,7 @@ export const Nutrition: React.FC = () => {
                 ].map((macro) => {
                   return (
                     <div
-                      key={macro.label}
+                      key={macro.key}
                       className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm"
                     >
                       <div className="flex justify-between items-start mb-2">
@@ -1160,7 +1163,7 @@ export const Nutrition: React.FC = () => {
                         <div className={`h-full ${macro.color}`} />
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        {getCalories(macro.label.toLowerCase(), macro.current)}{" "}
+                        {getCalories(macro.key, macro.current)}{" "}
                         {t("nutrition.kcal")}
                       </div>
                     </div>

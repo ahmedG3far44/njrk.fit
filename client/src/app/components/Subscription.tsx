@@ -241,8 +241,17 @@ export const Subscription: React.FC = () => {
         await fetchSubscriptionStatus();
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || t('subscriptions.failedToOpen');
-      toast.error(msg);
+      const status = err?.status || err?.response?.status;
+      if (status === 400) {
+        toast.error(t('subscriptions.invalidPlan'));
+      } else if (status === 404) {
+        toast.error(t('subscriptions.userNotFound'));
+      } else if (status === 500) {
+        toast.error(t('subscriptions.serverError'));
+      } else {
+        const msg = err?.message || t('subscriptions.failedToOpen');
+        toast.error(msg);
+      }
     } finally {
       setSubscribing(false);
     }

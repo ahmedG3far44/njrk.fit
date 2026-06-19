@@ -877,7 +877,10 @@
     "pastDueDesc": "Your last payment failed. Update your payment method through the billing portal to continue using all features.",
     "failedToOpen": "Failed to open billing portal",
     "cancelEndOfPeriod": "Subscription will be canceled at the end of the billing period",
-    "failedToCancel": "Failed to cancel subscription"
+    "failedToCancel": "Failed to cancel subscription",
+    "invalidPlan": "Invalid plan selected. Please try again.",
+    "userNotFound": "User account not found. Please log in again.",
+    "serverError": "Something went wrong on our end. Please try again later."
   },
 
   "recipeDetail": {

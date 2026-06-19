@@ -109,7 +109,7 @@ export const api = {
   },
 
   async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { skipAuthRefresh, timeout = 30000, ...requestOptions } = options;
+    const { skipAuthRefresh, timeout = 120000, ...requestOptions } = options;
     const headers: ApiHeaders = {
       ...(requestOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(requestOptions.headers as ApiHeaders | undefined),
