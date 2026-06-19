@@ -165,7 +165,7 @@ export const registerUser = async (
 
   const user = await User.create(newUser);
 
-  await sendSubscriptionEmail(user.email, user.name);
+  sendSubscriptionEmail(user.email, user.name).catch(() => {});
 
   if (provider === "email") {
     const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;
@@ -187,7 +187,7 @@ export const registerUser = async (
       </div>
     `;
 
-    await sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك الجديد" : "Verify Your New Account");
+    sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك الجديد" : "Verify Your New Account").catch(() => {});
   }
 
   const payload = {
@@ -394,20 +394,16 @@ export const getUserByEmail = async (email: string) => {
 };
 
 export const verifyEmailToken = async (token: string) => {
-  // تشفير التوكن اللي وصلنا عشان نقارنه باللي محفوظ في الداتا بيس
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
   const user = await User.findOne({
     emailVerificationToken: hashedToken,
-    emailVerificationExpires: { $gt: Date.now() }, // نتأكد إن التوكن ما انتهت صلاحيته
+    emailVerificationExpires: { $gt: Date.now() }, 
   });
 
   if (!user) {
     return { success: false, message: "الرمز غير صالح أو منتهي الصلاحية" };
   }
-
-  // إذا التوكن صحيح، نحدث حالة اليوزر
-  // (تأكد إنك ضفت isEmailVerified في الـ IUser interface في ملف user.model.ts)
+  
   user.set("isEmailVerified", true);
   user.set("emailVerificationToken", undefined);
   user.set("emailVerificationExpires", undefined);

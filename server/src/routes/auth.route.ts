@@ -347,7 +347,6 @@ router.post(
         ? "/onboarding"
         : "/dashboard/insights";
 
-      // Changed to 200 OK (201 is usually for resource creation)
       res
         .status(200)
         .json({ ...result, redirect: `${clientUrl}${redirectPath}` });
@@ -366,24 +365,18 @@ router.post(
         return res.status(401).json({ error: "Refresh token required" });
       }
 
-      // Verify the existing token
       const payload = jwtUtils.verifyRefreshToken(refreshToken);
 
-      // FIX: Generate a new access token (and optionally a new refresh token)
-      // Assuming your payload contains the necessary user info (e.g., userId, email)
       const newAccessToken = jwtUtils.generateAccessToken(payload);
 
-      // Update the access token cookie
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 24 * 60 * 60 * 1000,
       });
-
       res.status(200).json({ message: "Token refreshed successfully" });
     } catch (error) {
-      // If the refresh token is expired or invalid, clear cookies
       clearAuthCookies(res);
       return res
         .status(401)
@@ -396,7 +389,6 @@ router.post(
   "/logout",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // FIX: Actually clear the cookies!
       clearAuthCookies(res);
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {

@@ -54,7 +54,7 @@ export const VerifyEmailPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-800">تم التوثيق!</h2>
             <p className="text-gray-600">{message}</p>
-            <Link to="/login" className="mt-6 inline-block w-full bg-forest-canopy text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+            <Link to="/" className="mt-6 inline-block w-full bg-forest-canopy text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
               تسجيل الدخول
             </Link>
           </div>
@@ -68,7 +68,7 @@ export const VerifyEmailPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-800">عذراً</h2>
             <p className="text-gray-600">{message}</p>
-            <Link to="/login" className="mt-6 inline-block w-full border border-forest-canopy text-forest-canopy py-3 rounded-lg font-medium hover:bg-stone transition-colors">
+            <Link to="/" className="mt-6 inline-block w-full border border-forest-canopy text-forest-canopy py-3 rounded-lg font-medium hover:bg-stone transition-colors">
               العودة لتسجيل الدخول
             </Link>
           </div>
