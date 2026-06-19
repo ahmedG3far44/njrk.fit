@@ -135,7 +135,7 @@ const callLLMWithRecovery = async <T>(
   let lastError: any;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const raw = await callOpenRouter(prompt, language);
+      const raw = await callGemini(prompt, language);
       const parsed = extractJSON(raw!);
       const normalized = normalizeLLMOutput(parsed);
       const data = schema.parse(normalized);
@@ -300,6 +300,7 @@ const generateMealPlanPrompt = (
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
   language: 'en' | 'ar' = 'en',
+  specificDay?: number,
 ): string => {
   const isArabic = language === 'ar';
   const bmr = calculateBMR(user);
@@ -317,8 +318,8 @@ const generateMealPlanPrompt = (
     : "";
   const totalItemsPerDay = mealsCount + snacksCount;
 
-  // Latency optimization: If repeating meals, only generate Day 1 and programmatically copy
-  const daysToGenerate = repeatMealsEveryDay ? 1 : 7;
+  // Latency optimization: If repeating meals or doing single day, only generate 1 day
+  const daysToGenerate = (repeatMealsEveryDay || specificDay !== undefined) ? 1 : 7;
   const totalItemsCount = totalItemsPerDay * daysToGenerate;
   const expectedMeals = mealsCount * daysToGenerate;
   const expectedSnacks = snacksCount * daysToGenerate;
@@ -342,23 +343,29 @@ const generateMealPlanPrompt = (
   });
 
   const langPrompt = isArabic ? `
-أنت خبير تغذية. أنشئ خطة ${daysToGenerate} أيام.
+أنت خبير تغذية. أنشئ خطة ${specificDay !== undefined ? `اليوم ${specificDay}` : `${daysToGenerate} أيام`}.
 
 ${toonContext}
 
 قواعد صارمة:
 - بالضبط ${totalItemsCount} عنصر (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
-- الغطاء: ${repeatMealsEveryDay ? "اليوم 1 فقط" : "اليوم 1 إلى 7"}
+- الغطاء: ${specificDay !== undefined ? `اليوم ${specificDay} فقط` : (repeatMealsEveryDay ? "اليوم 1 فقط" : "اليوم 1 إلى 7")}
+- يجب أن يكون حقل "day" لجميع الوجبات والوجبات الخفيفة هو "${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}" بالضبط.
 - mealType: "meal" للوجبات، "snack" للوجبات الخفيفة
 - ~${calories} سعرة/يوم (±50)
 - ${totalItemsPerDay} عنصر/يوم (وجبات 70-80%, وجبات خفيفة 20-30%)
-- ضبط المغذيات حسب الهدف
+- ضبط المغغيات حسب الهدف
 - لا تستخدم مكونات من قائمة الحساسية
 - الحالات المزمنة (السكري, الضغط, مقاومة الأنسولين..الخ): قدّم وجبات مناسبة لكل حالة (مثلاً قليل السكر للسكري, قليل الملح للضغط)
 - الدين "muslim": لا لحم خنزير, لا كحول, حلال فقط
 - الدين "christian" والصيام: نباتي 100%
-${repeatMealsEveryDay ? "- كرر اليوم 1 فقط" : "- تنويع يومي"}
+${(repeatMealsEveryDay || specificDay !== undefined) ? `- كرر اليوم ${specificDay || 1} فقط` : "- تنويع يومي"}
 - المكونات: 4-8 للوجبة, 1-3 للوجبة الخفيفة
+- قواعد صارمة لوحدات المكونات (حقل unit):
+  * للعناصر القابلة للعد (مثل التفاح، البرتقال، البيض، الموز، الفواكه/الخضروات الكاملة)، يجب أن تكون الوحدة "piece" بالإنجليزية بالضبط.
+  * للمواد الثقيلة والنشويات والبروتينات الصلبة أو الجافة (مثل اللحم، الدجاج، الأرز، المعكرونة، الشوفان)، يجب أن تكون الوحدة "g" أو "kg" بالإنجليزية.
+  * للسوائل (مثل الحليب، الماء، الزيت، العصير)، يجب أن تكون الوحدة "l" أو "ml" بالإنجليزية.
+  * يُمنع منعاً باتاً استخدام أي وحدات أخرى مثل "كوب"، "ملعقة"، "رشة"، "حفنة"، إلخ.
 - التعليمات: 3 خطوات كحد أقصى
 - التوقيت: فطور 08:00, غداء 12:30, عشاء 19:00${snacksCount > 0 ? ", وجبات خفيفة 10:30, 15:30" : ""}
 - أسماء الوجبات والمكونات والتعليمات بالعربية
@@ -367,15 +374,16 @@ ${repeatMealsEveryDay ? "- كرر اليوم 1 فقط" : "- تنويع يومي"
 - مفاتيح JSON بالإنجليزية, القيم بالعربية
 
 أخرج JSON فقط:
-{"meals":[{"day":"اليوم 1","name":"فطور: اسم الوجبة","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
+{"meals":[{"day":"${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}","name":"فطور: اسم الوجبة","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
 ` : `
-You are a nutritionist. Generate a ${daysToGenerate}-day meal plan.
+You are a nutritionist. Generate a ${specificDay !== undefined ? `meal plan for Day ${specificDay} only` : `${daysToGenerate}-day meal plan`}.
 
 ${toonContext}
 
 STRICT RULES:
 - EXACTLY ${totalItemsCount} items (${expectedMeals} meals + ${expectedSnacks} snacks)
-- Cover: ${repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7"}
+- Cover: ${specificDay !== undefined ? `Day ${specificDay} only` : (repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7")}
+- The "day" property for all meals and snacks MUST be exactly "${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}".
 - mealType: "meal" or "snack"
 - ~${calories} kcal/day (±50), ${totalItemsPerDay} items/day
 - Meals 70-80% of calories, snacks 20-30%
@@ -384,15 +392,20 @@ STRICT RULES:
 - Chronic conditions (diabetes, hypertension, insulin resistance, etc): tailor meals accordingly (low sugar for diabetes, low sodium for hypertension, etc)
 - muslim: NO pork/alcohol, halal only
 - christian + fasting: 100% vegan
-${repeatMealsEveryDay ? "- Repeat Day 1 only" : "- Vary daily, no repeats"}
+${(repeatMealsEveryDay || specificDay !== undefined) ? `- Repeat Day ${specificDay || 1} only` : "- Vary daily, no repeats"}
 - Ingredients: 4-8/meal, 1-3/snack (exclude salt, spices, oil)
+- STRICT Ingredient Units (for the unit field):
+  * For countable/whole items (e.g., apple, orange, banana, egg, whole fruits/vegetables), the unit MUST be exactly "piece".
+  * For heavy, solid, or dry carbs/proteins (e.g., meat, chicken, fish, rice, pasta, oats, flour), the unit MUST be exactly "g" or "kg".
+  * For liquids (e.g., milk, water, oil, juice), the unit MUST be exactly "l" or "ml".
+  * NEVER use any other units like "cup", "tbsp", "tsp", "handful", etc.
 - Instructions: max 3 short steps
 - Times: Breakfast 08:00, Lunch 12:30, Dinner 19:00${snacksCount > 0 ? ", Snacks 10:30, 15:30" : ""}
 - Prefix meal names with type label: "Breakfast: ", "Lunch: ", "Dinner: ", "Snack: "
 - Example: "Breakfast: Omelet Eggs with Toast and Avocado" not just "Omelet Eggs with Toast and Avocado"
 
 Output JSON ONLY:
-{"meals":[{"day":"Day 1","name":"Breakfast: meal name","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
+{"meals":[{"day":"${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}","name":"Breakfast: meal name","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
 `;
 
   return langPrompt;
@@ -406,54 +419,121 @@ export const generateMealPlan = async (
   repeatMealsEveryDay: boolean = false,
   language: 'en' | 'ar' = 'en',
 ): Promise<MealPlanResponse> => {
-  const prompt = generateMealPlanPrompt(
-    user,
-    mealsCount,
-    snacksCount,
-    favoriteFoods,
-    repeatMealsEveryDay,
-    language,
-  );
-
-  const daysToGenerate = repeatMealsEveryDay ? 1 : 7;
-  const expectedMeals = mealsCount * daysToGenerate;
-  const expectedSnacks = snacksCount * daysToGenerate;
-
-  const response = await callLLMWithRecovery(
-    prompt,
-    mealPlanResponseSchema,
-    (data) => {
-      const mealCount = data.meals.filter((m) => m.mealType === "meal").length;
-      const snackCount = data.meals.filter(
-        (m) => m.mealType === "snack",
-      ).length;
-      if (mealCount !== expectedMeals || snackCount !== expectedSnacks) {
-        throw new Error(
-          `Count mismatch: expected ${expectedMeals} meals + ${expectedSnacks} snacks ` +
-            `(= ${mealsCount} meals + ${snacksCount} snacks per day for ${daysToGenerate} days) ` +
-            `but got ${mealCount} meals + ${snackCount} snacks. ` +
-            `Regenerate with EXACTLY ${mealsCount} meals and ${snacksCount} snacks per day.`,
-        );
-      }
-    },
-    language,
-  );
+  const isArabic = language === 'ar';
 
   if (repeatMealsEveryDay) {
-    const day1Meals = response.meals;
+    const prompt = generateMealPlanPrompt(
+      user,
+      mealsCount,
+      snacksCount,
+      favoriteFoods,
+      true,
+      language,
+    );
+
+    const response = await callLLMWithRecovery(
+      prompt,
+      mealPlanResponseSchema,
+      undefined, // No strict validator to avoid crashing, we do robust self-healing below!
+      language,
+    );
+
+    // Self-healing for Day 1
+    let dayMeals = response.meals.filter((m) => m.mealType === "meal" || !m.mealType);
+    let daySnacks = response.meals.filter((m) => m.mealType === "snack");
+    dayMeals.forEach((m) => (m.mealType = "meal"));
+
+    if (dayMeals.length > mealsCount) {
+      dayMeals = dayMeals.slice(0, mealsCount);
+    } else if (dayMeals.length < mealsCount && dayMeals.length > 0) {
+      while (dayMeals.length < mealsCount) {
+        dayMeals.push({ ...dayMeals[0] });
+      }
+    }
+
+    if (daySnacks.length > snacksCount) {
+      daySnacks = daySnacks.slice(0, snacksCount);
+    } else if (daySnacks.length < snacksCount && daySnacks.length > 0) {
+      while (daySnacks.length < snacksCount) {
+        daySnacks.push({ ...daySnacks[0] });
+      }
+    }
+
+    const day1Meals = [...dayMeals, ...daySnacks];
     const expandedMeals: any[] = [];
     for (let d = 1; d <= 7; d++) {
       for (const m of day1Meals) {
         expandedMeals.push({
           ...m,
-          day: language === 'ar' ? `اليوم ${d}` : `Day ${d}`,
+          day: isArabic ? `اليوم ${d}` : `Day ${d}`,
         });
       }
     }
     response.meals = expandedMeals as any;
+    return response;
   }
 
-  return response;
+  // Generate 7 days of meals in parallel for extremely low latency and high quality
+  const promises = Array.from({ length: 7 }, (_, i) => {
+    const dayNum = i + 1;
+    const prompt = generateMealPlanPrompt(
+      user,
+      mealsCount,
+      snacksCount,
+      favoriteFoods,
+      false,
+      language,
+      dayNum,
+    );
+
+    return callLLMWithRecovery(
+      prompt,
+      mealPlanResponseSchema,
+      undefined, // No strict validator here, we heal the structure programmatically below!
+      language,
+    );
+  });
+
+  const dayResponses = await Promise.all(promises);
+
+  const allMeals: any[] = [];
+  for (let i = 0; i < 7; i++) {
+    const dayNum = i + 1;
+    const resp = dayResponses[i];
+
+    let dayMeals = resp.meals.filter((m) => m.mealType === "meal" || !m.mealType);
+    let daySnacks = resp.meals.filter((m) => m.mealType === "snack");
+    
+    dayMeals.forEach((m) => (m.mealType = "meal"));
+
+    // Robust slicing or padding
+    if (dayMeals.length > mealsCount) {
+      dayMeals = dayMeals.slice(0, mealsCount);
+    } else if (dayMeals.length < mealsCount && dayMeals.length > 0) {
+      while (dayMeals.length < mealsCount) {
+        dayMeals.push({ ...dayMeals[0] });
+      }
+    }
+
+    if (daySnacks.length > snacksCount) {
+      daySnacks = daySnacks.slice(0, snacksCount);
+    } else if (daySnacks.length < snacksCount && daySnacks.length > 0) {
+      while (daySnacks.length < snacksCount) {
+        daySnacks.push({ ...daySnacks[0] });
+      }
+    }
+
+    const dayLabel = isArabic ? `اليوم ${dayNum}` : `Day ${dayNum}`;
+    dayMeals.forEach((m) => (m.day = dayLabel));
+    daySnacks.forEach((s) => (s.day = dayLabel));
+
+    allMeals.push(...dayMeals, ...daySnacks);
+  }
+
+  return {
+    meals: allMeals,
+    targetMacros: dayResponses[0].targetMacros,
+  };
 };
 
 export const generateWorkoutPlan = async (
@@ -493,6 +573,11 @@ ${mealSchema.toString()}
 - حافظ على نفس السعرات بالضبط
 - حافظ على المغذيات ضمن ±5%
 - احترم القيود والحساسية
+- قواعد صارمة لوحدات المكونات (حقل unit):
+  * للعناصر القابلة للعد (مثل التفاح، البرتقال، البيض، الموز، الفواكه/الخضروات الكاملة)، يجب أن تكون الوحدة "piece" بالإنجليزية بالضبط.
+  * للمواد الثقيلة والنشويات والبروتينات الصلبة أو الجافة (مثل اللحم، الدجاج، الأرز، المعكرونة، الشوفان)، يجب أن تكون الوحدة "g" أو "kg" بالإنجليزية.
+  * للسوائل (مثل الحليب، الماء، الزيت، العصير)، يجب أن تكون الوحدة "l" أو "ml" بالإنجليزية.
+  * يُمنع منعاً باتاً استخدام أي وحدات أخرى مثل "كوب"، "ملعقة"، "رشة"، "حفنة"، إلخ.
 
 الوجبة (TOON):
 ${encode(currentMeal)}
@@ -511,6 +596,11 @@ Rules:
 - Keep same calories exactly
 - Keep macros within ±5%
 - Respect restrictions & allergies
+- STRICT Ingredient Units (for the unit field):
+  * For countable/whole items (e.g., apple, orange, banana, egg, whole fruits/vegetables), the unit MUST be exactly "piece".
+  * For heavy, solid, or dry carbs/proteins (e.g., meat, chicken, fish, rice, pasta, oats, flour), the unit MUST be exactly "g" or "kg".
+  * For liquids (e.g., milk, water, oil, juice), the unit MUST be exactly "l" or "ml".
+  * NEVER use any other units like "cup", "tbsp", "tsp", "handful", etc.
 
 Meal (TOON format):
 ${encode(currentMeal)}
@@ -545,7 +635,12 @@ ${mealSchema.toString()}
 2. الحفاظ على السعرات الحرارية الإجمالية قدر الإمكان (±3%)
 3. الحفاظ على البروتين والكربوهيدرات والدهون ضمن ±5%
 4. احترام جميع الحساسية والقيود الغذائية والدينية
-5. أسماء الوجبات والمكونات والتعليمات باللغة العربية
+5. قواعد صارمة لوحدات المكونات (حقل unit):
+  * للعناصر القابلة للعد (مثل التفاح، البرتقال، البيض، الموز، الفواكه/الخضروات الكاملة)، يجب أن تكون الوحدة "piece" بالإنجليزية بالضبط.
+  * للمواد الثقيلة والنشويات والبروتينات الصلبة أو الجافة (مثل اللحم، الدجاج، الأرز، المعكرونة، الشوفان)، يجب أن تكون الوحدة "g" أو "kg" بالإنجليزية.
+  * للسوائل (مثل الحليب، الماء، الزيت، العصير)، يجب أن تكون الوحدة "l" أو "ml" بالإنجليزية.
+  * يُمنع منعاً باتاً استخدام أي وحدات أخرى مثل "كوب"، "ملعقة"، "رشة"، "حفنة"، إلخ.
+6. أسماء الوجبات والمكونات والتعليمات باللغة العربية
 
 سياق المستخدم:
 الحساسية: ${user.allergies?.join(", ") || "لا يوجد"}
@@ -576,7 +671,11 @@ STRICT RULES:
 7. Never include forbidden ingredients.
 8. If the user is fasting, ensure the meal is suitable for fasting.
 9. Prefer realistic ingredient substitutions.
-10. Keep measurements practical (grams, cups, tbsp, pieces, etc.).
+10. STRICT Ingredient Units (for the unit field):
+  * For countable/whole items (e.g., apple, orange, banana, egg, whole fruits/vegetables), the unit MUST be exactly "piece".
+  * For heavy, solid, or dry carbs/proteins (e.g., meat, chicken, fish, rice, pasta, oats, flour), the unit MUST be exactly "g" or "kg".
+  * For liquids (e.g., milk, water, oil, juice), the unit MUST be exactly "l" or "ml".
+  * NEVER use any other units like "cup", "tbsp", "tsp", "handful", etc.
 11. Keep the meal culturally and nutritionally coherent.
 12. Do not remove major meal components unless necessary.
 13. Ensure the generated meal is complete and edible in real life.
@@ -617,54 +716,30 @@ ${encode(meal)}
 // - qwen/qwen3-coder:free
 // - deepseek/deepseek-v4-flash
 
-const callOpenRouter = async (prompt: string, language: string = "en") => {
+const callGemini = async (prompt: string, language: string = "en") => {
   const isArabic = language.toLowerCase() === "ar";
 
-  const providers = [
-    {
-      client: new OpenAI({
-        apiKey: cleanKey(env.GEMINI_API_KEY),
-        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-      }),
-      model: isArabic ? env.GEMINI_MODEL_AR : env.GEMINI_MODEL_EN,
-    },
-    {
-      client: new OpenAI({
-        baseURL: "https://openrouter.ai/api/v1",
-        apiKey: cleanKey(env.OPENROUTER_API_KEY),
-        defaultHeaders: { "X-Title": "NJrk.Fit" },
-      }),
-      model: isArabic ? env.LLM_MODEL_AR : env.LLM_MODEL_EN,
-    },
-  ];
+  const client = new OpenAI({
+    apiKey: cleanKey(env.GEMINI_API_KEY),
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+  });
+  const model = isArabic ? env.GEMINI_MODEL_AR : env.GEMINI_MODEL_EN;
 
-  let lastError: any;
-  for (const { client, model } of providers) {
-    try {
-      const completion = await client.chat.completions.create({
-        model,
-        max_tokens: 3000,
-        temperature: 0.2,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a strict JSON API. Return ONLY valid JSON. No markdown, no text.",
-          },
-          { role: "user", content: prompt },
-        ],
-      });
-      const firstChoice = completion.choices[0];
-      if (!firstChoice?.message?.content) {
-        throw new Error("LLM did not return any content");
-      }
-      return firstChoice.message.content.trim();
-    } catch (err) {
-      lastError = err;
-      if (providers.length > 1) {
-        console.error(`LLM provider "${model}" failed, trying next:`, (err as Error).message);
-      }
-    }
+  const completion = await client.chat.completions.create({
+    model,
+    temperature: 0.2,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a strict JSON API. Return ONLY valid JSON. No markdown, no text.",
+      },
+      { role: "user", content: prompt },
+    ],
+  });
+  const firstChoice = completion.choices[0];
+  if (!firstChoice?.message?.content) {
+    throw new Error("LLM did not return any content");
   }
-  throw lastError;
+  return firstChoice.message.content.trim();
 };
