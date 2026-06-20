@@ -196,7 +196,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             animate="visible"
             variants={staggerContainer}
           >
-            <motion.div
+            {/* <motion.div
               variants={fadeInUp}
               className="inline-flex items-center gap-2 bg-white border border-green-100 text-green-800 px-4 py-2 rounded-full font-bold text-sm mb-8 shadow-sm"
             >
@@ -205,7 +205,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-600" />
               </span>
               {t('landing.heroBadge')}
-            </motion.div>
+            </motion.div> */}
 
             <motion.h1
               variants={fadeInUp}
