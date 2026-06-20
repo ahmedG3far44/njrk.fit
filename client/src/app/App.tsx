@@ -34,6 +34,7 @@ const AdminUsersPage = lazy(() => import("./admin/pages/AdminUsersPage").then(m 
 const AdminAnalyticsPage = lazy(() => import("./admin/pages/AdminAnalyticsPage").then(m => ({ default: m.AdminAnalyticsPage })));
 const AdminSubscriptionsPage = lazy(() => import("./admin/pages/AdminSubscriptionsPage").then(m => ({ default: m.AdminSubscriptionsPage })));
 const AdminSettingsPage = lazy(() => import("./admin/pages/AdminSettingsPage").then(m => ({ default: m.AdminSettingsPage })));
+const AdminPostsPage = lazy(() => import("./admin/pages/AdminPostsPage").then(m => ({ default: m.AdminPostsPage })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -60,6 +61,7 @@ const AdminApp = () => {
            adminPath === 'analytics' ? <AdminAnalyticsPage /> :
            adminPath === 'subscriptions' ? <AdminSubscriptionsPage /> :
            adminPath === 'settings' ? <AdminSettingsPage /> :
+           adminPath === 'posts' ? <AdminPostsPage /> :
            <AdminDashboardPage />}
         </AdminLayout>
       </Suspense>

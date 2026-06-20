@@ -7,6 +7,7 @@ import {
   BarChart3,
   CreditCard,
   Settings,
+  MessageCircle,
   LogOut,
   Menu,
   X,
@@ -20,6 +21,7 @@ const navItems = [
   { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/admin/analytics' },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, path: '/admin/subscriptions' },
+  { id: 'posts', label: 'Posts', icon: MessageCircle, path: '/admin/posts' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
