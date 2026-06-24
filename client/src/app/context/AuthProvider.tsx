@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import { gamificationService } from '../services/gamificationService';
 import i18n from '../i18n/i18n';
 
@@ -153,8 +153,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       saveUserToStorage(response.user);
       syncLanguage(response.user);
-    } catch {
-      clearSession();
+    } catch (error) {
+      // Only clear session on explicit auth failures, not transient network errors
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
+      } else {
+        console.warn('Session load failed (keeping cached user):', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -166,8 +171,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.user);
       saveUserToStorage(response.user);
       syncLanguage(response.user);
-    } catch {
-      clearSession();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearSession();
+      } else {
+        console.warn('Refresh user failed (keeping cached user):', error);
+      }
     }
   }, [clearSession]);
 

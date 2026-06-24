@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
+import { api, ApiError } from "../lib/api";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
+interface VerifyResponse {
+  message: string;
+}
 
 export const VerifyEmailPage = () => {
   const { token } = useParams();
@@ -10,27 +13,30 @@ export const VerifyEmailPage = () => {
 
   useEffect(() => {
     const verifyToken = async () => {
-      try {
-        // نكلم الباك اند ونتأكد من التوكن
-        const response = await fetch(`${API_BASE_URL}/auth/verify-email/${token}`);
-        const data = await response.json();
+      if (!token) return;
 
-        if (response.ok) {
-          setStatus("success");
-          setMessage(data.message || "تم توثيق حسابك بنجاح!");
-        } else {
-          setStatus("error");
-          setMessage(data.error || "فشل توثيق الحساب، قد يكون الرابط منتهي الصلاحية.");
-        }
-      } catch (error) {
+      try {
+        const data = await api.get<VerifyResponse>(
+          `/auth/verify-email/${token}`,
+          { timeout: 15000 }
+        );
+        setStatus("success");
+        setMessage(data.message || "تم توثيق حسابك بنجاح!");
+      } catch (error: unknown) {
         setStatus("error");
-        setMessage("حدث خطأ في الاتصال بالخادم، الرجاء المحاولة لاحقاً.");
+        if (error instanceof ApiError) {
+          const errorMsg =
+            error.data && typeof error.data === "object" && "error" in (error.data as object)
+              ? String((error.data as { error: string }).error)
+              : "فشل توثيق الحساب، قد يكون الرابط منتهي الصلاحية.";
+          setMessage(errorMsg);
+        } else {
+          setMessage("حدث خطأ في الاتصال بالخادم، الرجاء المحاولة لاحقاً.");
+        }
       }
     };
 
-    if (token) {
-      verifyToken();
-    }
+    verifyToken();
   }, [token]);
 
   return (

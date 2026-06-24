@@ -1,3 +1,5 @@
+const NETWORK_RETRY_COUNT = 2;
+
 type ApiHeaders = Record<string, string>;
 
 type RequestInterceptor = (config: RequestInit) => RequestInit | Promise<RequestInit>;
@@ -16,7 +18,9 @@ class ApiError extends Error {
   constructor(response: Response, data?: unknown) {
     const message = (data && typeof data === 'object' && ('error' in data || 'message' in data))
       ? String((data as Record<string, unknown>).error || (data as Record<string, unknown>).message)
-      : `API request failed with status ${response.status}`;
+      : response.status === 0
+        ? 'تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.'
+        : `API request failed with status ${response.status}`;
     
     super(message);
     this.name = 'ApiError';
@@ -67,19 +71,34 @@ const applyResponseInterceptors = async (response: Response) => {
   return nextResponse;
 };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const refreshAccessToken = async () => {
   if (!refreshPromise) {
-    refreshPromise = fetch(resolveUrl(AUTH_REFRESH_ENDPOINT), {
-      method: 'POST',
-      credentials: 'include',
-    }).then((response) => {
-      if (!response.ok) {
+    refreshPromise = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(resolveUrl(AUTH_REFRESH_ENDPOINT), {
+          method: 'POST',
+          credentials: 'include',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          window.dispatchEvent(new Event('njerka:unauthorized'));
+          throw new ApiError(response);
+        }
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
         window.dispatchEvent(new Event('njerka:unauthorized'));
-        throw new ApiError(response);
+        throw error;
+      } finally {
+        clearTimeout(timer);
+        refreshPromise = null;
       }
-    }).finally(() => {
-      refreshPromise = null;
-    });
+    })();
   }
 
   return refreshPromise;
@@ -115,37 +134,52 @@ export const api = {
       ...(requestOptions.headers as ApiHeaders | undefined),
     };
 
-    const controller = new AbortController();
-    const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
+    const baseConfig = await applyRequestInterceptors({ ...requestOptions, headers });
 
-    const config = await applyRequestInterceptors({ ...requestOptions, headers, signal: controller.signal });
-    let response: Response;
-    try {
-      response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
+    let lastError: unknown;
 
-    if (response.status === 401 && !skipAuthRefresh) {
+    for (let attempt = 0; attempt <= NETWORK_RETRY_COUNT; attempt++) {
+      const controller = new AbortController();
+      const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
+
       try {
-        await refreshAccessToken();
-        response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
-      } catch {
-        window.dispatchEvent(new Event('njerka:unauthorized'));
-        throw new ApiError(response);
+        const config = { ...baseConfig, signal: controller.signal };
+        let response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+
+        if (response.status === 401 && !skipAuthRefresh) {
+          await refreshAccessToken();
+          response = await applyResponseInterceptors(await fetch(resolveUrl(endpoint), config));
+        }
+
+        if (!response.ok) {
+          let errorData: unknown;
+          try {
+            errorData = await response.clone().json();
+          } catch {
+            // Non-JSON error response
+          }
+          throw new ApiError(response, errorData);
+        }
+
+        return parseResponse<T>(response);
+      } catch (error) {
+        lastError = error;
+
+        if (
+          attempt < NETWORK_RETRY_COUNT &&
+          (error instanceof TypeError || (error instanceof DOMException && error.name === 'AbortError'))
+        ) {
+          await delay(Math.pow(2, attempt) * 1000);
+          continue;
+        }
+
+        throw error;
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
-    if (!response.ok) {
-      let errorData: unknown;
-      try {
-        errorData = await response.clone().json();
-      } catch {
-        // Non-JSON error response
-      }
-      throw new ApiError(response, errorData);
-    }
 
-    return parseResponse<T>(response);
+    throw lastError;
   },
 
   get<T>(endpoint: string, options?: ApiRequestOptions) {

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 // تأكد من مسار الشعار حسب ترتيب ملفاتك
 import NjerkaLogo from '../components/NjerkaLogo'; 
 
@@ -38,10 +38,15 @@ export const ResetPasswordPage = () => {
       
       toast.success('تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.');
       navigate('/login'); // نرجعه لصفحة اللوقن
-    } catch (err: any) {
-      console.log(err);
-      const message = err.data?.error || err.message || 'رابط غير صالح أو منتهي الصلاحية.';
-      setError(message);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        const message = err.data && typeof err.data === 'object' && 'error' in (err.data as object)
+          ? String((err.data as { error: string }).error)
+          : err.message;
+        setError(message);
+      } else {
+        setError('رابط غير صالح أو منتهي الصلاحية.');
+      }
     } finally {
       setIsLoading(false);
     }

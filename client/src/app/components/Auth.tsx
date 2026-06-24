@@ -4,7 +4,7 @@ import { ArrowRight, Mail, Lock, User, Chrome, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
-import { api } from '../lib/api';
+import { api, ApiError } from '../lib/api';
 import NjerkaLogo from './NjerkaLogo';
 import { Button } from './ui/button';
 
@@ -98,20 +98,22 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
         }
       }
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string }; status?: number }; data?: { error?: string }; message?: string; status?: number };
-      const message = 
-        err.response?.data?.error || 
-        (err.data as { error?: string } | undefined)?.error || 
-        err.message || 
-        'Something went wrong. Please try again.';
+      if (error instanceof ApiError) {
+        const message = error.data && typeof error.data === 'object' && 'error' in (error.data as object)
+          ? String((error.data as { error: string }).error)
+          : error.message;
 
-      const status = err.response?.status || err.status || 400;
-
-      if (status === 401) {
-        setErrors({ password: 'Invalid email or password' });
-      } else if (status === 400) {
-        setErrors({ email: message });
+        if (error.status === 401) {
+          setErrors({ password: 'Invalid email or password' });
+        } else if (error.status === 400) {
+          setErrors({ email: message });
+        } else {
+          toast.error(message);
+        }
+      } else if (error instanceof TypeError) {
+        toast.error('تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.');
       } else {
+        const message = (error as { message?: string }).message || 'Something went wrong. Please try again.';
         toast.error(message);
       }
     } finally {
@@ -141,9 +143,16 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onRegister, initialView = '
       
       toast.success(t('auth.resetLinkSent'));
     } catch (err: unknown) {
-      const error = err as { data?: { error?: string }; message?: string };
-      const message = error.data?.error || error.message || t('auth.forgotPasswordFailed');
-      toast.error(message);
+      if (err instanceof ApiError) {
+        const message = err.data && typeof err.data === 'object' && 'error' in (err.data as object)
+          ? String((err.data as { error: string }).error)
+          : err.message;
+        toast.error(message);
+      } else if (err instanceof TypeError) {
+        toast.error('تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.');
+      } else {
+        toast.error(t('auth.forgotPasswordFailed'));
+      }
     }
   };
 
