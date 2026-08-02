@@ -60,7 +60,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.json({
-    name: "Njerak.fit API",
+    name: "Njerka.fit API",
     version: "1.0.0",
     environment: env.NODE_ENV,
   });

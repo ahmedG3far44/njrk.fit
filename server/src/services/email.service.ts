@@ -1,26 +1,15 @@
 import { env } from "../configs/env";
-import nodemailer from "nodemailer";
-
-export const transporter = nodemailer.createTransport({
-  host: env.EMAIL_HOST,
-  port: Number(env.EMAIL_PORT),
-  secure: Number(env.EMAIL_PORT) === 465,
-  auth: {
-    user: env.EMAIL_USER,
-    pass: env.EMAIL_PASSWORD,
-  },
-});
-
+import { resend } from "../configs/resend";
 
 export const sendEmail = async (html: string, to: string, subject: string) => {
-const mailOptions = {
-    from: env.EMAIL_USER,
+  const mailOptions = {
+    from: env.EMAIL_FROM,
     to,
     subject,
     html,
   };
   try {
-    await transporter.sendMail(mailOptions);
+    await resend.emails.send(mailOptions);
   } catch (error) {
     console.log("Failed to send email:", error);
   }
@@ -47,4 +36,3 @@ export const sendSubscriptionEmail = async (to: string, name: string) => {
   `;
   await sendEmail(html, to, subject);
 };
-

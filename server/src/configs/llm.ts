@@ -7,13 +7,15 @@ export const cleanKey = (key: string): string => {
   return key.trim().replace(/^"|"$/g, "");
 };
 
-export const getLLMClientAndModel = (language: string = "en") => {
-  const isArabic = language.toLowerCase() === "ar";
-
+export const getLLMClientAndModel = (_language: string = "en") => {
   const client = new OpenAI({
-    apiKey: cleanKey(env.GEMINI_API_KEY),
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: cleanKey(env.OPEN_ROUTER_API_KEY),
+    defaultHeaders: {
+      "HTTP-Referer": "https://njerka.xyz",
+      "X-OpenRouter-Title": "Njerka.fit",
+    },
   });
-  const model = isArabic ? env.GEMINI_MODEL_AR : env.GEMINI_MODEL_EN;
+  const model = env.OPEN_ROUTER_MODEL || "openrouter/free";
   return { client, model };
 };

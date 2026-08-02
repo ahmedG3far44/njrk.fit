@@ -11,7 +11,6 @@ import {
 import { Meal, UserContext } from "../types";
 import { cleanKey } from "../configs/llm";
 import OpenAI from "openai";
-// import { normalizeMeal } from '../utils/parser';
 
 const ingredientSchema = z.object({
   name: z.string(),
@@ -74,7 +73,10 @@ const extractJSON = (text: string): any => {
   try {
     return JSON.parse(text);
   } catch (e) {
-    console.error("extractJSON: direct parse failed:", (e as Error)?.message?.slice(0, 100));
+    console.error(
+      "extractJSON: direct parse failed:",
+      (e as Error)?.message?.slice(0, 100),
+    );
   }
 
   const match = text.match(/```json([\s\S]*?)```/i);
@@ -82,7 +84,10 @@ const extractJSON = (text: string): any => {
     try {
       return JSON.parse(match[1]);
     } catch (e) {
-      console.error("extractJSON: code block parse failed:", (e as Error)?.message?.slice(0, 100));
+      console.error(
+        "extractJSON: code block parse failed:",
+        (e as Error)?.message?.slice(0, 100),
+      );
     }
   }
 
@@ -93,12 +98,18 @@ const extractJSON = (text: string): any => {
     try {
       return JSON.parse(sliced);
     } catch (e) {
-      console.error("extractJSON: brace slice parse failed:", (e as Error)?.message?.slice(0, 100));
+      console.error(
+        "extractJSON: brace slice parse failed:",
+        (e as Error)?.message?.slice(0, 100),
+      );
     }
   }
 
   // Log a preview of the raw LLM response for debugging
-  console.error("extractJSON: all parse strategies failed. Raw response preview:", text.slice(0, 500));
+  console.error(
+    "extractJSON: all parse strategies failed. Raw response preview:",
+    text.slice(0, 500),
+  );
   throw new Error("Failed to extract valid JSON from LLM");
 };
 
@@ -151,16 +162,27 @@ const callLLMWithRecovery = async <T>(
 };
 
 const dayNameMap: Record<string, string> = {
-  monday: "Day 1", mon: "Day 1",
-  tuesday: "Day 2", tue: "Day 2",
-  wednesday: "Day 3", wed: "Day 3",
-  thursday: "Day 4", thu: "Day 4",
-  friday: "Day 5", fri: "Day 5",
-  saturday: "Day 6", sat: "Day 6",
-  sunday: "Day 7", sun: "Day 7",
+  monday: "Day 1",
+  mon: "Day 1",
+  tuesday: "Day 2",
+  tue: "Day 2",
+  wednesday: "Day 3",
+  wed: "Day 3",
+  thursday: "Day 4",
+  thu: "Day 4",
+  friday: "Day 5",
+  fri: "Day 5",
+  saturday: "Day 6",
+  sat: "Day 6",
+  sunday: "Day 7",
+  sun: "Day 7",
 };
 
-const normalizeDay = (day: string, index: number, itemsPerDay: number): string => {
+const normalizeDay = (
+  day: string,
+  index: number,
+  itemsPerDay: number,
+): string => {
   if (!day) return `Day ${Math.floor(index / itemsPerDay) + 1}`;
   const lower = day.trim().toLowerCase();
   if (dayNameMap[lower]) return dayNameMap[lower];
@@ -173,7 +195,8 @@ const normalizeDay = (day: string, index: number, itemsPerDay: number): string =
 
 const normalizeLLMOutput = (data: any) => {
   if (data?.meals) {
-    const itemsPerDay = data.meals.length > 7 ? Math.round(data.meals.length / 7) : 3;
+    const itemsPerDay =
+      data.meals.length > 7 ? Math.round(data.meals.length / 7) : 3;
     data.meals = data.meals.map((meal: any, idx: number) => ({
       ...meal,
       day: normalizeDay(meal?.day, idx, itemsPerDay),
@@ -197,9 +220,9 @@ const generateWorkoutPlanPrompt = (
   training_days: number,
   training_program: string,
   duration: number = 60,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
 ): string => {
-  const isArabic = language === 'ar';
+  const isArabic = language === "ar";
   const activityLevel = user.activityLevel || "moderate";
 
   const toonContext = encode({
@@ -216,34 +239,81 @@ const generateWorkoutPlanPrompt = (
   });
 
   const exercisesByDuration: Record<number, number> = {
-    30: 4, 45: 5, 60: 7, 75: 8, 90: 10,
+    30: 4,
+    45: 5,
+    60: 7,
+    75: 8,
+    90: 10,
   };
-  const targetExercises = exercisesByDuration[duration] || Math.round(duration / 9);
+  const targetExercises =
+    exercisesByDuration[duration] || Math.round(duration / 9);
 
   const exerciseDBList = [
-    "bench press", "incline bench press", "deadlift", "romanian deadlift",
-    "overhead press", "shoulder press", "lateral raise", "front raise",
-    "barbell row", "bent over row", "dumbbell row", "pull up", "lat pulldown",
-    "bicep curl", "hammer curl",
-    "triceps extension", "skull crusher",
-    "squat", "barbell squat", "goblet squat", "leg press",
-    "leg extension", "leg curl", "lunge", "dumbbell lunge",
-    "calf raise", "standing calf raise", "glute bridge", "hip thrust",
-    "plank", "side plank", "crunch", "sit up",
-    "push up", "mountain climber", "burpee", "jumping jack", "high knees",
-    "dumbbell step up", "cable crossover", "face pull", "dumbbell press",
+    "bench press",
+    "incline bench press",
+    "deadlift",
+    "romanian deadlift",
+    "overhead press",
+    "shoulder press",
+    "lateral raise",
+    "front raise",
+    "barbell row",
+    "bent over row",
+    "dumbbell row",
+    "pull up",
+    "lat pulldown",
+    "bicep curl",
+    "hammer curl",
+    "triceps extension",
+    "skull crusher",
+    "squat",
+    "barbell squat",
+    "goblet squat",
+    "leg press",
+    "leg extension",
+    "leg curl",
+    "lunge",
+    "dumbbell lunge",
+    "calf raise",
+    "standing calf raise",
+    "glute bridge",
+    "hip thrust",
+    "plank",
+    "side plank",
+    "crunch",
+    "sit up",
+    "push up",
+    "mountain climber",
+    "burpee",
+    "jumping jack",
+    "high knees",
+    "dumbbell step up",
+    "cable crossover",
+    "face pull",
+    "dumbbell press",
   ];
 
   const programDescriptions: Record<string, string> = {
-    "push_pull_legs": isArabic ? "دفع (صدر+كتف+ترايسبس) | سحب (ظهر+بايسيبس) | أرجل (كواد+هاسترينغ+غلوتس+كاف)" : "Push: Chest+Shoulders+Triceps | Pull: Back+Biceps | Legs: Quads+Hamstrings+Glutes+Calves",
-    "upper_lower": isArabic ? "علوي (صدر+ظهر+كتف+ذراعين) | سفلي (أرجل+غلوتس+بطن)" : "Upper: Chest+Back+Shoulders+Arms | Lower: Legs+Glutes+Core",
-    "anterior_posterior": isArabic ? "أمامي (صدر+كواد+كتف+بطن) | خلفي (ظهر+هاسترينغ+غلوتس+كاف+ترايسبس)" : "Anterior: Chest+Quads+Shoulders+Abs | Posterior: Back+Hamstrings+Glutes+Calves+Triceps",
-    "arnold_split": isArabic ? "صدر+ظهر | كتف+ذراعين | أرجل" : "Chest+Back | Shoulders+Arms | Legs",
-    "full_body": isArabic ? "كامل الجسم في كل يوم تدريب" : "Full body each training day",
-    "mixed": isArabic ? "مزيج من التقسيمات أعلاه" : "Mix of the above splits",
+    push_pull_legs: isArabic
+      ? "دفع (صدر+كتف+ترايسبس) | سحب (ظهر+بايسيبس) | أرجل (كواد+هاسترينغ+غلوتس+كاف)"
+      : "Push: Chest+Shoulders+Triceps | Pull: Back+Biceps | Legs: Quads+Hamstrings+Glutes+Calves",
+    upper_lower: isArabic
+      ? "علوي (صدر+ظهر+كتف+ذراعين) | سفلي (أرجل+غلوتس+بطن)"
+      : "Upper: Chest+Back+Shoulders+Arms | Lower: Legs+Glutes+Core",
+    anterior_posterior: isArabic
+      ? "أمامي (صدر+كواد+كتف+بطن) | خلفي (ظهر+هاسترينغ+غلوتس+كاف+ترايسبس)"
+      : "Anterior: Chest+Quads+Shoulders+Abs | Posterior: Back+Hamstrings+Glutes+Calves+Triceps",
+    arnold_split: isArabic
+      ? "صدر+ظهر | كتف+ذراعين | أرجل"
+      : "Chest+Back | Shoulders+Arms | Legs",
+    full_body: isArabic
+      ? "كامل الجسم في كل يوم تدريب"
+      : "Full body each training day",
+    mixed: isArabic ? "مزيج من التقسيمات أعلاه" : "Mix of the above splits",
   };
 
-  const langPrompt = isArabic ? `
+  const langPrompt = isArabic
+    ? `
 أنت مدرب لياقة. أنشئ خطة أسبوعية 7 أيام.
 
 ${toonContext}
@@ -266,7 +336,8 @@ ${exerciseDBList.join(", ")}
 
 أخرج JSON فقط:
 {"sessions":[{"dayOfWeek":"Monday","name":"","type":"Strength","durationMin":${duration},"estimatedCaloriesBurn":0,"exercises":[{"name":"","sets":3,"reps":"8-12"}]}]}
-` : `
+`
+    : `
 You are a fitness coach. Generate a 7-day weekly plan.
 
 ${toonContext}
@@ -299,10 +370,10 @@ const generateMealPlanPrompt = (
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
   specificDay?: number,
 ): string => {
-  const isArabic = language === 'ar';
+  const isArabic = language === "ar";
   const bmr = calculateBMR(user);
   const tdee = calculateTDEE(user, bmr);
   const dailyCalories = adjustCaloriesForGoal(tdee, user.goal);
@@ -319,7 +390,8 @@ const generateMealPlanPrompt = (
   const totalItemsPerDay = mealsCount + snacksCount;
 
   // Latency optimization: If repeating meals or doing single day, only generate 1 day
-  const daysToGenerate = (repeatMealsEveryDay || specificDay !== undefined) ? 1 : 7;
+  const daysToGenerate =
+    repeatMealsEveryDay || specificDay !== undefined ? 1 : 7;
   const totalItemsCount = totalItemsPerDay * daysToGenerate;
   const expectedMeals = mealsCount * daysToGenerate;
   const expectedSnacks = snacksCount * daysToGenerate;
@@ -342,14 +414,15 @@ const generateMealPlanPrompt = (
     },
   });
 
-  const langPrompt = isArabic ? `
+  const langPrompt = isArabic
+    ? `
 أنت خبير تغذية. أنشئ خطة ${specificDay !== undefined ? `اليوم ${specificDay}` : `${daysToGenerate} أيام`}.
 
 ${toonContext}
 
 قواعد صارمة:
 - بالضبط ${totalItemsCount} عنصر (${expectedMeals} وجبات + ${expectedSnacks} وجبات خفيفة)
-- الغطاء: ${specificDay !== undefined ? `اليوم ${specificDay} فقط` : (repeatMealsEveryDay ? "اليوم 1 فقط" : "اليوم 1 إلى 7")}
+- الغطاء: ${specificDay !== undefined ? `اليوم ${specificDay} فقط` : repeatMealsEveryDay ? "اليوم 1 فقط" : "اليوم 1 إلى 7"}
 - يجب أن يكون حقل "day" لجميع الوجبات والوجبات الخفيفة هو "${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}" بالضبط.
 - mealType: "meal" للوجبات، "snack" للوجبات الخفيفة
 - ~${calories} سعرة/يوم (±50)
@@ -359,7 +432,7 @@ ${toonContext}
 - الحالات المزمنة (السكري, الضغط, مقاومة الأنسولين..الخ): قدّم وجبات مناسبة لكل حالة (مثلاً قليل السكر للسكري, قليل الملح للضغط)
 - الدين "muslim": لا لحم خنزير, لا كحول, حلال فقط
 - الدين "christian" والصيام: نباتي 100%
-${(repeatMealsEveryDay || specificDay !== undefined) ? `- كرر اليوم ${specificDay || 1} فقط` : "- تنويع يومي"}
+${repeatMealsEveryDay || specificDay !== undefined ? `- كرر اليوم ${specificDay || 1} فقط` : "- تنويع يومي"}
 - المكونات: 4-8 للوجبة, 1-3 للوجبة الخفيفة
 - قواعد صارمة لوحدات المكونات (حقل unit):
   * للعناصر القابلة للعد (مثل التفاح، البرتقال، البيض، الموز، الفواكه/الخضروات الكاملة)، يجب أن تكون الوحدة "piece" بالإنجليزية بالضبط.
@@ -375,14 +448,15 @@ ${(repeatMealsEveryDay || specificDay !== undefined) ? `- كرر اليوم ${sp
 
 أخرج JSON فقط:
 {"meals":[{"day":"${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}","name":"فطور: اسم الوجبة","time":"08:00","mealType":"meal","macros":{"calories":0,"protein":0,"carbs":0,"fats":0},"ingredients":[{"name":"","quantity":100,"unit":"g"}],"instructions":[""]}],"targetMacros":{"calories":${calories},"protein":${protein},"carbs":${carbs},"fats":${fats}}}
-` : `
+`
+    : `
 You are a nutritionist. Generate a ${specificDay !== undefined ? `meal plan for Day ${specificDay} only` : `${daysToGenerate}-day meal plan`}.
 
 ${toonContext}
 
 STRICT RULES:
 - EXACTLY ${totalItemsCount} items (${expectedMeals} meals + ${expectedSnacks} snacks)
-- Cover: ${specificDay !== undefined ? `Day ${specificDay} only` : (repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7")}
+- Cover: ${specificDay !== undefined ? `Day ${specificDay} only` : repeatMealsEveryDay ? "Day 1 only" : "Day 1 through Day 7"}
 - The "day" property for all meals and snacks MUST be exactly "${isArabic ? `اليوم ${specificDay || 1}` : `Day ${specificDay || 1}`}".
 - mealType: "meal" or "snack"
 - ~${calories} kcal/day (±50), ${totalItemsPerDay} items/day
@@ -392,7 +466,7 @@ STRICT RULES:
 - Chronic conditions (diabetes, hypertension, insulin resistance, etc): tailor meals accordingly (low sugar for diabetes, low sodium for hypertension, etc)
 - muslim: NO pork/alcohol, halal only
 - christian + fasting: 100% vegan
-${(repeatMealsEveryDay || specificDay !== undefined) ? `- Repeat Day ${specificDay || 1} only` : "- Vary daily, no repeats"}
+${repeatMealsEveryDay || specificDay !== undefined ? `- Repeat Day ${specificDay || 1} only` : "- Vary daily, no repeats"}
 - Ingredients: 4-8/meal, 1-3/snack (exclude salt, spices, oil)
 - STRICT Ingredient Units (for the unit field):
   * For countable/whole items (e.g., apple, orange, banana, egg, whole fruits/vegetables), the unit MUST be exactly "piece".
@@ -417,9 +491,9 @@ export const generateMealPlan = async (
   snacksCount: number = 0,
   favoriteFoods: string[] = [],
   repeatMealsEveryDay: boolean = false,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
 ): Promise<MealPlanResponse> => {
-  const isArabic = language === 'ar';
+  const isArabic = language === "ar";
 
   if (repeatMealsEveryDay) {
     const prompt = generateMealPlanPrompt(
@@ -439,7 +513,9 @@ export const generateMealPlan = async (
     );
 
     // Self-healing for Day 1
-    let dayMeals = response.meals.filter((m) => m.mealType === "meal" || !m.mealType);
+    let dayMeals = response.meals.filter(
+      (m) => m.mealType === "meal" || !m.mealType,
+    );
     let daySnacks = response.meals.filter((m) => m.mealType === "snack");
     dayMeals.forEach((m) => (m.mealType = "meal"));
 
@@ -501,9 +577,11 @@ export const generateMealPlan = async (
     const dayNum = i + 1;
     const resp = dayResponses[i];
 
-    let dayMeals = resp.meals.filter((m) => m.mealType === "meal" || !m.mealType);
+    let dayMeals = resp.meals.filter(
+      (m) => m.mealType === "meal" || !m.mealType,
+    );
     let daySnacks = resp.meals.filter((m) => m.mealType === "snack");
-    
+
     dayMeals.forEach((m) => (m.mealType = "meal"));
 
     // Robust slicing or padding
@@ -541,7 +619,7 @@ export const generateWorkoutPlan = async (
   trainingProgram: string = "full_body",
   trainingDays: number = 3,
   duration: number = 60,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
 ): Promise<WorkoutPlanResponse> => {
   const prompt = generateWorkoutPlanPrompt(
     user,
@@ -551,17 +629,23 @@ export const generateWorkoutPlan = async (
     language,
   );
 
-  return callLLMWithRecovery(prompt, workoutPlanResponseSchema, undefined, language);
+  return callLLMWithRecovery(
+    prompt,
+    workoutPlanResponseSchema,
+    undefined,
+    language,
+  );
 };
 
 export const refineMeal = async (
   currentMeal: Meal,
   refinementPrompt: string,
   user: UserContext,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
 ): Promise<MealPlanRefineResponse> => {
-  const isArabic = language === 'ar';
-  const prompt = isArabic ? `
+  const isArabic = language === "ar";
+  const prompt = isArabic
+    ? `
 أعد JSON صالح فقط.
 
 ⚠️ مهم: مفاتيح JSON كلها بالإنجليزية (calories, protein, carbs, fats, mealType, day, name, time, macros, ingredients, instructions). لا تترجم المفاتيح. فقط القيم (النصوص) تكون بالعربية.
@@ -586,7 +670,8 @@ ${encode(currentMeal)}
 ${refinementPrompt}
 
 أخرج أسماء الوجبات والمكونات باللغة العربية.
-` : `
+`
+    : `
 Return ONLY valid JSON.
 
 Schema:
@@ -615,10 +700,11 @@ ${refinementPrompt}
 export const regenerateMeal = async (
   meal: Meal,
   user: UserContext,
-  language: 'en' | 'ar' = 'en',
+  language: "en" | "ar" = "en",
 ): Promise<MealPlanRefineResponse> => {
-  const isArabic = language === 'ar';
-  const prompt = isArabic ? `
+  const isArabic = language === "ar";
+  const prompt = isArabic
+    ? `
 أنت خبير تغذية بالذكاء الاصطناعي.
 
 مهمتك هي إعادة توليد الوجبة المقدمة باستخدام مكونات مختلفة مع الحفاظ على الملف الغذائي واحترام القيود الغذائية للمستخدم.
@@ -649,7 +735,8 @@ ${mealSchema.toString()}
 
 الوجبة الأصلية (TOON):
 ${encode(meal)}
-` : `
+`
+    : `
 You are a professional nutritionist AI.
 
 Your task is to regenerate the provided meal using DIFFERENT ingredients while preserving the nutritional profile and respecting the user's dietary constraints.
@@ -699,35 +786,19 @@ ${encode(meal)}
 `;
   return callLLMWithRecovery(prompt, mealSchema, undefined, language);
 };
-// models
-// - inclusionai/ring-2.6-1t:free
-// - inclusionai/ling-2.6-1t:free
-// - openai/gpt-oss-120b:free
-// - nvidia/nemotron-3-nano-30b-a3b:free
-// - nvidia/nemotron-3-super-120b-a12b:free
-// - inclusionai/ring-2.6-1t:free
-// - google/gemma-4-31b-it:free
-// - google/gemma-4-26b-a4b-it:free
-// - qwen/qwen3-vl-32b-instruct
-// - qwen/qwen3-embedding-4b
-// - qwen/qwen3-vl-32b-instruct
-// - z-ai/glm-4.5-air:free
-// - qwen/qwen3-next-80b-a3b-instruct:free
-// - qwen/qwen3-coder:free
-// - deepseek/deepseek-v4-flash
 
-const callGemini = async (prompt: string, language: string = "en") => {
-  const isArabic = language.toLowerCase() === "ar";
-
-  const client = new OpenAI({
-    apiKey: cleanKey(env.GEMINI_API_KEY),
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+const callGemini = async (prompt: string, _language: string = "en") => {
+  const openai = new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: cleanKey(env.OPEN_ROUTER_API_KEY),
+    defaultHeaders: {
+      "HTTP-Referer": "https://njerka.xyz", // Optional. Site URL for rankings on openrouter.ai.
+      "X-OpenRouter-Title": "Njerka.fit", // Optional. Site title for rankings on openrouter.ai.
+    },
   });
-  const model = isArabic ? env.GEMINI_MODEL_AR : env.GEMINI_MODEL_EN;
 
-  const completion = await client.chat.completions.create({
-    model,
-    temperature: 0.2,
+  const completion = await openai.chat.completions.create({
+    model: env.OPEN_ROUTER_MODEL || "openrouter/free",
     messages: [
       {
         role: "system",
@@ -738,6 +809,12 @@ const callGemini = async (prompt: string, language: string = "en") => {
     ],
   });
   const firstChoice = completion.choices[0];
+
+  console.log(
+    "LLM raw response:",
+    firstChoice?.message?.content?.slice(0, 500),
+  );
+
   if (!firstChoice?.message?.content) {
     throw new Error("LLM did not return any content");
   }

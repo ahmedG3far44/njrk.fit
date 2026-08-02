@@ -2,13 +2,8 @@ import { env } from "../configs/env";
 import { jwtUtils } from "../utils/jwt";
 import { TOnboarding } from "../routes/auth.route";
 import { calculateUserHealthTargets } from "../utils/calculations";
+import { sendEmail, sendSubscriptionEmail } from "../services/email.service";
 import crypto from "crypto";
-import {
-  sendEmail,
-  sendSubscriptionEmail,
-  transporter,
-} from "../services/email.service"; // تأكد من مسار الاستيراد
-
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import stripe from "../configs/stripe";
@@ -170,15 +165,17 @@ export const registerUser = async (
   if (provider === "email") {
     const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;
 
-    const isArabic = user.language === 'ar';
-    const emailHtml = isArabic ? `
+    const isArabic = user.language === "ar";
+    const emailHtml = isArabic
+      ? `
       <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
         <h2>مرحباً بك يا ${user.name} 👋</h2>
         <p>سعداء بانضمامك لنا! عشان تفعل حسابك وتبدأ تستخدم التطبيق، اضغط على الزر تحت:</p>
         <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
         <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
       </div>
-    ` : `
+    `
+      : `
       <div style="font-family: Arial, sans-serif; text-align: center;">
         <h2>Welcome, ${user.name}! 👋</h2>
         <p>We're excited to have you! To activate your account and start using the app, click the button below:</p>
@@ -187,7 +184,11 @@ export const registerUser = async (
       </div>
     `;
 
-    sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك الجديد" : "Verify Your New Account").catch(() => {});
+    sendEmail(
+      emailHtml,
+      user.email,
+      isArabic ? "توثيق حسابك الجديد" : "Verify Your New Account",
+    ).catch(() => {});
   }
 
   const payload = {
@@ -236,8 +237,9 @@ export const forgotPassword = async (email: string) => {
   const resetUrl = `${env.CLIENT_URL}/reset-password/${resetToken}`;
 
   // 5. نرسل الإيميل بلغة المستخدم
-  const isArabic = user.language === 'ar';
-  const html = isArabic ? `
+  const isArabic = user.language === "ar";
+  const html = isArabic
+    ? `
     <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; direction: rtl;">
       <h2>إعادة تعيين كلمة المرور 🔒</h2>
       <p>لقد استلمنا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
@@ -245,7 +247,8 @@ export const forgotPassword = async (email: string) => {
       <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #047857; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">تغيير كلمة المرور</a>
       <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة ساعة واحدة فقط. إذا لم تطلب هذا التغيير، يمكنك تجاهل هذه الرسالة.</p>
     </div>
-  ` : `
+  `
+    : `
     <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
       <h2>Reset Your Password 🔒</h2>
       <p>We received a request to reset your password.</p>
@@ -256,13 +259,14 @@ export const forgotPassword = async (email: string) => {
   `;
 
   const mailOptions = {
-    from: `"Njerka Team" <${env.EMAIL_USER}>`,
-    to: user.email,
-    subject: isArabic ? "إعادة تعيين كلمة المرور - Njerka" : "Reset Your Password - Njerka",
     html,
+    to: email,
+    subject: isArabic
+      ? "إعادة تعيين كلمة المرور - Njerka"
+      : "Reset Your Password - Njerka",
   };
 
-  await transporter.sendMail(mailOptions);
+  await sendEmail(mailOptions.html, mailOptions.to, mailOptions.subject);
 
   return {
     success: true,
@@ -303,7 +307,9 @@ export const resetPassword = async (token: string, newPassword: string) => {
 };
 
 export const loginUser = async (email: string, password: string) => {
-  const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+  const user = await User.findOne({ email: email.toLowerCase() }).select(
+    "+passwordHash",
+  );
   if (!user || !user.passwordHash) {
     return { success: false, message: "Invalid credentials" };
   }
@@ -312,7 +318,6 @@ export const loginUser = async (email: string, password: string) => {
   if (!isValid) {
     return { success: false, message: "Invalid credentials" };
   }
-
 
   const payload = {
     _id: user._id.toString(),
@@ -397,13 +402,13 @@ export const verifyEmailToken = async (token: string) => {
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
   const user = await User.findOne({
     emailVerificationToken: hashedToken,
-    emailVerificationExpires: { $gt: Date.now() }, 
+    emailVerificationExpires: { $gt: Date.now() },
   });
 
   if (!user) {
     return { success: false, message: "الرمز غير صالح أو منتهي الصلاحية" };
   }
-  
+
   user.set("isEmailVerified", true);
   user.set("emailVerificationToken", undefined);
   user.set("emailVerificationExpires", undefined);
@@ -440,15 +445,17 @@ export const resendVerificationEmail = async (userId: string) => {
 
   const verificationUrl = `${env.CLIENT_URL}/verify-email/${verificationToken}`;
 
-  const isArabic = user.language === 'ar';
-  const emailHtml = isArabic ? `
+  const isArabic = user.language === "ar";
+  const emailHtml = isArabic
+    ? `
     <div style="font-family: Arial, sans-serif; text-align: center; direction: rtl;">
       <h2>مرحباً بك يا ${user.name} 👋</h2>
       <p>لعلك طلبت إعادة إرسال رابط التوثيق. اضغط على الزر تحت عشان تفعل حسابك:</p>
       <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">توثيق الحساب</a>
       <p style="color: #666; font-size: 12px;">هذا الرابط صالح لمدة 24 ساعة فقط.</p>
     </div>
-  ` : `
+  `
+    : `
     <div style="font-family: Arial, sans-serif; text-align: center;">
       <h2>Welcome, ${user.name}! 👋</h2>
       <p>You requested a new verification link. Click the button below to activate your account:</p>
@@ -457,7 +464,14 @@ export const resendVerificationEmail = async (userId: string) => {
     </div>
   `;
 
-  await sendEmail(emailHtml, user.email, isArabic ? "توثيق حسابك - Njerka" : "Verify Your Email - Njerka");
+  await sendEmail(
+    emailHtml,
+    user.email,
+    isArabic ? "توثيق حسابك - Njerka" : "Verify Your Email - Njerka",
+  );
 
-  return { success: true, message: "تم إرسال رابط التوثيق إلى بريدك الإلكتروني" };
+  return {
+    success: true,
+    message: "تم إرسال رابط التوثيق إلى بريدك الإلكتروني",
+  };
 };

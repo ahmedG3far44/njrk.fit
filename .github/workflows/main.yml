@@ -3,7 +3,7 @@ name: Deploy Production
 on:
   push:
     branches:
-      - final
+      - main
 
 jobs:
   deploy:
@@ -24,28 +24,15 @@ jobs:
       - name: Generate Server .env
         run: |
           cat > "$SERVER_DIR/.env" << EOF
+
           PORT=${{ secrets.PORT }}
           NODE_ENV=${{ secrets.NODE_ENV }}
-
-          ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+          
           CLIENT_URL=${{ secrets.CLIENT_URL }}
           API_URL=${{ secrets.API_URL }}
 
-          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
-
-          LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
-          LLM_MODEL_EN=${{ secrets.LLM_MODEL_EN }}
-          LLM_MODEL_AR=${{ secrets.LLM_MODEL_AR }}
-
-
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} 
-          GEMINI_MODEL_EN=${{ secrets.GEMINI_MODEL_EN }}
-          GEMINI_MODEL_AR=${{ secrets.GEMINI_MODEL_AR }}
-
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL_EN=${{ secrets.OPENAI_MODEL_EN }}
-          OPENAI_MODEL_AR=${{ secrets.OPENAI_MODEL_AR }}
-
+          OPEN_ROUTER_API_KEY=${{ secrets.OPEN_ROUTER_API_KEY }}
+          OPEN_ROUTER_MODEL=${{ secrets.OPEN_ROUTER_MODEL }}
 
           RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
 
@@ -61,13 +48,8 @@ jobs:
           JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
           JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
 
-          ADMIN_EMAIL_1=${{ secrets.ADMIN_EMAIL_1 }}
-          ADMIN_PASSWORD_1=${{ secrets.ADMIN_PASSWORD_1 }}
-          ADMIN_NAME_1=${{ secrets.ADMIN_NAME_1 }}
-
-          ADMIN_EMAIL_2=${{ secrets.ADMIN_EMAIL_2 }}
-          ADMIN_PASSWORD_2=${{ secrets.ADMIN_PASSWORD_2 }}
-          ADMIN_NAME_2=${{ secrets.ADMIN_NAME_2 }}
+          ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
 
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -76,8 +58,10 @@ jobs:
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
 
-          MONGODB_URI=${{ secrets.MONGODB_URI }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM=${{ secrets.EMAIL_FROM }}
 
+          MONGODB_URI=${{ secrets.MONGODB_URI }}
           EOF
 
       - name: Generate Client .env

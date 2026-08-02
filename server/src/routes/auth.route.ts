@@ -16,8 +16,7 @@ import {
 import User from "../models/user.model";
 import z from "zod";
 import { ActivityLevel, Gender, Goal, Religion } from "../types";
-import { sendSubscriptionEmail } from "../services/email.service";
-
+import { sendEmail, sendSubscriptionEmail } from "../services/email.service";
 
 const router = Router();
 
@@ -25,7 +24,7 @@ const setAuthCookies = (
   res: Response,
   accessToken: string,
   refreshToken: string,
-  googleAccessToken?: string
+  googleAccessToken?: string,
 ) => {
   const isProduction = env.NODE_ENV === "production";
 
@@ -76,149 +75,158 @@ router.get("/google", (req: Request, res: Response) => {
   res.redirect(url);
 });
 
-router.get("/google/fit-connect", authMiddleware, (req: Request, res: Response) => {
-  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
-  const clientId = env.GOOGLE_CLIENT_ID;
-  const userId = (req as AuthRequest).user?._id;
+router.get(
+  "/google/fit-connect",
+  authMiddleware,
+  (req: Request, res: Response) => {
+    const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+    const clientId = env.GOOGLE_CLIENT_ID;
+    const userId = (req as AuthRequest).user?._id;
 
-  const state = `fit_connect:${userId}`;
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=https://www.googleapis.com/auth/fitness.activity.read&include_granted_scopes=true&access_type=offline&prompt=consent&state=${state}`;
-  res.redirect(url);
-});
+    const state = `fit_connect:${userId}`;
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=https://www.googleapis.com/auth/fitness.activity.read&include_granted_scopes=true&access_type=offline&prompt=consent&state=${state}`;
+    res.redirect(url);
+  },
+);
 
-router.get("/google/callback", async (req: Request, res: Response, next: NextFunction) => {
-  const code = req.query.code as string;
-  const state = req.query.state as string;
-  const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
-  const clientUrl = env.CLIENT_URL;
+router.get(
+  "/google/callback",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const code = req.query.code as string;
+    const state = req.query.state as string;
+    const redirectUri = `${(env.API_URL || "http://localhost:8080").replace(/\/api\/?$/, "")}/api/auth/google/callback`;
+    const clientUrl = env.CLIENT_URL;
 
-  if (!code) {
-    return res.status(400).json({ error: "Missing authorization code" });
-  }
-
-  try {
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: env.GOOGLE_CLIENT_ID!,
-        client_secret: env.GOOGLE_CLIENT_SECRET!,
-        code,
-        redirect_uri: redirectUri,
-        grant_type: "authorization_code",
-      }),
-    });
-
-    const data = await tokenRes.json();
-
-    if (!tokenRes.ok) {
-      throw new Error("Failed to fetch access token");
+    if (!code) {
+      return res.status(400).json({ error: "Missing authorization code" });
     }
 
-    // --- FIT CONNECT flow (incremental authorization for fitness scope) ---
-    if (state?.startsWith("fit_connect:")) {
-      const userId = state.split(":")[1];
-      if (!userId) {
-        return res.redirect(`${clientUrl}/login`);
+    try {
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: env.GOOGLE_CLIENT_ID!,
+          client_secret: env.GOOGLE_CLIENT_SECRET!,
+          code,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }),
+      });
+
+      const data = await tokenRes.json();
+
+      if (!tokenRes.ok) {
+        throw new Error("Failed to fetch access token");
       }
 
-      const fitUpdate: Record<string, any> = {
-        googleTokenExpiry: new Date(Date.now() + (data.expires_in || 3600) * 1000),
-      };
+      // --- FIT CONNECT flow (incremental authorization for fitness scope) ---
+      if (state?.startsWith("fit_connect:")) {
+        const userId = state.split(":")[1];
+        if (!userId) {
+          return res.redirect(`${clientUrl}/login`);
+        }
+
+        const fitUpdate: Record<string, any> = {
+          googleTokenExpiry: new Date(
+            Date.now() + (data.expires_in || 3600) * 1000,
+          ),
+        };
+        if (data.refresh_token) {
+          fitUpdate.googleRefreshToken = data.refresh_token;
+        }
+        await User.findByIdAndUpdate(userId, { $set: fitUpdate });
+
+        res.cookie("googleAccessToken", data.access_token, {
+          httpOnly: true,
+          secure: env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        return res.redirect(`${clientUrl}/dashboard/progress`);
+      }
+
+      // --- LOGIN flow ---
+      const profileRes = await fetch(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        },
+      );
+
+      const profileData: GoogleUserProfile = await profileRes.json();
+
+      if (!profileRes.ok) {
+        return res
+          .status(400)
+          .json({ error: "Google login failed", details: profileData });
+      }
+
+      const { email, picture, family_name, given_name, id } = profileData;
+
+      let userDoc: any = await authService.getUserByEmail(email);
+
+      if (!userDoc) {
+        const result = await authService.registerUser("google", {
+          email,
+          name: `${given_name} ${family_name}`,
+          avatarUrl: picture,
+          googleId: id,
+        });
+        if (!result.user) {
+          return res.status(500).json({ error: "Failed to create user" });
+        }
+        userDoc = result.user;
+      }
+
+      if (!userDoc) {
+        return res.status(500).json({ error: "User not found" });
+      }
+
+      const userId = userDoc._id.toString();
+
       if (data.refresh_token) {
-        fitUpdate.googleRefreshToken = data.refresh_token;
+        await User.findByIdAndUpdate(userId, {
+          $set: {
+            googleRefreshToken: data.refresh_token,
+            googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
+          },
+        });
+      } else {
+        await User.findByIdAndUpdate(userId, {
+          $set: {
+            googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
+          },
+        });
       }
-      await User.findByIdAndUpdate(userId, { $set: fitUpdate });
 
-      res.cookie("googleAccessToken", data.access_token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
+      const userPayload = {
+        _id: userId,
+        userId,
+        email: userDoc.email,
+        name: userDoc.name,
+        avatarUrl: userDoc.avatarUrl,
+        onboardingCompleted: userDoc.onboardingCompleted,
+        subscriptionTier: userDoc.subscription?.subscriptionTier || "BASIC",
+      };
 
-      return res.redirect(`${clientUrl}/dashboard/progress`);
-    }
+      const accessToken = jwtUtils.generateAccessToken(userPayload);
+      const refreshToken = jwtUtils.generateRefreshToken(userPayload);
+      const googleAccessToken = data.access_token;
 
-    // --- LOGIN flow ---
-    const profileRes = await fetch(
-      "https://www.googleapis.com/oauth2/v2/userinfo",
-      {
-        headers: { Authorization: `Bearer ${data.access_token}` },
-      },
-    );
+      setAuthCookies(res, accessToken, refreshToken, googleAccessToken);
 
-    const profileData: GoogleUserProfile = await profileRes.json();
-
-    if (!profileRes.ok) {
-      return res
-        .status(400)
-        .json({ error: "Google login failed", details: profileData });
-    }
-
-    const { email, picture, family_name, given_name, id } = profileData;
-
-    let userDoc: any = await authService.getUserByEmail(email);
-
-    if (!userDoc) {
-      const result = await authService.registerUser("google", {
-        email,
-        name: `${given_name} ${family_name}`,
-        avatarUrl: picture,
-        googleId: id,
-      });
-      if (!result.user) {
-        return res.status(500).json({ error: "Failed to create user" });
+      if (!userDoc.onboardingCompleted) {
+        res.redirect(`${clientUrl}/onboarding`);
+      } else {
+        res.redirect(`${clientUrl}/dashboard/insights`);
       }
-      userDoc = result.user;
+    } catch (err) {
+      next(err);
     }
-
-    if (!userDoc) {
-      return res.status(500).json({ error: "User not found" });
-    }
-
-    const userId = userDoc._id.toString();
-
-    if (data.refresh_token) {
-      await User.findByIdAndUpdate(userId, {
-        $set: {
-          googleRefreshToken: data.refresh_token,
-          googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
-        },
-      });
-    } else {
-      await User.findByIdAndUpdate(userId, {
-        $set: {
-          googleTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
-        },
-      });
-    }
-
-    const userPayload = {
-      _id: userId,
-      userId,
-      email: userDoc.email,
-      name: userDoc.name,
-      avatarUrl: userDoc.avatarUrl,
-      onboardingCompleted: userDoc.onboardingCompleted,
-      subscriptionTier: userDoc.subscription?.subscriptionTier || 'BASIC',
-    };
-
-    const accessToken = jwtUtils.generateAccessToken(userPayload);
-    const refreshToken = jwtUtils.generateRefreshToken(userPayload);
-    const googleAccessToken = data.access_token;
-
-    setAuthCookies(res, accessToken, refreshToken, googleAccessToken);
-
-    if (!userDoc.onboardingCompleted) {
-      res.redirect(`${clientUrl}/onboarding`);
-    } else {
-      res.redirect(`${clientUrl}/dashboard/insights`);
-    }
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 router.post(
   "/register",
@@ -266,9 +274,8 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
-
 
 router.post(
   "/resend-verification",
@@ -290,7 +297,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.post(
@@ -304,7 +311,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.post(
@@ -324,9 +331,8 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
-
 
 router.post(
   "/login",
@@ -397,8 +403,6 @@ router.post(
   },
 );
 
-
-
 interface IOnboardingRequest {
   age: number;
   gender: Gender;
@@ -411,7 +415,7 @@ interface IOnboardingRequest {
   userGoal: Goal;
   targetWeight: number;
   fitnessGoal: string;
-  language?: 'en' | 'ar';
+  language?: "en" | "ar";
 }
 const onboardingSchema = z.object({
   age: z
@@ -453,7 +457,7 @@ const onboardingSchema = z.object({
   targetWeight: z.number(),
   fitnessGoal: z.string(),
   goalDate: z.string().optional(),
-  language: z.enum(['en', 'ar']).default('en'),
+  language: z.enum(["en", "ar"]).default("en"),
 });
 
 export type TOnboarding = z.infer<typeof onboardingSchema>;
@@ -505,17 +509,25 @@ router.post(
       const { email, name } = req.body;
 
       if (!email || !name) {
-        return res
-          .status(400)
-          .json({ error: "Email and name are required" });
+        return res.status(400).json({ error: "Email and name are required" });
       }
-
-      await sendSubscriptionEmail(email, name);
+      const html = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #166534;">Hello, ${name}!</h2>
+            <p>This is a test email from Njerka. If you received this, it means our email service is working correctly.</p>
+            <p style="margin-top: 20px; font-size: 0.9em; color: #777;">
+              Best,
+              <br>
+              The Njerka Team
+            </p>  
+      `;
+      await sendEmail(html, email, "Test Email from Njerka");
 
       res.status(200).json({ message: "Test email sent successfully" });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 export default router;
